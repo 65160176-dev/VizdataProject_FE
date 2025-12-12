@@ -1,6 +1,6 @@
 /// <reference types="@vueuse/nuxt" />
-/// <reference types="@nuxt/image-edge" />
 /// <reference types="nuxt-icon" />
+/// <reference types="@nuxt/image-edge" />
 /// <reference types="@nuxt/devtools" />
 /// <reference types="@nuxt/telemetry" />
 /// <reference path="types/builder-env.d.ts" />
