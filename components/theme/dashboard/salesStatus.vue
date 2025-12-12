@@ -53,8 +53,8 @@
 
 </template>
 <script setup>
-import dashboard from "@/data/dashboard.json"
-import RevenueChart from "@/components/theme/dashboard/revenueChart.vue"
+import dashboard from "~/data/dashboard.json"
+import RevenueChart from "~/components/theme/dashboard/revenueChart.vue"
 import { ref } from "vue";
 let data=dashboard.orders
 let items=dashboard.seles

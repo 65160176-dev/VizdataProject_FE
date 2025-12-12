@@ -25,6 +25,7 @@ type NuxtAppInjections =
   InjectionType<typeof import("../../node_modules/nuxt/dist/app/plugins/check-if-layout-used.js")> &
   InjectionType<typeof import("../../plugins/useBootstrap.client")> &
   InjectionType<typeof import("../../plugins/showToast.client.js")> &
+  InjectionType<typeof import("../../plugins/apexcharts.client.js")> &
   InjectionType<typeof import("../../plugins/fontawesome.js")> &
   InjectionType<typeof import("../../plugins/i18n.js")>
 
