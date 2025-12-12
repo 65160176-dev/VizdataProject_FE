@@ -3,39 +3,39 @@ import { Server } from 'node:http';
 import { resolve, dirname, join } from 'node:path';
 import nodeCrypto from 'node:crypto';
 import { parentPort, threadId } from 'node:worker_threads';
-import { defineEventHandler, handleCacheHeaders, splitCookiesString, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, sendRedirect, proxyRequest, getRequestHeader, setResponseHeaders, setResponseStatus, send, getRequestHeaders, setResponseHeader, appendResponseHeader, getRequestURL, getResponseHeader, removeResponseHeader, createError, getQuery as getQuery$1, readBody, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getResponseStatus, getRouterParam, getResponseStatusText } from 'file://C:/65160176%20project/vizdataproject/node_modules/h3/dist/index.mjs';
-import { escapeHtml } from 'file://C:/65160176%20project/vizdataproject/node_modules/@vue/shared/dist/shared.cjs.js';
-import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file://C:/65160176%20project/vizdataproject/node_modules/vue-bundle-renderer/dist/runtime.mjs';
+import { defineEventHandler, handleCacheHeaders, splitCookiesString, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, sendRedirect, proxyRequest, getRequestHeader, setResponseHeaders, setResponseStatus, send, getRequestHeaders, setResponseHeader, appendResponseHeader, getRequestURL, getResponseHeader, removeResponseHeader, createError, getQuery as getQuery$1, readBody, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getResponseStatus, getRouterParam, getResponseStatusText } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/h3/dist/index.mjs';
+import { escapeHtml } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/@vue/shared/dist/shared.cjs.js';
+import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/vue-bundle-renderer/dist/runtime.mjs';
 import process$1 from 'node:process';
-import { renderToString } from 'file://C:/65160176%20project/vizdataproject/node_modules/vue/server-renderer/index.mjs';
-import { klona } from 'file://C:/65160176%20project/vizdataproject/node_modules/klona/dist/index.mjs';
-import defu, { defuFn } from 'file://C:/65160176%20project/vizdataproject/node_modules/defu/dist/defu.mjs';
-import destr, { destr as destr$1 } from 'file://C:/65160176%20project/vizdataproject/node_modules/destr/dist/index.mjs';
-import { snakeCase } from 'file://C:/65160176%20project/vizdataproject/node_modules/scule/dist/index.mjs';
-import { createHead as createHead$1, propsToString, renderSSRHead } from 'file://C:/65160176%20project/vizdataproject/node_modules/unhead/dist/server.mjs';
-import { stringify, uneval } from 'file://C:/65160176%20project/vizdataproject/node_modules/devalue/index.js';
-import { isVNode, toValue, isRef } from 'file://C:/65160176%20project/vizdataproject/node_modules/vue/index.mjs';
-import { DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin } from 'file://C:/65160176%20project/vizdataproject/node_modules/unhead/dist/plugins.mjs';
-import { createHooks } from 'file://C:/65160176%20project/vizdataproject/node_modules/hookable/dist/index.mjs';
-import { createFetch, Headers as Headers$1 } from 'file://C:/65160176%20project/vizdataproject/node_modules/ofetch/dist/node.mjs';
-import { fetchNodeRequestHandler, callNodeRequestHandler } from 'file://C:/65160176%20project/vizdataproject/node_modules/node-mock-http/dist/index.mjs';
-import { createStorage, prefixStorage } from 'file://C:/65160176%20project/vizdataproject/node_modules/unstorage/dist/index.mjs';
-import unstorage_47drivers_47fs from 'file://C:/65160176%20project/vizdataproject/node_modules/unstorage/drivers/fs.mjs';
-import { digest } from 'file://C:/65160176%20project/vizdataproject/node_modules/nitropack/node_modules/ohash/dist/index.mjs';
-import { toRouteMatcher, createRouter } from 'file://C:/65160176%20project/vizdataproject/node_modules/radix3/dist/index.mjs';
+import { renderToString } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/vue/server-renderer/index.mjs';
+import { klona } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/klona/dist/index.mjs';
+import defu, { defuFn } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/defu/dist/defu.mjs';
+import destr, { destr as destr$1 } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/destr/dist/index.mjs';
+import { snakeCase } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/scule/dist/index.mjs';
+import { createHead as createHead$1, propsToString, renderSSRHead } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/unhead/dist/server.mjs';
+import { stringify, uneval } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/devalue/index.js';
+import { isVNode, toValue, isRef } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/vue/index.mjs';
+import { DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/unhead/dist/plugins.mjs';
+import { createHooks } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/hookable/dist/index.mjs';
+import { createFetch, Headers as Headers$1 } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/ofetch/dist/node.mjs';
+import { fetchNodeRequestHandler, callNodeRequestHandler } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/node-mock-http/dist/index.mjs';
+import { createStorage, prefixStorage } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/unstorage/dist/index.mjs';
+import unstorage_47drivers_47fs from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/unstorage/drivers/fs.mjs';
+import { digest } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/nitropack/node_modules/ohash/dist/index.mjs';
+import { toRouteMatcher, createRouter } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/radix3/dist/index.mjs';
 import { readFile } from 'node:fs/promises';
-import consola from 'file://C:/65160176%20project/vizdataproject/node_modules/nitropack/node_modules/consola/dist/index.mjs';
-import { ErrorParser } from 'file://C:/65160176%20project/vizdataproject/node_modules/youch-core/build/index.js';
-import { Youch } from 'file://C:/65160176%20project/vizdataproject/node_modules/youch/build/index.js';
-import { SourceMapConsumer } from 'file://C:/65160176%20project/vizdataproject/node_modules/nitropack/node_modules/source-map/source-map.js';
+import consola from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/nitropack/node_modules/consola/dist/index.mjs';
+import { ErrorParser } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/youch-core/build/index.js';
+import { Youch } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/youch/build/index.js';
+import { SourceMapConsumer } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/nitropack/node_modules/source-map/source-map.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { consola as consola$1 } from 'file://C:/65160176%20project/vizdataproject/node_modules/@nuxt/nitro-server/node_modules/consola/dist/index.mjs';
-import { getContext } from 'file://C:/65160176%20project/vizdataproject/node_modules/unctx/dist/index.mjs';
-import { captureRawStackTrace, parseRawStackTrace } from 'file://C:/65160176%20project/vizdataproject/node_modules/errx/dist/index.js';
+import { consola as consola$1 } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/@nuxt/nitro-server/node_modules/consola/dist/index.mjs';
+import { getContext } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/unctx/dist/index.mjs';
+import { captureRawStackTrace, parseRawStackTrace } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/errx/dist/index.js';
 import { promises } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname as dirname$1, resolve as resolve$1 } from 'file://C:/65160176%20project/vizdataproject/node_modules/pathe/dist/index.mjs';
-import { walkResolver } from 'file://C:/65160176%20project/vizdataproject/node_modules/unhead/dist/utils.mjs';
+import { dirname as dirname$1, resolve as resolve$1 } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/pathe/dist/index.mjs';
+import { walkResolver } from 'file://D:/Work/Vizdata%20Project/temp/vizdataproject/node_modules/unhead/dist/utils.mjs';
 
 const HASH_RE = /#/g;
 const AMPERSAND_RE = /&/g;
@@ -287,7 +287,7 @@ function stringifyParsedURL(parsed) {
   return proto + auth + host + pathname + search + hash;
 }
 
-const serverAssets = [{"baseName":"server","dir":"C:/65160176 project/vizdataproject/server/assets"}];
+const serverAssets = [{"baseName":"server","dir":"D:/Work/Vizdata Project/temp/vizdataproject/server/assets"}];
 
 const assets$1 = createStorage();
 
@@ -299,11 +299,11 @@ const storage = createStorage({});
 
 storage.mount('/assets', assets$1);
 
-storage.mount('root', unstorage_47drivers_47fs({"driver":"fs","readOnly":true,"base":"C:/65160176 project/vizdataproject","watchOptions":{"ignored":[null]}}));
-storage.mount('src', unstorage_47drivers_47fs({"driver":"fs","readOnly":true,"base":"C:/65160176 project/vizdataproject/server","watchOptions":{"ignored":[null]}}));
-storage.mount('build', unstorage_47drivers_47fs({"driver":"fs","readOnly":false,"base":"C:/65160176 project/vizdataproject/.nuxt"}));
-storage.mount('cache', unstorage_47drivers_47fs({"driver":"fs","readOnly":false,"base":"C:/65160176 project/vizdataproject/.nuxt/cache"}));
-storage.mount('data', unstorage_47drivers_47fs({"driver":"fs","base":"C:/65160176 project/vizdataproject/.data/kv"}));
+storage.mount('root', unstorage_47drivers_47fs({"driver":"fs","readOnly":true,"base":"D:/Work/Vizdata Project/temp/vizdataproject","watchOptions":{"ignored":[null]}}));
+storage.mount('src', unstorage_47drivers_47fs({"driver":"fs","readOnly":true,"base":"D:/Work/Vizdata Project/temp/vizdataproject/server","watchOptions":{"ignored":[null]}}));
+storage.mount('build', unstorage_47drivers_47fs({"driver":"fs","readOnly":false,"base":"D:/Work/Vizdata Project/temp/vizdataproject/.nuxt"}));
+storage.mount('cache', unstorage_47drivers_47fs({"driver":"fs","readOnly":false,"base":"D:/Work/Vizdata Project/temp/vizdataproject/.nuxt/cache"}));
+storage.mount('data', unstorage_47drivers_47fs({"driver":"fs","base":"D:/Work/Vizdata Project/temp/vizdataproject/.data/kv"}));
 
 function useStorage(base = "") {
   return base ? prefixStorage(storage, base) : storage;
@@ -1602,13 +1602,13 @@ if (!window.__NUXT_DEVTOOLS_TIME_METRIC__) {
 window.__NUXT_DEVTOOLS_TIME_METRIC__.appInit = Date.now()
 `;
 
-const _KFHQTBFQyh16AfGYx8p3dmMCEV4UrXFYQggMt5GBf_0 = (function(nitro) {
+const _ZtSRevAsNXOtu9nzXmMKL5AhOmQ0_a2rpOtTGyu15ic = (function(nitro) {
   nitro.hooks.hook("render:html", (htmlContext) => {
     htmlContext.head.push(`<script>${script}<\/script>`);
   });
 });
 
-const rootDir = "C:/65160176 project/vizdataproject";
+const rootDir = "D:/Work/Vizdata Project/temp/vizdataproject";
 
 const appHead = {"meta":[{"name":"viewport","content":"width=device-width, initial-scale=1"},{"charset":"utf-8"},{"name":"description","content":"My amazing site."}],"link":[],"style":[],"script":[{"src":"https://www.paypal.com/sdk/js?client-id=test&currency=USD"},{"src":"https://checkout.stripe.com/checkout.js"}],"noscript":[],"charset":"utf-8","viewport":"width=device-width, initial-scale=1","title":"Multikart Ecommerce | Vuejs shopping theme"};
 
@@ -1627,7 +1627,7 @@ const devReducers = {
   URL: (data) => data instanceof URL ? data.toString() : void 0
 };
 const asyncContext = getContext("nuxt-dev", { asyncContext: true, AsyncLocalStorage });
-const _eIqfyORD4NHi5E_bM1wptrj2dCQVc2tliKTj6fKz0QM = (nitroApp) => {
+const _Y4pnOczda0Umm1SJKxiQCTnnBj9gEq28szMyeFhbVs = (nitroApp) => {
   const handler = nitroApp.h3App.handler;
   nitroApp.h3App.handler = (event) => {
     return asyncContext.callAsync({ logs: [], event }, () => handler(event));
@@ -1697,8 +1697,8 @@ function onConsoleLog(callback) {
 }
 
 const plugins = [
-  _KFHQTBFQyh16AfGYx8p3dmMCEV4UrXFYQggMt5GBf_0,
-_eIqfyORD4NHi5E_bM1wptrj2dCQVc2tliKTj6fKz0QM
+  _ZtSRevAsNXOtu9nzXmMKL5AhOmQ0_a2rpOtTGyu15ic,
+_Y4pnOczda0Umm1SJKxiQCTnnBj9gEq28szMyeFhbVs
 ];
 
 const assets = {};
@@ -1726,7 +1726,7 @@ function getAsset (id) {
 
 const METHODS = /* @__PURE__ */ new Set(["HEAD", "GET"]);
 const EncodingMap = { gzip: ".gz", br: ".br" };
-const _OCtDsW = eventHandler((event) => {
+const __L0jDm = eventHandler((event) => {
   if (event.method && !METHODS.has(event.method)) {
     return;
   }
@@ -1865,7 +1865,7 @@ function publicAssetsURL(...path) {
 const APP_ROOT_OPEN_TAG = `<${appRootTag}${propsToString(appRootAttrs)}>`;
 const APP_ROOT_CLOSE_TAG = `</${appRootTag}>`;
 const getServerEntry = () => Promise.resolve().then(function () { return server$1; }).then((r) => r.default || r);
-const getClientManifest = () => import('file://C:/65160176%20project/vizdataproject/.nuxt//dist/server/client.manifest.mjs').then((r) => r.default || r).then((r) => typeof r === "function" ? r() : r);
+const getClientManifest = () => import('file://D:/Work/Vizdata%20Project/temp/vizdataproject/.nuxt//dist/server/client.manifest.mjs').then((r) => r.default || r).then((r) => typeof r === "function" ? r() : r);
 const getSSRRenderer = lazyCachedFunction(async () => {
   const createSSRApp = await getServerEntry();
   if (!createSSRApp) {
@@ -2111,13 +2111,13 @@ async function getIslandContext(event) {
   return ctx;
 }
 
-const _lazy_kNu9Vn = () => Promise.resolve().then(function () { return renderer$1; });
+const _lazy_uwqBO8 = () => Promise.resolve().then(function () { return renderer$1; });
 
 const handlers = [
-  { route: '', handler: _OCtDsW, lazy: false, middleware: true, method: undefined },
-  { route: '/__nuxt_error', handler: _lazy_kNu9Vn, lazy: true, middleware: false, method: undefined },
+  { route: '', handler: __L0jDm, lazy: false, middleware: true, method: undefined },
+  { route: '/__nuxt_error', handler: _lazy_uwqBO8, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: _SxA8c9, lazy: false, middleware: false, method: undefined },
-  { route: '/**', handler: _lazy_kNu9Vn, lazy: true, middleware: false, method: undefined }
+  { route: '/**', handler: _lazy_uwqBO8, lazy: true, middleware: false, method: undefined }
 ];
 
 function createNitroApp() {

@@ -1,8 +1,8 @@
 /// <reference types="@vueuse/nuxt" />
-/// <reference types="@nuxt/devtools" />
-/// <reference types="@nuxt/image-edge" />
-/// <reference types="nuxt-icon" />
 /// <reference types="@nuxt/telemetry" />
+/// <reference types="@nuxt/devtools" />
+/// <reference types="nuxt-icon" />
+/// <reference types="@nuxt/image-edge" />
 /// <reference path="types/builder-env.d.ts" />
 /// <reference types="nuxt" />
 /// <reference path="types/app-defaults.d.ts" />
@@ -10,7 +10,7 @@
 /// <reference path="types/build.d.ts" />
 /// <reference path="types/schema.d.ts" />
 /// <reference path="types/app.config.d.ts" />
-/// <reference types="C:/65160176 project/vizdataproject/node_modules/@nuxt/nitro-server/dist/index.mjs" />
+/// <reference types="D:/Work/Vizdata Project/temp/vizdataproject/node_modules/@nuxt/nitro-server/dist/index.mjs" />
 /// <reference types="@pinia/nuxt" />
 /// <reference types="vue-router" />
 /// <reference path="types/middleware.d.ts" />

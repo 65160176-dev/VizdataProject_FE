@@ -22,12 +22,18 @@
             <li class="onhover-dropdown mobile-account">
               <i class="fa fa-user" aria-hidden="true"></i> My Account
               <ul class="onhover-show-div">
-                <li  @click="logout">
-                  <nuxt-link to="javascript:void(0)"> {{isLogin ? 'Logout':'Login'}} </nuxt-link>
-                  
-                </li>
                 <li>
                   <nuxt-link to="/page/account/dashboard">Dashboard</nuxt-link>
+                </li>
+
+                <li>
+                  <nuxt-link to="/page/account/dashboard?tab=orders">My Orders</nuxt-link>
+                </li>
+
+                <li @click="logout">
+                  <nuxt-link to="javascript:void(0)">
+                    {{ isLogin ? 'Logout' : 'Login' }}
+                  </nuxt-link>
                 </li>
               </ul>
             </li>
@@ -47,20 +53,20 @@ export default {
       isLogin: false
     }
   },
- 
+
   methods: {
     logout: function () {
-       if(this.isLogin){
-         UserAuth.Logout()
-        this.$router.replace('/page/auth/loginpage')
-       }
-       else{
-          this.$router.push('/page/auth/loginpage')
-       }
+      if (this.isLogin) {
+        UserAuth.Logout()
+        this.$router.replace('/page/account/login')
+      }
+      else {
+        this.$router.push('/page/account/login')
+      }
     }
   },
-   created() {
-      this.isLogin = useCookie('userlogin').value
+  created() {
+    this.isLogin = useCookie('userlogin').value
   },
 }
 </script>
