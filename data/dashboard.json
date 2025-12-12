@@ -1,0 +1,219 @@
+{
+    "order":[
+        {
+          "id": 1,
+          "amount": "$120.00",
+          "method": "Bank Transfers",
+          "status": "On Way",
+          "class":"font-danger"
+        },
+        {
+          "id": 2,
+          "amount": "$90.00",
+          "method": "Ewallets",
+          "status": "Delivered",
+          "class":"font-secondary"
+        },
+        {
+          "id": 3,
+          "amount": "$240.00",
+          "method": "Cash",
+          "status": "Delivered",
+          "class":"font-warning"
+        },
+        {
+          "id": 4,
+          "amount": "$120.00",
+          "method": "Direct Deposit",
+          "status": "$6523",
+          "class":"font-primary"
+        },
+        {
+          "id": 5,
+          "amount": "$50.00",
+          "method": "Bank Transfers",
+          "status": "Delivered",
+          "class":"font-primary"
+        }
+      ],
+      "good":[
+        {
+          "description": "Simply dummy text of the printing",
+          "quantity": 1,
+          "status": {
+            "text": "Pending",
+            "class": "font-primary"
+          },
+          "price": 6523
+        },
+        {
+          "description": "Long established",
+          "quantity": 5,
+          "status": {
+            "text": "Cancel",
+            "class": "font-secondary"
+          },
+          "price": 6523
+        },
+        {
+          "description": "sometimes by accident",
+          "quantity": 10,
+          "status": {
+            "text": "Cancel",
+            "class": "font-secondary"
+          },
+          "price": 6523
+        },
+        {
+          "description": "Classical Latin literature",
+          "quantity": 9,
+          "status": {
+            "text": "Return",
+            "class": "font-primary"
+          },
+          "price": 6523
+        },
+        {
+          "description": "keep the site on the Internet",
+          "quantity": 8,
+          "status": {
+            "text": "Pending",
+            "class": "font-primary"
+          },
+          "price": 6523
+        },
+        {
+          "description": "Molestiae consequatur",
+          "quantity": 3,
+          "status": {
+            "text": "Cancel",
+            "class": "font-secondary"
+          },
+          "price": 6523
+        },
+        {
+          "description": "Pain can procure",
+          "quantity": 8,
+          "status": {
+            "text": "Return",
+            "class": "font-primary"
+          },
+          "price": 6523
+        }
+      ],
+      "data":[
+        {
+          "name": "John Deo",
+          "online_status": "14+ Online",
+          "image": "/images/dashboard/user2.jpg",
+          "role": "Designer",
+          "progress": {
+            "percentage": 30,
+            "class": "bg-primary"
+          },
+          "experience": "2 Year"
+        },
+        {
+          "name": "Holio Mako",
+          "online_status": "250+ Online",
+          "image": "/images/dashboard/user1.jpg",
+          "role": "Developer",
+          "progress": {
+            "percentage": 70,
+            "class": "bg-secondary"
+          },
+          "experience": "3 Year"
+        },
+        {
+          "name": "Mohsib lara",
+          "online_status": "99+ Online",
+          "image": "/images/dashboard/man.png",
+          "role": "Tester",
+          "progress": {
+            "percentage": 60,
+            "class": "bg-primary"
+          },
+          "experience": "5 Month"
+        },
+        {
+          "name": "Hileri Soli",
+          "online_status": "150+ Online",
+          "image": "/images/dashboard/user.png",
+          "role": "Designer",
+          "progress": {
+            "percentage": 30,
+            "class": "bg-secondary"
+          },
+          "experience": "3 Month"
+        },
+        {
+          "name": "Pusiz bia",
+          "online_status": "14+ Online",
+          "image": "/images/dashboard/designer.jpg",
+          "role": "Designer",
+          "progress": {
+            "percentage": 90,
+            "class": "bg-primary"
+          },
+          "experience": "5 Year"
+        }
+      ],
+      "orders":[
+        {
+          "country": "Saint Lucia",
+          "amount": "$157",
+          "orderColorClass": "order-color-primary"
+        },
+        {
+          "country": "Kenya",
+          "amount": "$347",
+          "orderColorClass": "order-color-secondary"
+        },
+        {
+          "country": "Liberia",
+          "amount": "$468",
+          "orderColorClass": "order-color-danger"
+        },
+        {
+          "country": "Christmas Island",
+          "amount": "$742",
+          "orderColorClass": "order-color-warning"
+        },
+        {
+          "country": "Saint Helena",
+          "amount": "$647",
+          "orderColorClass": "order-color-success"
+        }
+      ],
+      "seles":[
+        {
+          "country": "Germany",
+          "percentage": "25%",
+          "orderShapeClass": "order-shape-primary"
+        },
+        {
+          "country": "Brasil",
+          "percentage": "10%",
+          "orderShapeClass": "order-shape-secondary"
+        },
+        {
+          "country": "United Kingdom",
+          "percentage": "34%",
+          "orderShapeClass": "order-shape-danger"
+        },
+        {
+          "country": "Australia",
+          "percentage": "5%",
+          "orderShapeClass": "order-shape-warning"
+        },
+        {
+          "country": "Canada",
+          "percentage": "25%",
+          "orderShapeClass": "order-shape-success"
+        }
+      ]
+      
+      
+      
+      
+}

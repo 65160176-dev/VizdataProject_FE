@@ -153,6 +153,14 @@
           <a href="javascript:void(0)">house of design</a>
         </li>
         <li>
+          <NuxtLink to="/SellerPage/productPage">Products</NuxtLink>
+
+        </li>
+        <li>
+          <NuxtLink to="/dashboard/dashboard">DashBoard</NuxtLink>
+
+        </li>
+        <li>
           <a href="javascript:void(0)" @click="setActive('beauty')">beauty & personal care
             <span class="sub-arrow"></span>
           </a>

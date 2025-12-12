@@ -166,6 +166,18 @@ interface _GlobalComponents {
   'ShopWatchSlider': typeof import("../../components/shop/watch/slider.vue").default
   'ShopWatchTimerBanner': typeof import("../../components/shop/watch/timer_banner.vue").default
   'ShopWatchTopProducts': typeof import("../../components/shop/watch/top_products.vue").default
+  'ThemeDashboardBuysellChart': typeof import("../../components/theme/dashboard/buysellChart.vue").default
+  'ThemeDashboardDepositeChart': typeof import("../../components/theme/dashboard/depositeChart.vue").default
+  'ThemeDashboardEmployStatus': typeof import("../../components/theme/dashboard/employStatus.vue").default
+  'ThemeDashboardGoodReturn': typeof import("../../components/theme/dashboard/goodReturn.vue").default
+  'ThemeDashboardMarketChart': typeof import("../../components/theme/dashboard/marketChart.vue").default
+  'ThemeDashboardOrderTable': typeof import("../../components/theme/dashboard/orderTable.vue").default
+  'ThemeDashboardPurchaseChart': typeof import("../../components/theme/dashboard/purchaseChart.vue").default
+  'ThemeDashboardRevenueChart': typeof import("../../components/theme/dashboard/revenueChart.vue").default
+  'ThemeDashboardSalesChart': typeof import("../../components/theme/dashboard/salesChart.vue").default
+  'ThemeDashboardSalesStatus': typeof import("../../components/theme/dashboard/salesStatus.vue").default
+  'ThemeDashboardTransactionChart': typeof import("../../components/theme/dashboard/transactionChart.vue").default
+  'ThemeDashboardWidgetsCard': typeof import("../../components/theme/dashboard/widgetsCard.vue").default
   'WidgetsBreadcrumbs': typeof import("../../components/widgets/breadcrumbs.vue").default
   'WidgetsCollectionSidebar': typeof import("../../components/widgets/collection-sidebar.vue").default
   'WidgetsComparePopup': typeof import("../../components/widgets/compare-popup.vue").default
@@ -355,6 +367,18 @@ interface _GlobalComponents {
   'LazyShopWatchSlider': LazyComponent<typeof import("../../components/shop/watch/slider.vue").default>
   'LazyShopWatchTimerBanner': LazyComponent<typeof import("../../components/shop/watch/timer_banner.vue").default>
   'LazyShopWatchTopProducts': LazyComponent<typeof import("../../components/shop/watch/top_products.vue").default>
+  'LazyThemeDashboardBuysellChart': LazyComponent<typeof import("../../components/theme/dashboard/buysellChart.vue").default>
+  'LazyThemeDashboardDepositeChart': LazyComponent<typeof import("../../components/theme/dashboard/depositeChart.vue").default>
+  'LazyThemeDashboardEmployStatus': LazyComponent<typeof import("../../components/theme/dashboard/employStatus.vue").default>
+  'LazyThemeDashboardGoodReturn': LazyComponent<typeof import("../../components/theme/dashboard/goodReturn.vue").default>
+  'LazyThemeDashboardMarketChart': LazyComponent<typeof import("../../components/theme/dashboard/marketChart.vue").default>
+  'LazyThemeDashboardOrderTable': LazyComponent<typeof import("../../components/theme/dashboard/orderTable.vue").default>
+  'LazyThemeDashboardPurchaseChart': LazyComponent<typeof import("../../components/theme/dashboard/purchaseChart.vue").default>
+  'LazyThemeDashboardRevenueChart': LazyComponent<typeof import("../../components/theme/dashboard/revenueChart.vue").default>
+  'LazyThemeDashboardSalesChart': LazyComponent<typeof import("../../components/theme/dashboard/salesChart.vue").default>
+  'LazyThemeDashboardSalesStatus': LazyComponent<typeof import("../../components/theme/dashboard/salesStatus.vue").default>
+  'LazyThemeDashboardTransactionChart': LazyComponent<typeof import("../../components/theme/dashboard/transactionChart.vue").default>
+  'LazyThemeDashboardWidgetsCard': LazyComponent<typeof import("../../components/theme/dashboard/widgetsCard.vue").default>
   'LazyWidgetsBreadcrumbs': LazyComponent<typeof import("../../components/widgets/breadcrumbs.vue").default>
   'LazyWidgetsCollectionSidebar': LazyComponent<typeof import("../../components/widgets/collection-sidebar.vue").default>
   'LazyWidgetsComparePopup': LazyComponent<typeof import("../../components/widgets/compare-popup.vue").default>

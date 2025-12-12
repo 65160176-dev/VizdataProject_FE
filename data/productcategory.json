@@ -1,0 +1,115 @@
+{
+    "data":[
+        {
+          "id": 1,
+          "image": "/images/dashboard/product/1.png",
+          "name": "Headphones",
+          "stock": 10,
+          "price": 20.00,
+          "commission": 5,
+          "status": "success",
+          "category": "Electronics"
+        },
+        {
+          "id": 2,
+          "image": "/images/dashboard/product/2.png",
+          "name": "Honor Mobile",
+          "stock": 100,
+          "price": 462.00,
+          "commission": 5,
+          "status": "success",
+          "category": "Electronics"
+        },
+        {
+          "id": 3,
+          "image": "/images/dashboard/product/3.jpg",
+          "name": "Samsung LED TV",
+          "stock": 150,
+          "price": 652.00,
+          "commission": 5,
+          "status": "warning",
+          "category": "Electronics"
+        },
+        {
+          "id": 4,
+          "image": "/images/dashboard/product/4.jpg",
+          "name": "Motorola Bluetooth",
+          "stock": 0,
+          "price": 25.00,
+          "commission": 5,
+          "status": "success",
+          "category": "Electronics"
+        },
+        {
+          "id": 5,
+          "image": "/images/dashboard/product/5.jpg",
+          "name": "Apple 6s",
+          "stock": 89,
+          "price": 782.00,
+          "commission": 5,
+          "status": "danger",
+          "category": "Electronics"
+        },
+        {
+          "id": 6,
+          "image": "/images/dashboard/product/6.jpg",
+          "name": "Printer",
+          "stock": 69,
+          "price": 4825.00,
+          "commission": 5,
+          "status": "warning",
+          "category": "Electronics"
+        },
+        {
+          "id": 7,
+          "image": "/images/dashboard/product/7.jpg",
+          "name": "Canon Camera",
+          "stock": 77,
+          "price": 2461.00,
+          "commission": 5,
+          "status": "success",
+          "category": "Electronics"
+        },
+        {
+          "id": 8,
+          "image": "/images/dashboard/product/8.jpg",
+          "name": "High Quality Headphones",
+          "stock": 55,
+          "price": 761.00,
+          "commission": 5,
+          "status": "danger",
+          "category": "Electronics"
+        },
+        {
+          "id": 9,
+          "image": "/images/dashboard/product/9.jpg",
+          "name": "Home Theater Speakers",
+          "stock": 111,
+          "price": 672.00,
+          "commission": 5,
+          "status": "success",
+          "category": "Electronics"
+        },
+        {
+          "id": 10,
+          "image": "/images/dashboard/product/10.jpg",
+          "name": "Diamond Ring",
+          "stock": 58,
+          "price": 237.00,
+          "commission": 5,
+          "status": "warning",
+          "category": "Jewellery"
+        },
+        {
+          "id": 11,
+          "image": "/images/dashboard/product/11.jpg",
+          "name": "Diamond Necklace",
+          "stock": 1,
+          "price": 3579.00,
+          "commission": 5,
+          "status": "warning",
+          "category": "Jewellery"
+        }
+      ]
+      
+}
