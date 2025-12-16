@@ -166,6 +166,9 @@
           </ul>
         </li>
         <li>
+              <NuxtLink to="/afiliate/afiliatePage">Afiliate</NuxtLink>
+            </li>
+        <li>
           <a href="javascript:void(0)">house of design</a>
         </li>
         

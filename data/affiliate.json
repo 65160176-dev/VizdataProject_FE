@@ -1,0 +1,49 @@
+{
+  "data": [
+    {
+      "orderId": "AFF-2023001",
+      "date": "2023-12-10",
+      "productName": "SKINTIFIC 5X Ceramide",
+      "category": "Skincare",
+      "price": 350,
+      "commission": 35,
+      "status": "สำเร็จแล้ว"
+    },
+    {
+      "orderId": "AFF-2023002",
+      "date": "2023-12-11",
+      "productName": "Wireless Mouse Logitech",
+      "category": "Electronics",
+      "price": 890,
+      "commission": 89,
+      "status": "รอชำระ"
+    },
+    {
+      "orderId": "AFF-2023003",
+      "date": "2023-12-12",
+      "productName": "เสื้อยืด Oversize สีดำ",
+      "category": "Fashion",
+      "price": 250,
+      "commission": 25,
+      "status": "ยกเลิก"
+    },
+    {
+      "orderId": "AFF-2023004",
+      "date": "2023-12-12",
+      "productName": "SRICHAND Skin Moisture",
+      "category": "Skincare",
+      "price": 420,
+      "commission": 42,
+      "status": "รอชำระ"
+    },
+    {
+      "orderId": "AFF-2023005",
+      "date": "2023-12-13",
+      "productName": "หม้อทอดไร้น้ำมัน",
+      "category": "Home & Living",
+      "price": 1500,
+      "commission": 150,
+      "status": "สำเร็จแล้ว"
+    }
+  ]
+}
