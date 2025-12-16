@@ -14,6 +14,11 @@
         </div>
         <div class="col-lg-6 text-end">
           <ul class="header-dropdown">
+            <li class="mobile-wishlist" style="margin-right: 15px;">
+              <a href="javascript:void(0)" @click="checkAffiliateStatus" style="color: inherit;">
+                <i class="fa fa-handshake-o" aria-hidden="true"></i> Affiliate
+              </a>
+            </li>
             <li class="mobile-wishlist">
               <nuxt-link to="/page/account/wishlist">
                 <i class="fa fa-heart" aria-hidden="true"></i>
@@ -39,15 +44,22 @@
       </div>
     </div>
   </div>
+  <affiliateRegPopup v-if="showAffiliate" @close="closeAffiliateModal" @confirm="confirmAffiliate" />
+
 </template>
 
 <script>
-
+import affiliateRegPopup from '~/pages/afiliate/affiliateRegPopup.vue';
 import UserAuth from '../../pages/page/auth/auth'
 export default {
+  components: {
+    affiliateRegPopup
+  },
   data() {
     return {
-      isLogin: false
+      isLogin: false,
+      showAffiliate: false,
+      isAffiliate: false
     }
   },
 
@@ -60,6 +72,22 @@ export default {
       else {
         this.$router.replace('/page/auth/LoginPage')
       }
+    }, checkAffiliateStatus() {
+      if (this.isAffiliate === true) {
+        this.$router.push('/afiliate/afiliatePage');
+      } else {
+        this.showAffiliate = true;
+      }
+    },
+
+    closeAffiliateModal() {
+      this.showAffiliate = false;
+    },
+
+    confirmAffiliate() {
+      this.isAffiliate = true;
+      this.showAffiliate = false;
+      // this.$router.push('/afiliate/afiliatePage');
     }
   },
   created() {
