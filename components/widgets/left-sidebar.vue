@@ -98,57 +98,8 @@
             </li>
           </ul>
         </li>
-        <li>
-          <a href="javascript:void(0)" @click="setActive('bags')">bags
-            <span class="sub-arrow"></span>
-          </a>
-          <ul :class="{ opensub1: isActive('bags') }">
-            <li>
-              <a href="#">shopper bags</a>
-            </li>
-            <li>
-              <a href="#">laptop bags</a>
-            </li>
-            <li>
-              <a href="#">clutches</a>
-            </li>
-          </ul>
-        </li>
-        <li>
-          <a href="javascript:void(0)" @click="setActive('footwear')">footwear
-            <span class="sub-arrow"></span>
-          </a>
-          <ul :class="{ opensub1: isActive('footwear') }">
-            <li>
-              <a href="#">sport shoes</a>
-            </li>
-            <li>
-              <a href="#">formal shoes</a>
-            </li>
-            <li>
-              <a href="#">casual shoes</a>
-            </li>
-          </ul>
-        </li>
-        <li>
-          <a href="#">watches</a>
-        </li>
-        <li>
-          <a href="javascript:void(0)" @click="setActive('accessories')">Accessories
-            <span class="sub-arrow"></span>
-          </a>
-          <ul :class="{ opensub1: isActive('accessories') }">
-            <li>
-              <a href="#">fashion jewellery</a>
-            </li>
-            <li>
-              <a href="#">caps and hats</a>
-            </li>
-            <li>
-              <a href="#">precious jewellery</a>
-            </li>
-          </ul>
-        </li>
+        
+        
         <li>
           <a href="javascript:void(0)" @click="setActive('Seller')">Seller
             <span class="sub-arrow"></span>
@@ -168,32 +119,8 @@
         <li>
               <NuxtLink to="/afiliate/afiliatePage">Afiliate</NuxtLink>
             </li>
-        <li>
-          <a href="javascript:void(0)">house of design</a>
-        </li>
-        
-        <li>
-          <a href="javascript:void(0)" @click="setActive('beauty')">beauty & personal care
-            <span class="sub-arrow"></span>
-          </a>
-          <ul :class="{ opensub1: isActive('beauty') }">
-            <li>
-              <a href="#">makeup</a>
-            </li>
-            <li>
-              <a href="#">skincare</a>
-            </li>
-            <li>
-              <a href="#">premium beaty</a>
-            </li>
-          </ul>
-        </li>
-        <li>
-          <a href="#">home & decor</a>
-        </li>
-        <li>
-          <a href="#">kitchen</a>
-        </li>
+       
+          
       </ul>
     </nav>
   </div>
