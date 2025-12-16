@@ -50,9 +50,44 @@ export default {
     text-align: center;
 }
 
+/* 1. จัดการที่ตัวกล่องแม่ (Header) */
+.modal-header {
+    position: relative;
+    /* เพื่อให้ปุ่มปิด (absolute) อ้างอิงหากล่องนี้ได้ */
+    display: flex;
+    /* ใช้ Flexbox */
+    justify-content: center;
+    /* บังคับให้ลูก (h3) มาอยู่ตรงกลาง */
+    align-items: center;
+    /* จัดกลางแนวตั้ง */
+    width: 100%;
+    /* กว้างเต็ม */
+    border-bottom: none;
+    /* (แถม) ลบเส้นขีดด้านล่างถ้ามี */
+    padding-bottom: 0;
+    /* (แถม) ลดช่องว่างด้านล่างถ้าห่างไป */
+}
+
+/* 2. ตัวข้อความ h3 */
 .modal-header h3 {
     margin: 0 0 15px 0;
     font-size: 20px;
+    font-weight: bold;
+    /* เพิ่มตัวหนาให้ดูเด่นขึ้น */
+}
+
+/* 3. ปุ่มปิด (เหมือนเดิมแต่ย้ำความชัวร์) */
+.close-btn {
+    position: absolute;
+    /* ลอยอิสระ ไม่เกี่ยวกับเพื่อน */
+    top: 10px;
+    right: 15px;
+    /* ชิดขวา */
+    font-size: 28px;
+    cursor: pointer;
+    color: #aaa;
+    line-height: 1;
+    /* แก้ปัญหากากบาทลอยสูง/ต่ำเกินไป */
 }
 
 .close-btn {

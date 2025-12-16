@@ -20,8 +20,8 @@
               </a>
             </li>
             <li class="mobile-wishlist">
-              <nuxt-link to="/page/account/wishlist">
-                <i class="fa fa-heart" aria-hidden="true"></i>
+              <nuxt-link to="/page/account/wishlist" style="color: inherit">
+                <i class="fa fa-heart" aria-hidden="true"></i> wishlist
               </nuxt-link>
             </li>
             <li class="onhover-dropdown mobile-account">
