@@ -26,9 +26,6 @@
                   <nuxt-link to="/page/account/dashboard">Dashboard</nuxt-link>
                 </li>
 
-                <li>
-                  <nuxt-link to="/page/account/dashboard?tab=orders">My Orders</nuxt-link>
-                </li>
 
                 <li @click="logout">
                   <nuxt-link to="javascript:void(0)">
@@ -58,10 +55,10 @@ export default {
     logout: function () {
       if (this.isLogin) {
         UserAuth.Logout()
-        this.$router.replace('/page/account/login')
+        this.$router.replace('/page/auth/LoginPage')
       }
       else {
-        this.$router.push('/page/account/login')
+        this.$router.replace('/page/auth/LoginPage')
       }
     }
   },

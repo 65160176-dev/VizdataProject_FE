@@ -9,46 +9,14 @@
             <div class="dashboard-sidebar">
               <div class="faq-tab">
                 <ul class="nav nav-tabs flex-column" id="top-tab" role="tablist">
-                  <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#info" class="nav-link active" @click="updateUrl('info')">
-                      Account Info
-                    </a>
+                  <li class="nav-item"><a data-bs-toggle="tab" data-bs-target="#info" class="nav-link active">Account
+                      Info</a></li>
+                  <li class="nav-item"><a data-bs-toggle="tab" data-bs-target="#address" class="nav-link">ยังไม่ได้คิด</a></li>
+                  <li class="nav-item"><a data-bs-toggle="tab" data-bs-target="#orders" class="nav-link">My Orders</a>
                   </li>
-
-                  <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#address" class="nav-link" @click="updateUrl('address')">
-                      Address Book
-                    </a>
-                  </li>
-
-                  <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#orders" class="nav-link" @click="updateUrl('orders')">
-                      My Orders
-                    </a>
-                  </li>
-
-                  <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#wishlist" class="nav-link" @click="updateUrl('wishlist')">
-                      Newsletter
-                    </a>
-                  </li>
-
-                  <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#payment" class="nav-link" @click="updateUrl('payment')">
-                      Change Password
-                    </a>
-                  </li>
-
-                  <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#profile" class="nav-link" @click="updateUrl('profile')">
-                      Logout
-                    </a>
-                  </li>
-
-                  <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#test" class="nav-link" @click="updateUrl('test')">
-                      Test
-                    </a>
+                  <li class="nav-item"><a data-bs-toggle="tab" data-bs-target="#payment" class="nav-link">Change
+                      Password</a></li>
+                  <li class="nav-item"><a data-bs-toggle="tab" data-bs-target="#profile" class="nav-link">Logout</a>
                   </li>
                 </ul>
               </div>
@@ -62,8 +30,8 @@
                     <div class="page-title">
                       <h2>Account Information</h2>
                     </div>
-                    <!-- <div class="welcome-msg">
-                      <p>Hello, MARK JECNO !</p>
+                    <div class="welcome-msg">
+                      <p>Hello, {{ userName || userEmail || 'Guest' }} !</p>
                       <p>From your My Account Dashboard you have the ability to view a snapshot of your recent account
                         activity and update your account information. Select a link below to view or edit information.
                       </p>
@@ -81,37 +49,11 @@
                               <a href="#">Edit</a>
                             </div>
                             <div class="box-content">
-                              <div class="row">
-
-                                <div class="col-md-4 mb-3">
-                                  <label class="text-muted small mb-1">User Name</label>
-                                  <h6>{{ user.username }}</h6>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                  <label class="text-muted small mb-1">Full Name</label>
-                                  <h6>{{ user.firstName }} {{ user.lastName }}</h6>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                  <label class="text-muted small mb-1">Email Address</label>
-                                  <h6>{{ user.email }}</h6>
-                                </div>
-
-                                <div class="col-md-4">
-                                  <label class="text-muted small mb-1">Tel.</label>
-                                  <h6>{{ user.phone }}</h6>
-                                </div>
-                                <div class="col-md-4">
-                                  <label class="text-muted small mb-1">Gender</label>
-                                  <h6>{{ user.gender }}</h6>
-                                </div>
-                                <div class="col-md-4">
-                                  <label class="text-muted small mb-1">Birthday</label>
-                                  <h6>{{ user.birthday }}</h6>
-                                </div>
-
-                              </div>
-                              <div class="mt-3">
-                              </div>
+                              <h6>{{ userName || userEmail }}</h6>
+                              <h6>{{ userEmail }}</h6>
+                              <h6>
+                                <a href="#">Change Password</a>
+                              </h6>
                             </div>
                           </div>
                         </div>
@@ -165,7 +107,7 @@
                       <h2>My Dashboard</h2>
                     </div>
                     <div class="welcome-msg">
-                      <p>Hello, MARK JECNO !</p>
+                      <p>Hello, {{ userName || userEmail || 'Guest' }} !</p>
                       <p>From your My Account Dashboard you have the ability to view a snapshot of your recent account
                         activity and update your account information. Select a link below to view or edit information.
                       </p>
@@ -182,8 +124,8 @@
                               <a href="javascript.void(0)">Edit</a>
                             </div>
                             <div class="box-content">
-                              <h6>MARK JECNO</h6>
-                              <h6>MARk-JECNO@gmail.com</h6>
+                              <h6>{{ userName || userEmail }}</h6>
+                              <h6>{{ userEmail }}</h6>
                               <h6>
                                 <a href="#">Change Password</a>
                               </h6>
@@ -238,8 +180,8 @@
                     <div class="page-title">
                       <h2>My orders</h2>
                     </div>
-                    <div class="welcome-msg">
-                      <p>Hello, MARK JECNO !</p>
+                      <div class="welcome-msg">
+                      <p>Hello, {{ userName || userEmail || 'Guest' }} !</p>
                       <p>From your Orders you have the ability to view your all orders and status of order.</p>
                     </div>
                     <div class="box-account box-info">
@@ -422,8 +364,8 @@
                               <a href="#">Edit</a>
                             </div>
                             <div class="box-content">
-                              <h6>MARK JECNO</h6>
-                              <h6>MARk-JECNO@gmail.com</h6>
+                              <h6>{{ userName || userEmail }}</h6>
+                              <h6>{{ userEmail }}</h6>
                               <h6>
                                 <a href="#">Change Password</a>
                               </h6>
@@ -526,101 +468,22 @@
   </div>
   <Footer />
 </template>
-<script>
+<script setup>
+import { computed } from 'vue'
+import { useAuthStore } from '~/store/auth'
 
-export default {
-  data() {
-    return {
-      user: {
-        username: "MarkRock", // User Name
-        firstName: "Mark",
-        lastName: "Jecno",
-        email: "mark.jecno@gmail.com",
-        phone: "081-234-5678",
-        gender: "Male",        // Gender
-        birthday: "15/08/1990" // Birthday
-      },
-      // ข้อมูลจำลองรายการคำสั่งซื้อ (ตามที่คุณต้องการ)
-      orders: [
-        {
-          id: "ORDER-001",
-          shopName: "Shop Name 1", // ร้านที่ 1
-          status: "สำเร็จแล้ว",
-          totalPrice: 1590,
-          items: [ // มีสินค้า 3 ชิ้น
-            {
-              name: "เสื้อยืด Cotton 100% สีดำ",
-              variant: "Size L",
-              quantity: 1,
-              price: 290,
-              originalPrice: 450
-            },
-            {
-              name: "กางเกงยีนส์ Slim Fit",
-              variant: "Size 32",
-              quantity: 1,
-              price: 990,
-              originalPrice: 1200
-            },
-            {
-              name: "ถุงเท้าข้อสั้น (แพ็ค 3 คู่)",
-              variant: "Free Size",
-              quantity: 1,
-              price: 310,
-              originalPrice: null
-            }
-          ]
-        },
-        {
-          id: "ORDER-002",
-          shopName: "Shop Name 2", // ร้านที่ 2
-          status: "กำลังจัดส่ง",
-          totalPrice: 650,
-          items: [ // มีสินค้า 2 ชิ้น
-            {
-              name: "เคสโทรศัพท์กันกระแทก",
-              variant: "iPhone 14 Pro",
-              quantity: 1,
-              price: 450,
-              originalPrice: 590
-            },
-            {
-              name: "ฟิล์มกระจกเต็มจอ",
-              variant: "แบบด้าน",
-              quantity: 2,
-              price: 200,
-              originalPrice: 290
-            }
-          ]
-        }
-      ]
-    }
-  },
-  mounted() {
-    // เมื่อโหลดหน้าเสร็จ ให้เช็ค URL ว่าต้องเปิด Tab ไหน
-    this.checkUrlAndOpenTab();
-  },
-  methods: {
-    // 1. ฟังก์ชันเปิด Tab อัตโนมัติ (ใช้ตอนกดปุ่ม Back หรือ Refresh)
-    checkUrlAndOpenTab() {
-      const tabName = this.$route.query.tab;
-      if (tabName) {
-        // ใช้ setTimeout เพื่อรอให้ HTML render เสร็จก่อนคลิก
-        setTimeout(() => {
-          const tabLink = document.querySelector(`#top-tab a[data-bs-target="#${tabName}"]`);
-          if (tabLink) {
-            tabLink.click();
-          }
-        }, 100);
-      }
-    },
+const auth = useAuthStore()
 
-    // 2. ฟังก์ชันอัปเดต URL (ใช้ตอน user กดคลิกเมนูเอง)
-    // อย่าลืมไปใส่ @click="updateUrl('ชื่อแท็บ')" ใน HTML ของ Sidebar ด้วยนะครับ
-    updateUrl(tabName) {
-      this.$router.push({ query: { tab: tabName } });
-    }
-  }
+const userEmail = computed(() => {
+  if (auth.user) return auth.user
+  if (import.meta.client) return localStorage.getItem('user') || ''
+  return ''
+})
 
-}
+const userName = computed(() => {
+  // auth store does not define userName in state; prefer localStorage fallback
+  if (auth.userName) return auth.userName
+  if (import.meta.client) return localStorage.getItem('userName') || ''
+  return ''
+})
 </script>

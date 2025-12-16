@@ -5,16 +5,25 @@
       <div v-if="message" class="alert" :class="messageType === 'success' ? 'alert-success' : 'alert-danger'">
         {{ message }}
       </div>
-      
       <div class="form-group">
-            <input 
-              required 
-              type="email" 
-              v-model="email" 
-              class="form-control" 
-              placeholder="Email"
-              :disabled="loading"
-            >
+        <input 
+          required 
+          type="text" 
+          v-model="username" 
+          class="form-control" 
+          placeholder="Username"
+          :disabled="loading"
+        >
+      </div>
+      <div class="form-group">
+        <input 
+          required 
+          type="email" 
+          v-model="email" 
+          class="form-control" 
+          placeholder="Email"
+          :disabled="loading"
+        >
       </div>
           
       <div class="form-group">
@@ -87,6 +96,7 @@ const authStore = useAuthStore()
 
 // role: default to user (1). seller = 0
 const role = ref(1)
+const username = ref('')
 
 // Form data
 const email = ref('')
@@ -115,8 +125,8 @@ async function doRegister() {
       return
     }
     
-    // Call auth store register
-    const result = authStore.register(email.value, password.value, confirmPassword.value, Number(role.value))
+    // Call auth store register (email, password, confirmPassword, role, username)
+    const result = authStore.register(email.value, password.value, confirmPassword.value, Number(role.value), username.value)
     
     if (result.success) {
       message.value = result.message

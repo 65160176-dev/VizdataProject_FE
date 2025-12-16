@@ -119,8 +119,8 @@ async function doLogin() {
       return
     }
     
-    // Call auth store login
-    const result = authStore.login(email.value, password.value)
+    // Call auth store login (await in case it's async / API-backed)
+    const result = await authStore.login(email.value, password.value)
     
     if (result.success) {
       message.value = result.message

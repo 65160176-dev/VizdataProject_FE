@@ -27,8 +27,8 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    // Login action
-    login(email, password) {
+    // Login action (made async to support API later)
+    async login(email, password) {
       // Demo credentials - ในระบบจริงควรเรียก API
       const validUsers = [
         { email: 'test@admin.com', password: 'test@123456', name: 'Test Admin', role: 1 },
@@ -79,8 +79,8 @@ export const useAuthStore = defineStore('auth', {
       return { success: false, message: 'Invalid email or password' }
     },
     
-    // Register action
-    register(email, password, confirmPassword, role = 1) {
+    // Register action (accept optional username)
+    async register(email, password, confirmPassword, role = 1, username = '') {
       // Validation
       if (!email || !password || !confirmPassword) {
         return { success: false, message: 'Please fill in all fields' }
@@ -99,14 +99,16 @@ export const useAuthStore = defineStore('auth', {
       this.role = role
       this.isLoggedIn = true
 
+      const displayName = username && username.trim() ? username.trim() : email.split('@')[0]
+
       if (import.meta.client) {
         localStorage.setItem('user', email)
-        localStorage.setItem('userName', email.split('@')[0])
+        localStorage.setItem('userName', displayName)
         localStorage.setItem('userRole', String(this.role))
         // Persist mock-registered user so login() can find it later
         try {
           const regs = JSON.parse(localStorage.getItem('registeredUsers') || '[]')
-          regs.push({ email, password, name: email.split('@')[0], role })
+          regs.push({ email, password, name: displayName, role })
           localStorage.setItem('registeredUsers', JSON.stringify(regs))
         } catch (e) {
           // ignore
@@ -117,7 +119,7 @@ export const useAuthStore = defineStore('auth', {
           document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`;
         } catch (e) {}
       }
-      
+
       return { success: true, message: 'Registration successful!' }
     },
     
