@@ -128,26 +128,36 @@ async function doLogin() {
       
       // Small delay to show success message
       setTimeout(() => {
-        // If a redirect query is present (e.g., from checkout), follow it first
+        // If a redirect query is present (e.g., from checkout), only follow it
+        // when it's appropriate for the logged-in role. Otherwise prefer
+        // role-based default destinations.
+        const currentRole = authStore.role || Number(localStorage.getItem('userRole') || 1)
+
         if (redirectUrl.value) {
           // redirectUrl may be encoded by middleware, decode it first
-          try {
-            const decoded = decodeURIComponent(String(redirectUrl.value))
-            router.replace(decoded)
-          } catch (e) {
-            router.replace(String(redirectUrl.value))
+          let decoded = String(redirectUrl.value)
+          try { decoded = decodeURIComponent(decoded) } catch (e) {}
+
+          // Helper to detect seller-only paths
+          const isSellerPath = (p) => {
+            if (!p) return false
+            return p.includes('/SellerPage') || p.includes('/seller') || p.includes('seller-dashboard') || p.includes('/page/account/seller')
           }
-          return
+
+          // Only follow the redirect if it makes sense for the role
+          if ((currentRole === 0 && isSellerPath(decoded)) || (currentRole !== 0 && !isSellerPath(decoded))) {
+            router.replace(decoded)
+            return
+          }
+          // otherwise fall through to role defaults
         }
 
-        // Otherwise, if cart has items, go to checkout
+        // Otherwise, if cart has items, go to checkout (only for regular users)
         const cartStore = useCartStore()
         const cartLength = (cartStore.cart && cartStore.cart.length) || (cartStore.cartItems && cartStore.cartItems.length) || 0
 
-        // If user is a seller (role 0), send to seller dashboard (unless redirect specified)
-        const currentRole = authStore.role || Number(localStorage.getItem('userRole') || 1)
         if (currentRole === 0) {
-          router.replace('/page/account/seller-dashboard')
+          router.replace('/SellerPage/dashboard')
           return
         }
 

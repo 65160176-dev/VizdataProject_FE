@@ -2,10 +2,9 @@
   <div class="seller-dashboard container">
     <div class="row">
       <div class="col-12">
-        <h1>Seller Dashboard (Mock)</h1>
-        <p>Welcome, {{ userName }} — this is a simple mock seller dashboard.</p>
-        <nuxt-link to="/" class="btn btn-primary">Go to Store</nuxt-link>
-        <button class="btn btn-outline-secondary ms-2" @click="logout">Logout</button>
+        <h1>Redirecting to Seller Dashboard…</h1>
+        <p class="text-muted">If you are not redirected automatically, click the button below.</p>
+        <nuxt-link to="/SellerPage/dashboard" class="btn btn-primary">Open Seller Dashboard</nuxt-link>
       </div>
     </div>
   </div>
@@ -14,16 +13,22 @@
 <script setup>
 import { useAuthStore } from '~/store/auth'
 import { useRouter } from 'vue-router'
+import { onMounted } from 'vue'
 
 const auth = useAuthStore()
 const router = useRouter()
 
-const userName = auth.userName || localStorage.getItem('userName') || ''
-
-function logout() {
-  auth.logout()
-  router.replace('/')
+function ensureAuthAndRedirect() {
+  if (!auth.isLoggedIn && !localStorage.getItem('userName')) {
+    router.replace('/')
+    return
+  }
+  router.replace('/SellerPage/dashboard')
 }
+
+onMounted(() => {
+  ensureAuthAndRedirect()
+})
 
 definePageMeta({ middleware: 'auth' })
 </script>

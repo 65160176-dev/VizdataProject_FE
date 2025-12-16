@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
+    userName: null,
     isLoggedIn: false,
     // role: 0 = seller, 1 = user
     role: 1,
@@ -18,9 +19,11 @@ export const useAuthStore = defineStore('auth', {
     initAuth() {
       if (import.meta.client) {
         const savedUser = localStorage.getItem('user')
+        const savedUserName = localStorage.getItem('userName')
         const savedRole = localStorage.getItem('userRole')
         if (savedUser) {
           this.user = savedUser
+          if (savedUserName) this.userName = savedUserName
           this.isLoggedIn = true
           if (savedRole !== null) this.role = Number(savedRole)
         }
@@ -54,13 +57,14 @@ export const useAuthStore = defineStore('auth', {
       
       if (foundUser) {
         this.user = foundUser.email
+        this.userName = foundUser.name || (foundUser.email ? foundUser.email.split('@')[0] : null)
         this.role = typeof foundUser.role !== 'undefined' ? foundUser.role : 1
         this.isLoggedIn = true
 
         // Save to localStorage
         if (import.meta.client) {
           localStorage.setItem('user', foundUser.email)
-          localStorage.setItem('userName', foundUser.name)
+          if (this.userName) localStorage.setItem('userName', this.userName)
           localStorage.setItem('userRole', String(this.role))
           // Also set a cookie 'userlogin' for components that check cookie-based login
           try {
@@ -96,10 +100,10 @@ export const useAuthStore = defineStore('auth', {
       
       // Demo registration - ในระบบจริงควรเรียก API
       this.user = email
+      const displayName = username && username.trim() ? username.trim() : email.split('@')[0]
+      this.userName = displayName
       this.role = role
       this.isLoggedIn = true
-
-      const displayName = username && username.trim() ? username.trim() : email.split('@')[0]
 
       if (import.meta.client) {
         localStorage.setItem('user', email)
@@ -126,6 +130,7 @@ export const useAuthStore = defineStore('auth', {
     // Logout action
     logout() {
       this.user = null
+      this.userName = null
       this.isLoggedIn = false
       this.role = 1
       

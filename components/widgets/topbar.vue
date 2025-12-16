@@ -44,6 +44,7 @@
 <script>
 
 import UserAuth from '../../pages/page/auth/auth'
+import { useAuthStore } from '~/store/auth'
 export default {
   data() {
     return {
@@ -53,17 +54,17 @@ export default {
 
   methods: {
     logout: function () {
-      if (this.isLogin) {
-        UserAuth.Logout()
-        this.$router.replace('/page/auth/LoginPage')
-      }
-      else {
-        this.$router.replace('/page/auth/LoginPage')
-      }
+      const auth = useAuthStore()
+      // Ensure Pinia state and localStorage are cleared
+      if (auth && typeof auth.logout === 'function') auth.logout()
+      // Keep cookie-based logout for compatibility with other parts
+      try { UserAuth.Logout() } catch (e) {}
+      this.isLogin = false
+      this.$router.replace('/page/auth/LoginPage')
     }
   },
   created() {
-    this.isLogin = useCookie('userlogin').value
+    this.isLogin = Boolean(useCookie('userlogin').value || (import.meta.client && localStorage.getItem('user')))
   },
 }
 </script>

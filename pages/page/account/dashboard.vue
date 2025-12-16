@@ -28,14 +28,12 @@
                 <div class="dashboard-right">
                   <div class="dashboard">
                     <div class="page-title">
-                      <h2>Account Information</h2>
+                      <h2>Account INFO</h2>
                     </div>
                     <div class="welcome-msg">
-                      <p>Hello, {{ userName || userEmail || 'Guest' }} !</p>
-                      <p>From your My Account Dashboard you have the ability to view a snapshot of your recent account
-                        activity and update your account information. Select a link below to view or edit information.
-                      </p>
-                    </div> -->
+                      <p v-if="isAuthenticated">Hello, {{ userName || userEmail }} !</p>
+                      <p v-else class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
+                    </div>
                     <div class="box-account box-info">
                       <!-- <div class="box-head">
                         <h2>Account Information</h2>
@@ -49,11 +47,17 @@
                               <a href="#">Edit</a>
                             </div>
                             <div class="box-content">
-                              <h6>{{ userName || userEmail }}</h6>
-                              <h6>{{ userEmail }}</h6>
-                              <h6>
-                                <a href="#">Change Password</a>
-                              </h6>
+                              <template v-if="isAuthenticated">
+                                <h6>{{ userName || userEmail }}</h6>
+                                <h6>{{ userEmail }}</h6>
+                                <h6>
+                                  <a href="#">Change Password</a>
+                                </h6>
+                              </template>
+                              <template v-else>
+                                <p class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
+                                <nuxt-link to="/page/auth/LoginPage" class="btn btn-primary mt-2">เข้าสู่ระบบ</nuxt-link>
+                              </template>
                             </div>
                           </div>
                         </div>
@@ -107,8 +111,9 @@
                       <h2>My Dashboard</h2>
                     </div>
                     <div class="welcome-msg">
-                      <p>Hello, {{ userName || userEmail || 'Guest' }} !</p>
-                      <p>From your My Account Dashboard you have the ability to view a snapshot of your recent account
+                      <p v-if="isAuthenticated">Hello, {{ userName || userEmail }} !</p>
+                      <p v-else class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
+                      <p v-if="isAuthenticated">From your My Account Dashboard you have the ability to view a snapshot of your recent account
                         activity and update your account information. Select a link below to view or edit information.
                       </p>
                     </div>
@@ -124,11 +129,17 @@
                               <a href="javascript.void(0)">Edit</a>
                             </div>
                             <div class="box-content">
-                              <h6>{{ userName || userEmail }}</h6>
-                              <h6>{{ userEmail }}</h6>
-                              <h6>
-                                <a href="#">Change Password</a>
-                              </h6>
+                              <template v-if="isAuthenticated">
+                                <h6>{{ userName || userEmail }}</h6>
+                                <h6>{{ userEmail }}</h6>
+                                <h6>
+                                  <a href="#">Change Password</a>
+                                </h6>
+                              </template>
+                              <template v-else>
+                                <p class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
+                                <nuxt-link to="/page/auth/LoginPage" class="btn btn-primary mt-2">เข้าสู่ระบบ</nuxt-link>
+                              </template>
                             </div>
                           </div>
                         </div>
@@ -181,9 +192,10 @@
                       <h2>My orders</h2>
                     </div>
                       <div class="welcome-msg">
-                      <p>Hello, {{ userName || userEmail || 'Guest' }} !</p>
-                      <p>From your Orders you have the ability to view your all orders and status of order.</p>
-                    </div>
+                        <p v-if="isAuthenticated">Hello, {{ userName || userEmail }} !</p>
+                        <p v-else class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
+                        <p v-if="isAuthenticated">From your Orders you have the ability to view your all orders and status of order.</p>
+                      </div>
                     <div class="box-account box-info">
                       <div class="box-head">
                         <h2>Order Information</h2>
@@ -232,72 +244,43 @@
                       <h2>My Orders</h2>
                     </div>
 
-                    <div v-for="(order, index) in orders" :key="index" class="card mb-3 border-0 shadow-sm"
-                      style="background: #fff;">
+                                        <div v-for="(order, index) in orders" :key="index" class="card mb-3 border-0 shadow-sm"
+                                          style="background: #fff;">
 
-                      <div
-                        class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center py-3">
-                        <div class="d-flex align-items-center gap-2">
-                          <strong style="font-size: 14px;">{{ order.shopName }}</strong>
-                          <!-- <button class="btn btn-sm btn-outline-secondary py-0 px-2"
-                            style="font-size: 12px;">แชทเลย</button>
-                          <a href="#" class="btn btn-sm btn-outline-secondary py-0 px-2 text-decoration-none"
-                            style="font-size: 12px;">ดูร้านค้า</a> -->
-                        </div>
-                        <div class="d-flex align-items-center gap-2" style="font-size: 14px;">
-                          <span class="text-success" v-if="order.status === 'สำเร็จแล้ว'"><i class="fa fa-truck"></i>
-                            พัสดุจัดส่งสำเร็จแล้ว | </span>
-                          <span style="color: #ee4d2d;">{{ order.status }}</span>
-                        </div>
-                      </div>
+                                          <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center py-3">
+                                            <div class="d-flex align-items-center gap-2">
+                                              <strong style="font-size: 14px;">{{ order.shopName }}</strong>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2" style="font-size: 14px;">
+                                              <span class="text-muted">Status: </span>
+                                              <span :class="order.statusClass" style="margin-left:6px">{{ order.status }}</span>
+                                            </div>
+                                          </div>
 
-                      <hr class="m-0" style="opacity: 0.1;">
+                                          <div class="card-body p-3">
+                                            <div class="row align-items-center">
+                                              <div class="col-md-2 d-flex gap-2">
+                                                <img :src="order.items[0].image || '/images/placeholder.png'" alt="thumb" style="width:80px; height:80px; object-fit:cover; border-radius:6px;" />
+                                                <div class="d-flex flex-column gap-2">
+                                                  <div v-for="(it, t) in order.items.slice(0,3)" :key="t" style="width:48px; height:48px; overflow:hidden; border-radius:4px;">
+                                                    <img :src="it.image || '/images/placeholder.png'" style="width:100%; height:100%; object-fit:cover;" />
+                                                  </div>
+                                                </div>
+                                              </div>
+                                              <div class="col-md-7">
+                                                <h6 class="mb-1">{{ order.items[0].name }}</h6>
+                                                <div class="text-muted small">{{ order.items.length }} รายการ — {{ order.note || '' }}</div>
+                                              </div>
+                                              <div class="col-md-3 text-end">
+                                                <div class="mb-2">฿{{ order.totalPrice }}</div>
+                                                <div class="d-flex justify-content-end gap-2">
+                                                  <nuxt-link :to="`/page/account/orders/${order.id}`" class="btn btn-outline-secondary" style="font-size:14px; min-width:120px;">ดูรายละเอียด</nuxt-link>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
 
-                      <div class="card-body p-0">
-                        <div v-for="(item, i) in order.items" :key="i" class="p-3 border-bottom">
-                          <div class="d-flex">
-                            <div
-                              class="flex-shrink-0 bg-light border d-flex align-items-center justify-content-center text-muted"
-                              style="width: 80px; height: 80px; font-size: 12px;">
-                              No Image
-                            </div>
-
-                            <div class="flex-grow-1 ms-3">
-                              <h6 class="mb-1" style="font-size: 14px; line-height: 1.4;">
-                                {{ item.name }}
-                              </h6>
-                              <div class="text-muted" style="font-size: 12px;">ตัวเลือกสินค้า: {{ item.variant }}</div>
-                              <div class="text-muted" style="font-size: 12px;">x{{ item.quantity }}</div>
-                            </div>
-
-                            <div class="text-end ps-3">
-                              <div v-if="item.originalPrice" class="text-decoration-line-through text-muted"
-                                style="font-size: 12px;">
-                                ฿{{ item.originalPrice }}
-                              </div>
-                              <div style="font-size: 14px;">
-                                ฿{{ item.price }}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="card-footer bg-white border-top-0 py-3">
-                        <div class="d-flex justify-content-end align-items-center mb-3">
-                          <span class="me-2" style="font-size: 14px;">ยอดคำสั่งซื้อทั้งหมด:</span>
-                          <strong style="font-size: 20px;">฿{{ order.totalPrice }}</strong>
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2">
-                          <nuxt-link :to="'/page/account/orders/_id'" class="btn btn-outline-secondary"
-                            style="font-size: 14px; min-width: 120px;">
-                            ดูรายละเอียด
-                          </nuxt-link>
-                        </div>
-                      </div>
-
-                    </div>
+                                        </div>
                   </div>
                 </div>
               </div>
@@ -364,11 +347,17 @@
                               <a href="#">Edit</a>
                             </div>
                             <div class="box-content">
-                              <h6>{{ userName || userEmail }}</h6>
-                              <h6>{{ userEmail }}</h6>
-                              <h6>
-                                <a href="#">Change Password</a>
-                              </h6>
+                              <template v-if="isAuthenticated">
+                                <h6>{{ userName || userEmail }}</h6>
+                                <h6>{{ userEmail }}</h6>
+                                <h6>
+                                  <a href="#">Change Password</a>
+                                </h6>
+                              </template>
+                              <template v-else>
+                                <p class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
+                                <nuxt-link to="/page/auth/LoginPage" class="btn btn-primary mt-2">เข้าสู่ระบบ</nuxt-link>
+                              </template>
                             </div>
                           </div>
                         </div>
@@ -469,21 +458,21 @@
   <Footer />
 </template>
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '~/store/auth'
+import ordersData from '~/data/orders.json'
 
 const auth = useAuthStore()
 
-const userEmail = computed(() => {
-  if (auth.user) return auth.user
-  if (import.meta.client) return localStorage.getItem('user') || ''
-  return ''
+// Sync store with localStorage on client (initAuth reads localStorage)
+onMounted(() => {
+  if (import.meta.client && typeof auth.initAuth === 'function') auth.initAuth()
 })
 
-const userName = computed(() => {
-  // auth store does not define userName in state; prefer localStorage fallback
-  if (auth.userName) return auth.userName
-  if (import.meta.client) return localStorage.getItem('userName') || ''
-  return ''
-})
+const isAuthenticated = computed(() => !!auth.isLoggedIn)
+const userEmail = computed(() => auth.user || '')
+const userName = computed(() => auth.userName || '')
+
+// Use mock orders from data/orders.json (replace with API call when ready)
+const orders = ref(ordersData || [])
 </script>
