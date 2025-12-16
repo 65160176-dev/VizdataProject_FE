@@ -19,3 +19,20 @@ Thumbs.db
 # editor
 .vscode/
 .idea/
+
+# additional common ignores
+pnpm-debug.log*
+.cache/
+.parcel-cache/
+.sass-cache/
+.eslintcache
+coverage/
+nyc_output/
+*.log
+desktop.ini
+*.iml
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+*.tsbuildinfo
+.pnp.*
