@@ -16,7 +16,7 @@
               </div>
               <div class="row">
                 <div class="col-md-6">
-                  <label for="fname">First Name</label>
+                  <label for="fname">First Nametest</label>
                   <input type="text" class="form-control" id="fname" v-model="fname" placeholder="First Name"
                     name="fname" required />
                 </div>
