@@ -155,13 +155,13 @@
           </a>
           <ul :class="{ opensub1: isActive('Seller') }">
             <li>
-              <NuxtLink to="/dashboard/dashboard">DashBoard</NuxtLink>
+              <NuxtLink to="/sellerPage/dashboard">DashBoard</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/SellerPage/productPage">Products</NuxtLink>
+              <NuxtLink to="/sellerPage/productPage">Products</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/SellerPage/shippingPage">Shipping</NuxtLink>
+              <NuxtLink to="/sellerPage/shippingPage">Shipping</NuxtLink>
             </li>
           </ul>
         </li>
