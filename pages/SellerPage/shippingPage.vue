@@ -26,7 +26,7 @@
                 <th>ยอดรวม</th>
                 <th>สถานะจัดส่ง</th>
                 <th>เลข Tracking</th>
-                <th>Actions</th>
+               
               </tr>
             </thead>
 
@@ -55,19 +55,7 @@
 
                 <td>{{ item.trackingNumber }}</td>
 
-                <td>
-                  <Icon
-                    name="feather:truck"
-                    style="height:20px; cursor:pointer; margin-right:8px; color: #007bff;"
-                    @click="updateShipping(item.orderId)"
-                  />
-
-                  <Icon
-                    name="feather:trash"
-                    style="height:20px; cursor:pointer; color:red;"
-                    @click="deleteShipping(index)"
-                  />
-                </td>
+                
               </tr>
             </tbody>
 

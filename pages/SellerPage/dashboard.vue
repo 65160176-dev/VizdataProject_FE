@@ -1,9 +1,8 @@
 <template>
   <div>
     <Breadcrumbs title="Dashboard" />
-
-    <div class="container-fluid">
-      <div class="row">
+  <div class="container-fluid">
+    <div class="row g-3">
         
         <WidgetsCard />
         <MarketChart />

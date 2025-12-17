@@ -25,6 +25,9 @@
         <li>
           <NuxtLink to="/SellerPage/shippingPage" class="menu-item">🚚 Shipping</NuxtLink>
         </li>
+        <li>
+          <NuxtLink to="/SellerPage/category" class="menu-item">📊 Category</NuxtLink>
+        </li>
       </ul>
     </nav>
 

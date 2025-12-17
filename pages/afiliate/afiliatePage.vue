@@ -9,9 +9,14 @@
           <h1 class="display-1 fw-bold text-dark mb-2">
             {{ formatNumber(totalIncome) }}
           </h1>
-          <div class="text-muted cursor-pointer" style="cursor: pointer;">
-            DD-MM-YYYY - DD-MM-YYYY <i class="fa fa-chevron-down ms-1"></i>
+
+          <div class="d-flex justify-content-center align-items-center gap-2 mt-3">
+             <input type="date" class="form-control border-0 bg-white shadow-sm" style="width: 160px; text-align: center;" v-model="startDate">
+             <span class="text-muted fw-bold">-</span>
+             <input type="date" class="form-control border-0 bg-white shadow-sm" style="width: 160px; text-align: center;" v-model="endDate">
           </div>
+          <small class="text-muted mt-2 d-block" v-if="!startDate && !endDate">(แสดงข้อมูลทั้งหมด)</small>
+
         </div>
       </div>
     </div>
@@ -19,7 +24,9 @@
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5>Affiliate Report</h5>
-        
+        <button v-if="startDate || endDate" @click="clearDate" class="btn btn-sm btn-outline-danger">
+            ล้างวันที่
+        </button>
       </div>
 
       <div class="card-body">
@@ -34,12 +41,11 @@
                 <th>ราคาสินค้า</th>
                 <th>ส่วนแบ่งสินค้า</th>
                 <th>สถานะ</th>
-                <th>Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              <tr v-for="(item, index) in affiliateData" :key="index">
+              <tr v-for="(item, index) in filteredAffiliateData" :key="index">
                 <td>{{ item.orderId }}</td>
                 <td>{{ item.date }}</td>
                 <td class="text-start">{{ item.productName }}</td>
@@ -62,11 +68,10 @@
                     {{ item.status }}
                   </span>
                 </td>
-
-                <td>
-                  <Icon name="feather:edit" class="text-primary me-2" style="cursor:pointer; height:20px;" @click="editOrder(item.orderId)" />
-                  <Icon name="feather:trash-2" class="text-danger" style="cursor:pointer; height:20px;" @click="deleteOrder(index)" />
-                </td>
+              </tr>
+              
+              <tr v-if="filteredAffiliateData.length === 0">
+                  <td colspan="7" class="text-muted py-3">ไม่พบข้อมูลในช่วงวันที่เลือก</td>
               </tr>
             </tbody>
 
@@ -148,19 +153,47 @@ definePageMeta({ layout: "default" })
 
 const affiliateData = ref(affiliateDataFile.data)
 
-// --- คำนวณรายได้ทั้งหมด (เฉพาะสถานะ 'สำเร็จแล้ว') ---
-const totalIncome = computed(() => {
-  return affiliateData.value
-    .filter(item => item.status === 'สำเร็จแล้ว') // เลือกเฉพาะที่สำเร็จแล้ว
-    .reduce((sum, item) => sum + Number(item.commission), 0) // รวมยอด commission
+// 1. สร้างตัวแปรเก็บวันที่
+const startDate = ref('')
+const endDate = ref('')
+
+// 2. ฟังก์ชันกรองข้อมูล (Computed)
+const filteredAffiliateData = computed(() => {
+  return affiliateData.value.filter(item => {
+    // ถ้ายังไม่ได้เลือกวันที่เลย ให้แสดงทั้งหมด
+    if (!startDate.value && !endDate.value) return true
+    
+    // แปลงวันที่เพื่อเปรียบเทียบ
+    const itemDate = new Date(item.date)
+    const start = startDate.value ? new Date(startDate.value) : null
+    const end = endDate.value ? new Date(endDate.value) : null
+
+    // กรองตามเงื่อนไข
+    if (start && itemDate < start) return false
+    if (end && itemDate > end) return false
+    
+    return true
+  })
 })
 
-// ฟอร์แมตตัวเลขสำหรับยอดรวมใหญ่ (ไม่มีสกุลเงิน)
+// 3. คำนวณรายได้ (แก้ให้คำนวณจากข้อมูลที่กรองแล้ว)
+const totalIncome = computed(() => {
+  return filteredAffiliateData.value
+    .filter(item => item.status === 'สำเร็จแล้ว') 
+    .reduce((sum, item) => sum + Number(item.commission), 0)
+})
+
+const clearDate = () => {
+    startDate.value = ''
+    endDate.value = ''
+}
+
+// ฟอร์แมตตัวเลข (เหมือนเดิม)
 const formatNumber = (value) => {
   return new Intl.NumberFormat('th-TH', { minimumFractionDigits: 0 }).format(value);
 }
 
-// ฟอร์แมตสกุลเงินในตาราง
+// ฟอร์แมตสกุลเงิน (เหมือนเดิม)
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('th-TH', { 
     style: 'currency', 
