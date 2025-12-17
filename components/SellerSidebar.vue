@@ -28,6 +28,9 @@
         <li>
           <NuxtLink to="/SellerPage/category" class="menu-item">📊 Category</NuxtLink>
         </li>
+        <li>
+          <NuxtLink to="/SellerPage/orderStatus" :class="['menu-item', { 'is-active': isActive('/SellerPage/orderStatus') }]">🧾 <span class="menu-label">Orders</span></NuxtLink>
+        </li>
       </ul>
     </nav>
 
@@ -38,13 +41,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import UserAuth from '~/pages/page/auth/auth'
 import { useAuthStore } from '~/store/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
+const route = useRoute()
 
 // profile state
 const displayName = computed(() => auth.userName || 'ร้านของฉัน')
@@ -78,6 +82,9 @@ onMounted(() => {
     window.removeEventListener('storage', storageHandler)
   })
 })
+function isActive(path){
+  try{ return route.path === path || route.path.startsWith(path) }catch(e){return false}
+}
 
 function logout() {
   // Clear Pinia state and localStorage
@@ -91,19 +98,19 @@ function logout() {
 
 <style scoped>
 .seller-sidebar{
-  width:240px;
+  width:260px;
   height:100vh;
   position:fixed;
   left:0;
   top:0;
-  background:#ffffff;
-  border-right:1px solid rgba(0,0,0,0.06);
+  background:linear-gradient(180deg,#fff,#fffaf0);
+  border-right:1px solid rgba(0,0,0,0.04);
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  padding:16px 12px;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.01) inset;
-  z-index:100;
+  padding:18px 14px;
+  box-shadow: 0 4px 18px rgba(14,20,30,0.06);
+  z-index:1000;
 }
 .sidebar-top .profile{
   display:flex;
@@ -112,32 +119,39 @@ function logout() {
   padding:8px 4px;
 }
 .avatar{
-  width:48px;
-  height:48px;
-  border-radius:50%;
+  width:56px;
+  height:56px;
+  border-radius:12px;
   object-fit:cover;
   background:#eee;
+  box-shadow:0 2px 6px rgba(0,0,0,0.06);
 }
 .profile-info .name{
-  font-weight:600;
+  font-weight:700;
+  font-size:14px;
 }
 .profile-info .role{
   font-size:12px;
-  color:#666;
+  color:#9a7b4f;
 }
-.sidebar-menu{ flex:1; margin-top:18px; }
+.sidebar-menu{ flex:1; margin-top:18px; overflow:auto; }
 .sidebar-menu ul{ list-style:none; padding:0; margin:0; }
 .sidebar-menu ul li{ display:block; }
 .menu-item{
-  display:block;
+  display:flex;
+  align-items:center;
+  gap:8px;
   padding:10px 12px;
-  color:#333;
-  border-radius:6px;
+  color:#3b3b3b;
+  border-radius:10px;
   text-decoration:none;
+  font-weight:600;
+  transition:all .15s ease;
 }
-.menu-item:hover{ background:#f5f5f5; }
-.profile-actions{ margin-top:8px; }
-.sidebar-menu{ overflow-y:auto; }
+.menu-item .menu-label{ margin-left:6px }
+.menu-item:hover{ transform:translateX(4px); background:rgba(255,249,240,0.8); }
+.menu-item.is-active{ background:linear-gradient(90deg,#fff3e6,#fff7f0); box-shadow: inset 4px 0 0 #ff9900; color:#b85a00 }
+.profile-actions{ margin-top:10px; display:flex; justify-content:flex-start }
 .sidebar-bottom{ display:flex; justify-content:flex-start; }
 .logout-btn{
   background:transparent;
@@ -149,8 +163,9 @@ function logout() {
 }
 .logout-btn:hover{ background:rgba(240,84,59,0.05); }
 
-/* Inline profile-edit styles (inside sidebar) */
 .profile-edit{ padding:8px 4px; border-top:1px dashed #eee; margin-top:8px }
 .profile-edit .form-group{ margin-bottom:8px }
-.ss-avatar-preview{ width:64px; height:64px; border-radius:50%; object-fit:cover; display:block; margin-bottom:8px }
+.ss-avatar-preview{ width:64px; height:64px; border-radius:8px; object-fit:cover; display:block; margin-bottom:8px }
+
+.seller-footer-note{ font-size:12px; color:#7a6b5a }
 </style>

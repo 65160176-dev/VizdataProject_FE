@@ -25,9 +25,10 @@ import SellerSidebar from '~/components/SellerSidebar.vue'
 }
 .page-body-wrapper {
   flex-grow: 1;
-  margin-left: 240px; /* ต้องเว้นที่ให้ Sidebar (ปรับให้เท่ากับ width ของ SellerSidebar) */
+  margin-left: 260px; /* เว้นที่ให้ Sidebar (ตรงกับความกว้างของ SellerSidebar) */
   min-height: 100vh;
   background-color: #fcfcfc;
   transition: 0.3s;
+  padding: 24px; /* ให้เนื้อหามีช่องหายใจด้านใน */
 }
 </style>
