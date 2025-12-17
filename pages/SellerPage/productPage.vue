@@ -12,7 +12,7 @@
           data-bs-toggle="modal"
           data-bs-target="#addModal"
         >
-          Add Category
+          Add Product
         </button>
       </div>
 
@@ -200,26 +200,24 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
-import productcategory from "~/data/productcategory.json"
-import bootstrap from "bootstrap/dist/js/bootstrap.bundle.min.js"
+import { ref } from 'vue'
+import productcategory from '~/data/productcategory.json'
+import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
-definePageMeta({
-  layout: "default"
-})
+definePageMeta({ layout: 'seller' })
 
 const data = ref(productcategory.data)
 
 // เก็บข้อมูลที่จะแก้ไข
 const editItem = ref({
   id: null,
-  name: "",
-  stock: "",
-  price: "",
-  commission: "",
-  category: "",
-  status: "",
-  image: ""
+  name: '',
+  stock: '',
+  price: '',
+  commission: '',
+  category: '',
+  status: '',
+  image: ''
 })
 
 // เปิด popup พร้อมข้อมูลเดิม
@@ -246,7 +244,7 @@ function saveEdit() {
 
 // ลบ item
 const deleteItem = (index) => {
-  if (confirm("คุณต้องการลบรายการนี้หรือไม่ ?")) {
+  if (confirm('คุณต้องการลบรายการนี้หรือไม่ ?')) {
     data.value.splice(index, 1)
   }
 }

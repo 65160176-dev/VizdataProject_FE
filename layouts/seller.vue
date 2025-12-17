@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     
-    <MySellerSidebar />
+    <SellerSidebar />
 
     <div class="page-body-wrapper">
       <div class="page-body">
@@ -15,7 +15,7 @@
 <script setup>
 // *** ใส่บรรทัดนี้: Import เข้ามาเองตรงๆ ***
 // เช็ค Path ให้เป๊ะนะครับ ว่าไฟล์อยู่ที่ components/blog/blog-sellerSbar.vue จริงไหม
-import MySellerSidebar from '~/components/blog/blog-sellerSbar.vue'
+import SellerSidebar from '~/components/SellerSidebar.vue'
 </script>
 
 <style scoped>
@@ -25,7 +25,7 @@ import MySellerSidebar from '~/components/blog/blog-sellerSbar.vue'
 }
 .page-body-wrapper {
   flex-grow: 1;
-  margin-left: 280px; /* ต้องเว้นที่ให้ Sidebar */
+  margin-left: 240px; /* ต้องเว้นที่ให้ Sidebar (ปรับให้เท่ากับ width ของ SellerSidebar) */
   min-height: 100vh;
   background-color: #fcfcfc;
   transition: 0.3s;

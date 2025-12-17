@@ -63,6 +63,11 @@
         <small>Email: test@admin.com</small><br>
         <small>Password: test@123456</small>
       </div>
+      <div class="demo-credentials">
+        <p><strong>Demo Account:</strong></p>
+        <small>Email: seller@demo.com</small><br>
+        <small>Password: seller123</small>
+      </div>
     </form>
   </div>
 </template>

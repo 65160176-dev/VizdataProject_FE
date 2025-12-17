@@ -142,7 +142,7 @@ import { ref } from "vue"
 import shippingDataFile from "~/data/shipping.json"
 
 definePageMeta({
-  layout: "default"
+  layout: "seller"
 })
 
 // นำเข้าข้อมูลจากไฟล์ JSON และกำหนดให้เป็นตัวแปร reactive
