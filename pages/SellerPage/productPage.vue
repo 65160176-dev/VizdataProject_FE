@@ -5,14 +5,26 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5>Products Category</h5>
 
-        <button 
-          type="button" 
-          class="btn btn-primary"
-          data-bs-toggle="modal"
-          data-bs-target="#addModal"
-        >
-          Add Product
-        </button>
+        <div>
+          <button 
+            type="button" 
+            class="btn btn-secondary me-2" 
+            data-bs-toggle="modal" 
+            data-bs-target="#addStockModal"
+          >
+            <Icon name="feather:box" size="16" class="me-1" style="margin-bottom:2px;"/> 
+            Add Stock
+          </button>
+
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addModal"
+          >
+            Add Product
+          </button>
+        </div>
       </div>
 
       <div class="card-body">
@@ -27,7 +39,8 @@
                   <th>Price</th>
                   <th>Commission (%)</th>
                   <th>Status</th>
-                  <th>Category</th> <th>Actions</th>
+                  <th>Category</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
 
@@ -70,7 +83,8 @@
 
         <ClientOnly>
           <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg"> <div class="modal-content">
+            <div class="modal-dialog modal-lg"> 
+              <div class="modal-content">
 
                 <div class="modal-header">
                   <h5 class="modal-title f-w-600">Add Product</h5>
@@ -199,6 +213,40 @@
           </div>
         </ClientOnly>
 
+        <ClientOnly>
+          <div class="modal fade" id="addStockModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title f-w-600">Add Stock (Quick Update)</h5>
+                  <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <form>
+                    <div class="form-group mb-3">
+                      <label class="mb-1">Select Product :</label>
+                      <select class="form-select" v-model="stockForm.id">
+                        <option disabled value="">Select a product...</option>
+                        <option v-for="item in data" :key="item.id" :value="item.id">
+                          {{ item.name }} (Current: {{ item.stock }})
+                        </option>
+                      </select>
+                    </div>
+                    <div class="form-group mb-3">
+                      <label class="mb-1">Quantity to Add :</label>
+                      <input class="form-control" type="number" v-model="stockForm.quantity" min="1" placeholder="Enter amount to add">
+                    </div>
+                  </form>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-success" type="button" @click="saveAddStock">Update Stock</button>
+                  <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ClientOnly>
+
       </div>
     </div>
   </div>
@@ -206,40 +254,25 @@
 
 <script setup>
 import { ref } from 'vue'
-// นำเข้าไฟล์ JSON จาก path ที่ถูกต้อง
 import productcategory from '~/data/productcategory.json' 
 import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 definePageMeta({ layout: 'seller' })
 
-// ดึงข้อมูลจาก JSON มาใส่ใน data
+// Data Initialization
 const data = ref(productcategory.data)
 
-// ตัวเลือก Category สำหรับ Dropdown
 const categoryOptions = ref([
-  'Electronics',
-  'Jewellery',
-  'Fashion',
-  'Shoes',
-  'Watch',
-  'Beauty'
+  'Electronics', 'Jewellery', 'Fashion', 'Shoes', 'Watch', 'Beauty'
 ])
 
 // --- Add Product Logic ---
 const newItem = ref({
-  name: '',
-  stock: '',
-  price: '',
-  commission: '',
-  category: '',
-  image: '', 
-  previewImage: null 
+  name: '', stock: '', price: '', commission: '', category: '', image: '', previewImage: null 
 })
 const fileInput = ref(null)
 
-const triggerFileInput = () => {
-  fileInput.value.click()
-}
+const triggerFileInput = () => fileInput.value.click()
 
 const onFileChange = (e) => {
   const file = e.target.files[0]
@@ -251,7 +284,6 @@ const onFileChange = (e) => {
 
 const saveNewItem = () => {
   const newId = data.value.length > 0 ? Math.max(...data.value.map(i => i.id)) + 1 : 1
-  
   data.value.push({
     id: newId,
     name: newItem.value.name,
@@ -260,10 +292,8 @@ const saveNewItem = () => {
     commission: newItem.value.commission,
     category: newItem.value.category,
     status: 'success', 
-    // ถ้าไม่มีรูป ให้ใช้รูป default
     image: newItem.value.image || '/images/dashboard/product/1.png'
   })
-
   newItem.value = { name: '', stock: '', price: '', commission: '', category: '', image: '', previewImage: null }
   
   const modalEle = document.getElementById('addModal')
@@ -271,24 +301,13 @@ const saveNewItem = () => {
   modal.hide()
 }
 
-// --- Edit & Delete Logic ---
-const editItem = ref({
-  id: null,
-  name: '',
-  stock: '',
-  price: '',
-  commission: '',
-  category: '',
-  status: '',
-  image: ''
-})
+// --- Edit Logic ---
+const editItem = ref({ id: null, name: '', stock: '', price: '', commission: '', category: '', status: '', image: '' })
 
 function goEdit(id) {
   const found = data.value.find((x) => x.id === id)
   if (!found) return
-
   editItem.value = { ...found }
-
   const modal = new bootstrap.Modal(document.getElementById('editModal'))
   modal.show()
 }
@@ -298,7 +317,6 @@ function saveEdit() {
   if (index !== -1) {
     data.value[index] = { ...editItem.value }
   }
-
   const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'))
   modal.hide()
 }
@@ -306,6 +324,26 @@ function saveEdit() {
 const deleteItem = (index) => {
   if (confirm('คุณต้องการลบรายการนี้หรือไม่ ?')) {
     data.value.splice(index, 1)
+  }
+}
+
+// --- Add Stock Logic (NEW) ---
+const stockForm = ref({ id: '', quantity: '' })
+
+const saveAddStock = () => {
+  const targetProduct = data.value.find(p => p.id === stockForm.value.id)
+  
+  if (targetProduct && stockForm.value.quantity > 0) {
+    // บวกค่าสต็อก (แปลงเป็น Int ก่อน)
+    targetProduct.stock = parseInt(targetProduct.stock) + parseInt(stockForm.value.quantity)
+    
+    // Reset และปิด Modal
+    stockForm.value = { id: '', quantity: '' }
+    const modalEle = document.getElementById('addStockModal')
+    const modal = bootstrap.Modal.getInstance(modalEle) || new bootstrap.Modal(modalEle)
+    modal.hide()
+  } else {
+    alert('Please select a product and enter a valid quantity.')
   }
 }
 </script>

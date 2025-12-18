@@ -29,7 +29,10 @@
           <NuxtLink to="/SellerPage/category" class="menu-item">📊 Category</NuxtLink>
         </li>
         <li>
-          <NuxtLink to="/SellerPage/orderStatus" :class="['menu-item', { 'is-active': isActive('/SellerPage/orderStatus') }]">🧾 <span class="menu-label">Orders</span></NuxtLink>
+          <NuxtLink to="/SellerPage/order" class="menu-item">📊 Order</NuxtLink>
+        </li>
+        <li>
+          <NuxtLink to="/SellerPage/orderStatus" :class="['menu-item', { 'is-active': isActive('/SellerPage/orderStatus') }]">🧾 <span class="menu-label">Order Status</span></NuxtLink>
         </li>
       </ul>
     </nav>
