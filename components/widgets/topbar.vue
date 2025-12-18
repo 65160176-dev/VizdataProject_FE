@@ -39,7 +39,7 @@
               <i class="fa fa-user" aria-hidden="true"></i> My Account
               <ul class="onhover-show-div">
                 <li>
-                  <nuxt-link to="/page/account/dashboard">Dashboard</nuxt-link>
+                  <nuxt-link to="/page/account/userdashboard">Dashboard</nuxt-link>
                 </li>
 
 
@@ -64,6 +64,7 @@ import affiliateRegPopup from '~/pages/afiliate/affiliateRegPopup.vue';
 import UserAuth from '../../pages/page/auth/auth'
 import { useAuthStore } from '~/store/auth'
 import notificationData from "~/data/notificationData.json"
+
 export default {
   components: {
     affiliateRegPopup
