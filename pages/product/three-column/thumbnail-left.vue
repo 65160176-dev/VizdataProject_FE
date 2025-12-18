@@ -369,7 +369,8 @@ export default {
       return useProductStore().changeCurrency
     },
     getDetail: function () {
-      return useProductStore().getProductById(1)
+      const id = this.$route.params.id || this.$route.query.id
+      return useProductStore().getProductById(id || 1)
     },
 
   },

@@ -7,7 +7,7 @@
           <div class="col p-0">
             <div class="top-header">
               <div class="logo pl-2">
-                <a class="navbar-brand" href="#"> <img src="/images/landing-page/header/logo.png" alt="logo" /></a>
+                <nuxt-link class="navbar-brand" :to="{ path: '/' }"> <img src="/images/landing-page/header/logo.png" alt="logo" /></nuxt-link>
               </div>
               <div class="main-menu ml-auto" id="nav">
                 <nav id="navbar-example2" class="navbar navbar-expand-lg navbar-light">

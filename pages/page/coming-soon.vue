@@ -7,7 +7,7 @@
             <div id="login">
               <div>
                 <div class="logo mb-4">
-                  <nuxt-link :to="{ path: '/shop/fashion' }">
+                  <nuxt-link :to="{ path: '/' }">
                     <img :src="logoimage" alt="Multikart_fashion" class="img-fluid" />
                   </nuxt-link>
                 </div>

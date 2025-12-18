@@ -13,8 +13,7 @@
 </template>
 
 <script setup>
-// *** ใส่บรรทัดนี้: Import เข้ามาเองตรงๆ ***
-// เช็ค Path ให้เป๊ะนะครับ ว่าไฟล์อยู่ที่ components/blog/blog-sellerSbar.vue จริงไหม
+
 import SellerSidebar from '~/components/SellerSidebar.vue'
 </script>
 
@@ -25,10 +24,10 @@ import SellerSidebar from '~/components/SellerSidebar.vue'
 }
 .page-body-wrapper {
   flex-grow: 1;
-  margin-left: 260px; /* เว้นที่ให้ Sidebar (ตรงกับความกว้างของ SellerSidebar) */
+  margin-left: 260px; 
   min-height: 100vh;
   background-color: #fcfcfc;
   transition: 0.3s;
-  padding: 24px; /* ให้เนื้อหามีช่องหายใจด้านใน */
+  padding: 24px;
 }
 </style>

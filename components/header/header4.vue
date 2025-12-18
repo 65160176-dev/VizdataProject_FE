@@ -9,9 +9,9 @@
             <div class="main-menu">
               <div class="menu-left category-nav-right">
                 <div class="brand-logo">
-                  <a href="#">
+                  <nuxt-link :to="{ path: '/' }">
                     <img src="/images/icon/layout4/logo.png" class="img-fluid" alt />
-                  </a>
+                  </nuxt-link>
                 </div>
                 <div class="navbar">
                   <a @click="left_sidebar">

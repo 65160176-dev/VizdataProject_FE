@@ -20,7 +20,7 @@
             </div>
             <div class="absolute-logo">
               <div class="brand-logo">
-                <a href="#"><img alt="" src="/images/icon/logo/12.png"></a>
+                <nuxt-link :to="{ path: '/' }"><img alt="" src="/images/icon/logo/12.png" /></nuxt-link>
               </div>
             </div>
             <div class="">

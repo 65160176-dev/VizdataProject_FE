@@ -9,7 +9,7 @@
           <div class="col-12">
             <div class="main-menu border-section border-top-0">
               <div class="brand-logo layout2-logo">
-                <nuxt-link :to="{ path: '/shop/fashion' }">
+                <nuxt-link :to="{ path: '/' }">
                   <img src="/images/icon/logo/14.png" class="img-fluid" alt="logo" />
                 </nuxt-link>
               </div>

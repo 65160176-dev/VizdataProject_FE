@@ -16,10 +16,9 @@
               </div>
             </div>
             <div class="brand-logo layout2-logo">
-              <a href="#">
-
+              <nuxt-link :to="{ path: '/' }">
                 <img src="/images/icon/layout2/logo.png" class="img-fluid" alt>
-              </a>
+              </nuxt-link>
             </div>
             <div class="menu-right pull-right">
               <WidgetsHeaderWidgets />

@@ -83,7 +83,7 @@
 
 <script>
 import { Footer } from '#components';
-import ordersData from '~/data/orders.json'
+import ordersData from '~/data/order.json'
 
 export default {
     data() {
