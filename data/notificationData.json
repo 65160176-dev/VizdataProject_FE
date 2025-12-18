@@ -5,20 +5,20 @@
         "message": "Your order #12345 has been shipped successfully.",
         "date": "12 Dec, 2023",
         "image": "icon/truck.png",
-        "isRead": false
+        "isRead": true
     },
     {
         "id": 2,
-        "title": "New Promotion!",
-        "message": "Get 50% off on all shoes today only.",
+        "title": "Notification 2",
+        "message": "Notice Detail.",
         "date": "10 Dec, 2023",
         "image": "icon/offer.png",
         "isRead": false
     },
     {
         "id": 3,
-        "title": "System Update",
-        "message": "We have updated our privacy policy.",
+        "title": "Notification 1",
+        "message": "Notice Detail.",
         "date": "05 Dec, 2023",
         "image": null,
         "isRead": false
@@ -28,6 +28,14 @@
         "title": "Payment Received",
         "message": "We have received your payment for order #12340.",
         "date": "01 Dec, 2023",
+        "image": "icon/payment.png",
+        "isRead": false
+    },
+    {
+        "id": 5,
+        "title": "Order is Packing",
+        "message": "Seller is packing your order",
+        "date": "29 Nov, 2023",
         "image": "icon/payment.png",
         "isRead": false
     }
