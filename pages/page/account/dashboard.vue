@@ -460,7 +460,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '~/store/auth'
-import ordersData from '~/data/orders.json'
+import ordersData from '~/data/order.json'
 
 const auth = useAuthStore()
 
