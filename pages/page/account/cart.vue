@@ -44,14 +44,14 @@
                   </div>
 
                   <div class="col-3 col-md-2">
-                    <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
+                    <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: item.id } }">
                       <img :src="getImgUrl(item.images?.[0]?.src)" @error="handleImageError"
                         class="img-fluid rounded border" alt="product">
                     </nuxt-link>
                   </div>
 
                   <div class="col-8 col-md-5">
-                    <nuxt-link :to="{ path: '/product/sidebar/' + item.id }" class="text-dark text-decoration-none">
+                    <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: item.id } }">
                       <h6 class="mb-1 text-truncate-2">{{ item.title }}</h6>
                     </nuxt-link>
                     <p class="text-muted small mb-2" v-if="item.size || item.color">

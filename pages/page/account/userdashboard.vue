@@ -36,23 +36,7 @@
                     <div class="box-account box-info">
                       <div class="row">
                         <div class="col-sm-12">
-                          <div class="box">
-                            <div class="box-title">
-                              <h3>Contact Information</h3>
-                              <a href="#">Edit</a>
-                            </div>
-                            <div class="box-content">
-                              <template v-if="isAuthenticated">
-                                <h6>{{ userName || userEmail }}</h6>
-                                <h6>{{ userEmail }}</h6>
-                                <h6><a href="#">Change Password</a></h6>
-                              </template>
-                              <template v-else>
-                                <p class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
-                                <nuxt-link to="/page/auth/LoginPage" class="btn btn-primary mt-2">เข้าสู่ระบบ</nuxt-link>
-                              </template>
-                            </div>
-                          </div>
+                          
                         </div>
                       </div>
                       <div class="mt-3">
@@ -197,13 +181,7 @@
                         </div>
                         <div class="row">
                              <div class="col-sm-6">
-                                <div class="box">
-                                    <div class="box-title"><h3>Contact Information</h3><a href="#">Edit</a></div>
-                                    <div class="box-content">
-                                        <h6>{{ userEmail }}</h6>
-                                        <h6><a href="#">Change Password</a></h6>
-                                    </div>
-                                </div>
+                                
                              </div>
                         </div>
                     </div>

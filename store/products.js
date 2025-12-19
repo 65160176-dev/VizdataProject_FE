@@ -105,6 +105,12 @@ export const useProductStore = defineStore({
            return product.id ===+id
         })
       },
+      getProductsByBrand: (state) => {
+        return (brand) => state.products.filter(p => p.brand && p.brand.toLowerCase() === (brand || '').toLowerCase())
+      },
+      getProductsBySellerId: (state) => {
+        return (sellerId) => state.products.filter(p => p.seller_id && +p.seller_id === +sellerId)
+      },
       compareItems: (state) => {
         return state.compare
       },

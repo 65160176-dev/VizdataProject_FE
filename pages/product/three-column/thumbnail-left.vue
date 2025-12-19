@@ -31,6 +31,12 @@
             <div class="col-lg-4">
               <div class="product-right product-description-box">
                 <h2>{{ getDetail.title }}</h2>
+                <div class="seller-block mt-2">
+                  <nuxt-link :to="{ path: '/seller/' + encodeURIComponent(getDetail.brand) }" class="btn btn-link p-0 seller-name">
+                    <i class="ti-user"></i> ร้านค้า: {{ getDetail.brand }}
+                  </nuxt-link>
+                  <small class="d-block text-muted">คะแนนร้านค้า 4.9 · ตอบแชทเร็ว · ส่งฟรีบางรายการ</small>
+                </div>
                 <div class="border-product">
                   <h6 class="product-title">product details</h6>
                   <p>{{ getDetail.description.substring(0, 200) + "...." }}</p>
@@ -322,6 +328,48 @@
       </div>
     </div>
   </div>
+   <div class="modal fade" id="seller-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title">ร้านค้า: {{ brand }}</h5>
+            <div class="text-muted">คะแนนร้านค้า 4.9 · ตอบแชทเร็ว · ผู้ติดตาม 1.2k</div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-8">
+              <p>สวัสดีจากร้าน <strong>{{ brand }}</strong> — นี่เป็น mockup หน้าร้านภายในหน้าสินค้า คุณสามารถดูตัวอย่างสินค้าที่ร้านนี้ขายได้ด้านล่าง</p>
+            </div>
+            <div class="col-md-4 text-end">
+              <button class="btn btn-primary">ติดตามร้านนี้</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div v-if="sellerProducts.length === 0" class="col-12">
+              <div class="alert alert-secondary">ไม่มีสินค้าอื่นในร้านนี้</div>
+            </div>
+            <div v-for="p in sellerProducts" :key="p.id" class="col-xl-3 col-lg-4 col-md-4 col-sm-6 mb-3">
+              <div class="card h-100">
+                <nuxt-link :to="{ path: '/product/sidebar/'+p.id }">
+                  <img :src="getImgUrl(p.images[0].src)" class="card-img-top" alt="" />
+                </nuxt-link>
+                <div class="card-body p-2">
+                  <h6 class="mb-1" style="font-size:14px">{{ p.title }}</h6>
+                  <div class="text-muted small">{{ p.category || p.type }}</div>
+                  <div class="mt-1">{{ curr.symbol }}{{ (p.price * curr.curr).toFixed(2) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
   <Footer />
 </template>
 <script>
@@ -371,6 +419,12 @@ export default {
     getDetail: function () {
       const id = this.$route.params.id || this.$route.query.id
       return useProductStore().getProductById(id || 1)
+    },brand() {
+      return (this.getDetail && this.getDetail.brand) ? this.getDetail.brand : ''
+    },
+    sellerProducts() {
+      const b = (this.brand || '').toLowerCase()
+      return useProductStore().products.filter(p => p.brand && p.brand.toLowerCase() === b && p.id !== this.getDetail.id)
     },
 
   },
@@ -448,3 +502,9 @@ export default {
   },
 }
 </script>
+<style scoped>
+.seller-name{font-size:16px;font-weight:600;color:#333}
+.seller-block small{font-size:12px}
+.card img{height:150px;object-fit:cover}
+</style>
+ 

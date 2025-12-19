@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "nike",
+      "display_name": "Nike Official Store",
+      "rating": 4.9,
+      "followers": 12500,
+      "description": "Official Nike store — รองเท้ากีฬาและแฟชั่นคุณภาพ"
+    },
+    {
+      "id": 2,
+      "name": "zara",
+      "display_name": "Zara Boutique",
+      "rating": 4.8,
+      "followers": 8200,
+      "description": "เสื้อผ้าแฟชั่นจาก Zara"
+    },
+    {
+      "id": 3,
+      "name": "local-seller",
+      "display_name": "Local Seller",
+      "rating": 4.6,
+      "followers": 980,
+      "description": "ร้านค้าท้องถิ่น — สินค้าแฮนด์เมดและของตกแต่งบ้าน"
+    }
+  ]
+}

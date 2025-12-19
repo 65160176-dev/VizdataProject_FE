@@ -507,12 +507,7 @@
                         <h3>register</h3>
                       </nuxt-link>
                     </div>
-                    <div class="col-xl-3 col-sm-6 col-12 demo-box">
-                      <nuxt-link :to="{ path: '/page/account/contact' }" target="_blank">
-                        <img src="/images/landing-page/special features/other/6.jpg" class="img-fluid" />
-                        <h3>contact us</h3>
-                      </nuxt-link>
-                    </div>
+                    
                     <div class="col-xl-3 col-sm-6 col-12 demo-box">
                       <nuxt-link :to="{ path: '/page/account/forget-password' }" target="_blank">
                         <img src="/images/landing-page/special features/other/7.jpg" class="img-fluid" />

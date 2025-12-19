@@ -13,7 +13,7 @@
               <i class="fa fa-angle-right ps-2" aria-hidden="true"></i>
             </div>
           </li>
-          <li v-for="(menuItem, index) in menulist" :key="index" :class="menuItem.megamenu ? 'mega-menu' : 'dropdown'">
+          <li v-for="(menuItem, index) in filteredMenu" :key="index" :class="menuItem.megamenu ? 'mega-menu' : 'dropdown'">
             <a href="#" class="nav-link" @click="setActive(menuItem.title)">
               {{$t(menuItem.title)}}
               <span class="sub-arrow" v-if="menuItem.children || menuItem.megamenu"></span>
@@ -37,17 +37,17 @@
                 </ul>
               </li>
             </ul>
-            <div class="mega-menu-container" :class="{ opensubmenu: isActive('portfolio') }" v-if="menuItem.megamenu">
+            <div class="mega-menu-container" :class="{ opensubmenu: isActive(menuItem.title) }" v-if="menuItem.megamenu">
               <div class="container">
                 <div class="row">
                   <div class="col mega-box" v-for="(childrenItem, index) in menuItem.children" :key="index">
                     <div class="link-section">
-                      <div class="menu-title" @click="setActivesubmega('portfolio')">
+                      <div class="menu-title" @click="setActivesubmega(childrenItem.title)">
                         <h5>{{ childrenItem.title }}
                           <span class="sub-arrow"></span>
                         </h5>
                       </div>
-                      <div class="menu-content" :class="{ opensubmegamenu: isActivesubmega('portfolio') }">
+                      <div class="menu-content" :class="{ opensubmegamenu: isActivesubmega(childrenItem.title) }">
                         <ul>
                           <li v-for="(childrenSubItem, index) in childrenItem.children" :key="index">
                             <nuxt-link :to="{ path: childrenSubItem.path }">
@@ -85,6 +85,11 @@ export default {
     ...mapState(useMenuStore, {
       menulist: 'data'
     })
+    ,
+    filteredMenu() {
+      if (!this.menulist || !Array.isArray(this.menulist)) return []
+      return this.menulist.filter(m => (m.title || '').toString().toLowerCase() !== 'products')
+    }
   },
 
   methods: {
@@ -131,4 +136,28 @@ export default {
     z-index: 1;
   }
 }
+
+/* Compact dropdown / megamenu styles */
+.mega-menu-container {
+  box-shadow: none;
+  border-radius: 4px;
+  max-width: 320px;
+  width: auto;
+  padding: 8px 12px;
+}
+.mega-menu-container .mega-box .menu-content ul {
+  padding-left: 0;
+}
+.mega-menu-container .mega-box .menu-content ul li {
+  list-style: none;
+  margin: 6px 0;
+}
+.mega-menu-container .mega-box .menu-content ul li a,
+.nav-submenu li a {
+  font-size: 13px;
+  color: #333;
+  padding: 4px 6px;
+}
+.nav-submenu { max-width: 300px; }
+
 </style>
