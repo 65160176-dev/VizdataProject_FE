@@ -4,15 +4,10 @@
       <ul>
         <li class="onhover-div mobile-search">
           <div>
-            <img
-              alt
-              src="/images/icon/layout4/search.png"
-              @click="openSearch()"
-              class="img-fluid"
-            >
+            <img alt src="/images/icon/layout4/search.png" @click="openSearch()" class="img-fluid">
             <i class="ti-search" @click="openSearch()"></i>
           </div>
-          <div id="search-overlay" class="search-overlay" :class="{ opensearch:search }">
+          <div id="search-overlay" class="search-overlay" :class="{ opensearch: search }">
             <div>
               <span class="closebtn" @click="closeSearch()" title="Close Overlay">x</span>
               <div class="overlay-content">
@@ -21,32 +16,22 @@
                     <div class="col-xl-12">
                       <form>
                         <div class="form-group mb-0">
-                          <input
-                            type="text"
-                            class="form-control"
-                            v-model="searchString"
-                           
-                            placeholder="Search a Product"
-                          >
+                          <input type="text" class="form-control" v-model="searchString" placeholder="Search a Product">
                         </div>
                         <button type="submit" class="btn btn-primary">
                           <i class="fa fa-search"></i>
                         </button>
                       </form>
                       <ul class="search-results" v-if="searchItems.length">
-                        <li v-for="(product,index) in searchItems" :key="index" class="product-box">
+                        <li v-for="(product, index) in searchItems" :key="index" class="product-box">
                           <div class="img-wrapper">
-                            <img
-                              :src='getImgUrl(product.images[0].src)'
-                              class="img-fluid bg-img"
-                              :key="index"
-                            />
+                            <img :src='getImgUrl(product.images[0].src)' class="img-fluid bg-img" :key="index" />
                           </div>
                           <div class="product-detail">
-                            <nuxt-link :to="{ path: '/product/sidebar/'+product.id}">
+                            <nuxt-link :to="{ path: '/product/sidebar/' + product.id }">
                               <h6>{{ product.title }}</h6>
                             </nuxt-link>
-                            <h4>{{curr.symbol}}{{ (product.price * curr.curr).toFixed(2) }}</h4>
+                            <h4>{{ curr.symbol }}{{ (product.price * curr.curr).toFixed(2) }}</h4>
                           </div>
                         </li>
                       </ul>
@@ -66,11 +51,12 @@
             <h6>Language</h6>
             <ul class="list-inline">
               <li>
-                <Nuxt-link v-for="locale in language" :key="locale.code" @click="setlang(locale.code)" to="javascript:void(0)">
-                     {{ locale.name }} 
+                <Nuxt-link v-for="locale in language" :key="locale.code" @click="setlang(locale.code)"
+                  to="javascript:void(0)">
+                  {{ locale.name }}
                 </Nuxt-link>
               </li>
-             
+
             </ul>
             <h6>currency</h6>
             <ul class="list-inline">
@@ -93,23 +79,23 @@
           <div>
             <img alt src="/images/icon/layout4/cart.png" class="img-fluid">
             <i class="ti-shopping-cart"></i>
-            <span class="cart_qty_cls">{{cart.length}}</span>
+            <span class="cart_qty_cls">{{ cart.length }}</span>
           </div>
           <ul class="show-div shopping-cart" v-if="!cart.length">
             <li>Your cart is currently empty.</li>
           </ul>
           <ul class="show-div shopping-cart" v-if="cart.length">
-            <li v-for="(item,index) in cart" :key="index">
+            <li v-for="(item, index) in cart" :key="index">
               <div class="media">
-                <nuxt-link :to="{ path: '/product/sidebar/'+item.id}">
+                <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
                   <img alt class="mr-3" :src='getImgUrl(item.images[0].src)'>
                 </nuxt-link>
                 <div class="media-body">
-                  <nuxt-link :to="{ path: '/product/sidebar/'+item.id}">
-                    <h4>{{item.title}}</h4>
+                  <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
+                    <h4>{{ item.title }}</h4>
                   </nuxt-link>
                   <h4>
-                    <span>{{item.quantity}} x {{ item.price || currency }}</span>
+                    <span>{{ item.quantity }} x {{ item.price || currency }}</span>
                   </h4>
                 </div>
               </div>
@@ -122,19 +108,16 @@
             <li>
               <div class="total">
                 <h5>
-                  subtotal :
-                  <span>{{ cartTotal || currency }}</span>
+                  total items :
+                  <span>{{ totalItems }}</span>
                 </h5>
               </div>
             </li>
             <li>
-              <div class="buttons">
-                <nuxt-link :to="{ path: '/page/account/cart'}" :class="'view-cart'">
+              <div class="buttons" style="display: flex; justify-content: flex-end;">
+                <nuxt-link :to="{ path: '/page/account/cart' }" :class="'view-cart'">
                   view cart
                 </nuxt-link>
-                <a href="javascript:void(0)" @click="goToCheckout" :class="'checkout'">
-                  checkout
-                </a>
               </div>
             </li>
           </ul>
@@ -143,9 +126,10 @@
     </div>
   </div>
 </template>
+
 <script>
 import { useProductStore } from '~/store/products'
-import {useCartStore} from '~/store/cart'
+import { useCartStore } from '~/store/cart'
 import { mapState } from 'pinia'
 export default {
   data() {
@@ -153,42 +137,46 @@ export default {
       currencyChange: {},
       search: false,
       searchString: '',
-      lang:[
+      lang: [
         {
-          code:'en',
-          name:'English'
+          code: 'en',
+          name: 'English'
         },
         {
-          code:'fr',
-          name:'French'
+          code: 'fr',
+          name: 'French'
         }
       ]
     }
   },
   computed: {
-    ...mapState(useProductStore,{
-      searchItems: 'searchProducts',      
+    ...mapState(useProductStore, {
+      searchItems: 'searchProducts',
     }),
-    language(){
+    language() {
       return this.lang.filter((lang) => lang.code != this.$i18n.locale)
     },
-    ...mapState(useCartStore,{
-  
-      cartTotal:(store)=> store.cartTotalAmount,
+    ...mapState(useCartStore, {
+
+      cartTotal: (store) => store.cartTotalAmount,
     }),
-    cart(){
+    cart() {
       return useCartStore().cartItems
     },
-    curr(){  
+    curr() {
       return useProductStore().changeCurrency
+    },
+    totalItems() {
+      // ใช้ reduce เพื่อรวมค่า quantity ของสินค้าทุกชิ้น
+      return this.cart.reduce((total, item) => total + item.quantity, 0);
     }
-   
+
   },
-  watch:{
-    searchString(){
+  watch: {
+    searchString() {
       useProductStore().searchProduct(this.searchString)
     },
-    cart(){
+    cart() {
       useCartStore().cartItems
     },
   },
@@ -206,11 +194,11 @@ export default {
     },
     removeCartItem: function (product) {
       useCartStore().removeCartItem(product)
-      if(this.cart.length==0 && this.$route.name=== 'page-account-checkout'){
+      if (this.cart.length == 0 && this.$route.name === 'page-account-checkout') {
         this.$router.replace('/page/account/cart')
       }
     },
-    setlang(name){
+    setlang(name) {
       this.$i18n.locale = name
     },
     updateCurrency: function (currency, currSymbol) {
