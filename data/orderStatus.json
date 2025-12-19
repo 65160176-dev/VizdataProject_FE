@@ -1,40 +1,72 @@
 [
   {
     "id": "1001",
-    "shopName": "ร้าน A",
-    "status": "กำลังจัดส่ง",
-    "statusClass": "text-warning",
+    "shopName": "ร้าน A Fashion",
+    "status": "ที่ต้องจัดส่ง",
     "totalPrice": 1290,
-    "note": "ส่งปกติ",
-    "subtotal": 1290,
-    "shippingFee": 50,
-    "discount": 0,
-    "total": 1340,
-    "paymentMethod": "ชำระเงินออนไลน์",
-    "customerName": "สมชาย ใจดี",
-    "phone": "081-111-2222",
-    "address": "บ้านเลขที่ 1 ถนนสุขใจ เขตตัวอย่าง จังหวัด",
+    "note": "ห่อของขวัญ",
+    "paymentMethod": "โอน/Bank",
+    "customerName": "คุณเอ (รอจัดส่ง)",
+    "phone": "081-111-1111",
+    "address": "123 ถ.สุขุมวิท กทม.",
     "items": [
-      { "name": "รองเท้าผ้าใบ รุ่น X", "variant": "สีขาว", "quantity": 1, "price": 1290, "image": "/images/products/shoe1.jpg" }
+      { "name": "กระเป๋าผ้า", "variant": "ลายดอกไม้", "quantity": 1, "price": 1290, "image": "" }
     ]
   },
   {
     "id": "1002",
-    "shopName": "ร้าน B",
-    "status": "รอรับสินค้า",
-    "statusClass": "text-success",
-    "totalPrice": 238,
-    "note": "ของแถมในกล่อง",
-    "subtotal": 238,
-    "shippingFee": 0,
-    "discount": 0,
-    "total": 238,
-    "paymentMethod": "เก็บเงินปลายทาง (COD)",
-    "customerName": "สมหญิง สบายใจ",
-    "phone": "082-333-4444",
-    "address": "อาคารตัวอย่าง ชั้น 2 แขวงตัวอย่าง เขตตัวอย่าง",
+    "shopName": "ร้าน B Gadget",
+    "status": "กำลังเตรียมพัสดุ",
+    "totalPrice": 4500,
+    "note": "ตรวจเช็คก่อนส่ง",
+    "paymentMethod": "บัตรเครดิต",
+    "customerName": "คุณบี (กำลังเตรียม)",
+    "phone": "082-222-2222",
+    "address": "45/2 จ.นนทบุรี",
     "items": [
-      { "name": "ปลอกมือถือใส", "variant": "iPhone 13", "quantity": 2, "price": 119, "image": "/images/products/phone_case.jpg" }
+      { "name": "หูฟัง Bluetooth", "variant": "สีดำ", "quantity": 1, "price": 4500, "image": "" }
+    ]
+  },
+  {
+    "id": "1003",
+    "shopName": "ร้าน C Decor",
+    "status": "กำลังจัดส่ง",
+    "totalPrice": 850,
+    "note": "",
+    "paymentMethod": "COD",
+    "customerName": "คุณซี (ส่งอยู่)",
+    "phone": "083-333-3333",
+    "address": "เชียงใหม่",
+    "items": [
+      { "name": "โคมไฟตั้งโต๊ะ", "variant": "Warm White", "quantity": 1, "price": 850, "image": "" }
+    ]
+  },
+  {
+    "id": "1004",
+    "shopName": "ร้าน D Beauty",
+    "status": "สำเร็จ",
+    "totalPrice": 320,
+    "note": "ลูกค้าประจำ",
+    "paymentMethod": "PromptPay",
+    "customerName": "คุณดี (รับของแล้ว)",
+    "phone": "084-444-4444",
+    "address": "ภูเก็ต",
+    "items": [
+      { "name": "ลิปสติก", "variant": "เบอร์ 05", "quantity": 2, "price": 160, "image": "" }
+    ]
+  },
+  {
+    "id": "1005",
+    "shopName": "ร้าน E Sport",
+    "status": "ยกเลิก",
+    "totalPrice": 1500,
+    "note": "เปลี่ยนใจ",
+    "paymentMethod": "ยกเลิก",
+    "customerName": "คุณอี (ยกเลิก)",
+    "phone": "085-555-5555",
+    "address": "ขอนแก่น",
+    "items": [
+      { "name": "รองเท้าวิ่ง", "variant": "Size 42", "quantity": 1, "price": 1500, "image": "" }
     ]
   }
 ]
