@@ -37,15 +37,6 @@
                     }}</span>
                   </div>
                   <div class="form-group col-md-12 col-sm-12">
-                    <div class="field-label">Country</div>
-                    <select required>
-                      <option>India</option>
-                      <option selected>South Africa</option>
-                      <option>United State</option>
-                      <option>Australia</option>
-                    </select>
-                  </div>
-                  <div class="form-group col-md-12 col-sm-12">
                     <div class="field-label">Address</div>
                     <input type="text" v-model="user.address.value" name="Address" />
                     <span class="validate-error" v-if="user.address.value.length === 0">{{
@@ -68,9 +59,6 @@
                     <span class="validate-error" v-if="user.pincode.value.length === 0">{{
                       user.pincode.errormsg
                     }}</span>
-                  </div>
-                  <div class="form-group col-lg-12 col-md-12 col-sm-12">
-                    <nuxt-link :to="{ path: '/page/auth/LoginPage' }">Create an Account?</nuxt-link>
                   </div>
                 </div>
               </div>
@@ -96,57 +84,77 @@
                       </li>
                       <li>Shipping
                         <div class="shipping">
-                          <div class="shopping-option">
-                            <input type="checkbox" name="free-shipping" id="free-shipping">
-                            <label for="free-shipping">Free Shipping</label>
+
+                          <div class="shopping-option d-flex justify-content-between align-items-center">
+                            <div>
+                              <label class="mb-0" v-if="selectedShipping">
+                                {{ selectedShipping.name }}
+                                <br>
+                                <small class="text-muted">({{ selectedShipping.time }})</small>
+                              </label>
+                            </div>
+
+                            <div class="text-end">
+                              <span class="count fw-bold">
+                                {{ selectedShipping && selectedShipping.price === 0 ? 'Free' : (selectedShipping ?
+                                  (selectedShipping.price * curr.curr).toFixed(2) : 0) }}
+                              </span>
+                              <a href="javascript:void(0)" class="d-block text-primary"
+                                style="font-size: 0.8rem; cursor: pointer;" @click="showShippingModal = true">
+                                (เปลี่ยน)
+                              </a>
+                            </div>
                           </div>
-                          <div class="shopping-option">
-                            <input type="checkbox" name="local-pickup" id="local-pickup">
-                            <label for="local-pickup">Local Pickup</label>
-                          </div>
+
                         </div>
                       </li>
                     </ul>
+
+
                     <ul class="sub-total">
                       <li>
                         Total
-                        <span class="count">{{ cartTotal * curr.curr }}</span>
+                        <span class="count">{{ (grandTotal * curr.curr).toFixed(2) }}</span>
                       </li>
                     </ul>
                   </div>
                   <div class="payment-box">
+
+                    <div class="checkout-title">
+                      <h3>Payment Method</h3>
+                    </div>
+
                     <div class="upper-box">
                       <div class="payment-options">
                         <ul>
                           <li>
-                            <label class="d-block" for="edo-ani1">
-                              <input class="radio_animated" id="edo-ani1" value="stripe" v-model="selectedPayment"
-                                type="radio" name="rdo-ani" data-original-title="">Stripe
-                            </label>
-
-                          </li>
-                          <li>
                             <label class="d-block" for="edo-ani2">
-
-                              <input class="radio_anima ted" id="edo-ani2" value="paypal" v-model="selectedPayment"
-                                type="radio" name="rdo-ani" data-original-title="" title="">PayPal
-
-
+                              <input class="radio_animated" id="edo-ani2" value="paypal" v-model="selectedPayment"
+                                type="radio" name="rdo-ani">
+                              PayPal
                             </label>
+                          </li>
 
+                          <li>
+                            <label class="d-block" for="edo-ani1">
+                              <input class="radio_animated" id="edo-ani1" value="promptpay" v-model="selectedPayment"
+                                type="radio" name="rdo-ani">
+                              PromptPay (QR Code)
+                            </label>
                           </li>
                         </ul>
                       </div>
                     </div>
+
                     <div class="text-end">
-
-
                       <div id="paypal-button-container" :class="[{ 'd-none': selectedPayment != 'paypal' }]"></div>
-                      <div class="order-place" v-if="selectedPayment === 'stripe' && cart.length">
 
-                        <button class="btn btn-primary" @click.prevent="payWithStripe">Place Order </button>
+                      <div class="order-place" v-if="selectedPayment === 'promptpay' && cart.length">
+                        <button class="btn btn-primary" @click.prevent="payWithPromptPay">Place Order
+                          (PromptPay)</button>
                       </div>
                     </div>
+
                   </div>
                 </div>
               </div>
@@ -154,22 +162,39 @@
           </form>
         </div>
       </div>
+
+      <shipmentMethod v-if="showShippingModal" :options="shippingOptions"
+        :currentId="selectedShipping ? selectedShipping.id : ''" :currency="curr.curr"
+        @close="showShippingModal = false" @select-shipping="handleShippingSelection" />
+
     </div>
   </section>
 </template>
+
 <script>
 import { useCartStore } from '~~/store/cart'
 import { useProductStore } from '~~/store/products'
-  export default {
+
+// 1. นำเข้าชื่อ shipmentMethod
+import shipmentMethod from './widgets/Payment/shipmentMethod.vue';
+
+export default {
+  components: {
+    shipmentMethod // 2. ลงทะเบียนชื่อ shipmentMethod
+  },
   computed: {
-    cart(){
+    cart() {
       return useCartStore().cartItems
     },
-    cartTotal(){
+    cartTotal() {
       return useCartStore().cartTotalAmount
     },
-    curr(){
+    curr() {
       return useProductStore().changeCurrency
+    },
+    grandTotal() {
+      let shippingCost = this.selectedShipping ? this.selectedShipping.price : 0;
+      return this.cartTotal + shippingCost;
     }
   },
   data() {
@@ -202,88 +227,81 @@ import { useProductStore } from '~~/store/products'
         shape: 'pill', // pill | rect
         color: 'blue' // gold | blue | silver | black
       },
-      amtchar: ''
+      amtchar: '',
+
+      // ส่วนของ Shipping
+      showShippingModal: false,
+      selectedShipping: null,
+      shippingOptions: [
+        { id: 'economy', name: 'Economy Delivery', time: '5-7 Days', price: 0 },
+        { id: 'standard', name: 'Standard Delivery', time: '3-5 Days', price: 50 },
+        { id: 'express', name: 'Express Delivery', time: '1-2 Days', price: 100 }
+      ],
     }
   },
- 
-watch:{
-    cart:{
-      handler(value){
-        if(value.length==0){
+  created() {
+    this.selectedShipping = this.shippingOptions[1];
+  },
+
+  watch: {
+    cart: {
+      handler(value) {
+        if (value.length == 0) {
           useNuxtApp().$showToast({ msg: "Cart is Empty.", type: "error" })
           this.$router.replace('/page/account/cart')
         }
-        
-      },deep:true
+
+      }, deep: true
     }
   },
 
-
   methods: {
-
-    payWithStripe() {
+    payWithPromptPay() {
       this.onSubmit()
-
       this.isLogin = useCookie('userlogin').value
       if (!this.isLogin) {
-
         this.$router.replace('/page/auth/LoginPage?redirect=/page/account/checkout')
       }
-      else if (this.user.firstName.errormsg != '' && this.user.lastName.errormsg != '' && this.user.city.errormsg != '' && this.user.pincode.errormsg != '' && this.user.state.errormsg != '' && this.user.phone.errormsg != '' && this.user.address.errormsg != '' && this.user.email.errormsg != '') {
+      else if (this.user.firstName.errormsg == '' && this.user.lastName.errormsg == '' &&
+        this.user.city.errormsg == '' && this.user.pincode.errormsg == '' &&
+        this.user.state.errormsg == '' && this.user.phone.errormsg == '' &&
+        this.user.address.errormsg == '' && this.user.email.errormsg == '') {
 
-        this.onSubmit()
+        this.$store.dispatch('products/createOrder', {
+          product: this.cart,
+          userDetail: this.user,
+          token: 'promptpay-manual',
+          paymentMethod: 'promptpay',
+          amt: this.cartTotal
+        })
+
+        this.$router.push('/page/order-success')
       }
-      else if (this.isLogin) {
+    },
 
-        this.payment = false
-        var handler = (window).StripeCheckout.configure({
-          key: 'PUBLISHBLE_KEY', // 'PUBLISHBLE_KEY'
-          locale: 'auto',
-          closed: function () {
-            handler.close()
-          },
-          token: (token) => {
-            this.$store.dispatch('products/createOrder', {
-              product: this.cart,
-              userDetail: this.user,
-              token: token.id,
-              amt: this.cartTotal
-            })
-            this.$router.push('/page/order-success')
-          }
-        });
-        handler.open({
-          name: 'Multikart ',
-          description: 'Your Choice Theme',
-          amount: this.cartTotal * 100
-        });
-      }
-
-
+    handleShippingSelection(option) {
+      this.selectedShipping = option;
+      this.showShippingModal = false;
     },
 
     onSubmit() {
-
       if (this.user.firstName.value.length <= 1 || this.user.firstName.value.length > 10) {
         this.user.firstName.errormsg = 'empty not allowed'
       } else {
         this.user.firstName.errormsg = ''
       }
-
       if (this.user.lastName.value.length <= 1 || this.user.lastName.value.length > 10) {
         this.user.lastName.errormsg = 'empty not allowed'
       } else {
         this.user.lastName.errormsg = ''
       }
-
       if (this.user.city.value.length < 3 || this.user.city.value.length > 10) {
         this.user.city.errormsg = 'empty not allowed'
       } else {
         this.user.city.errormsg = ''
       }
       if (this.user.pincode.value.length < 4) {
-
-        this.user.pincode.errormsg = 'empty not  allowed'
+        this.user.pincode.errormsg = 'empty not  allowed'
       } else {
         this.user.pincode.errormsg = ''
       }
@@ -305,9 +323,7 @@ watch:{
       if (!this.user.email.value) {
         this.user.email.errormsg = 'empty not allowed'
       } else if (!this.validEmail(this.user.email.value)) {
-
         this.user.email.errormsg = 'Valid email required.'
-
       } else {
         this.user.email.errormsg = ''
       }
@@ -318,14 +334,11 @@ watch:{
       return re.test(email)
     }
   },
-  
-   mounted(){
+
+  mounted() {
     window.paypal.Buttons({
 
     }).render('#paypal-button-container')
-
-
-
 
     this.isLogin = useCookie('userlogin').value
 
