@@ -8,7 +8,17 @@
         <div>
           <button 
             type="button" 
-            class="btn btn-secondary me-2" 
+            class="btn btn-outline-secondary me-2 shadow-sm" 
+            data-bs-toggle="modal" 
+            data-bs-target="#categoryModal"
+          >
+            <Icon name="feather:list" size="16" class="me-1" style="margin-bottom:2px;"/> 
+            Category
+          </button>
+
+          <button 
+            type="button" 
+            class="btn btn-success me-2 shadow-sm" 
             data-bs-toggle="modal" 
             data-bs-target="#addStockModal"
           >
@@ -18,10 +28,11 @@
 
           <button 
             type="button" 
-            class="btn btn-primary"
+            class="btn btn-primary shadow-sm"
             data-bs-toggle="modal"
             data-bs-target="#addModal"
           >
+            <Icon name="feather:plus" size="16" class="me-1" style="margin-bottom:2px;"/>
             Add Product
           </button>
         </div>
@@ -56,7 +67,10 @@
                   <td>{{ item.commission }}</td>
 
                   <td>
-                    <i class="fa fa-circle f-12" :class="'font-' + item.status"></i>
+                    <i 
+                      class="fa fa-circle f-12" 
+                      :class="'font-' + getStockStatus(item.stock)"
+                    ></i>
                   </td>
 
                   <td>{{ item.category }}</td>
@@ -85,34 +99,28 @@
           <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg"> 
               <div class="modal-content">
-
                 <div class="modal-header">
                   <h5 class="modal-title f-w-600">Add Product</h5>
                   <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body">
                   <form>
                     <div class="row">
                       <div class="col-md-5 d-flex flex-column align-items-center justify-content-center mb-3">
                         <div class="upload-box" @click="triggerFileInput">
                           <img v-if="newItem.previewImage" :src="newItem.previewImage" class="img-preview" />
-                          
                           <div v-else class="text-center text-muted">
                             <Icon name="feather:image" size="48" style="color: #ccc;" />
                             <p class="mb-0 mt-2" style="font-size: 14px;">Click to Upload Image</p>
                           </div>
-                          
                           <input type="file" ref="fileInput" class="d-none" @change="onFileChange" accept="image/*">
                         </div>
                       </div>
-
                       <div class="col-md-7">
                         <div class="form-group mb-3">
                           <label class="mb-1">Product Name :</label>
                           <input class="form-control" v-model="newItem.name" type="text" placeholder="Enter product name">
                         </div>
-
                         <div class="row">
                           <div class="col-6 form-group mb-3">
                             <label class="mb-1">Stock :</label>
@@ -123,7 +131,6 @@
                             <input class="form-control" v-model="newItem.price" type="number" min="0">
                           </div>
                         </div>
-
                         <div class="form-group mb-3">
                           <label class="mb-1">Category :</label>
                           <select class="form-select" v-model="newItem.category">
@@ -133,12 +140,10 @@
                             </option>
                           </select>
                         </div>
-
                         <div class="form-group mb-3">
                           <label class="mb-1">Commission (%) :</label>
                           <input class="form-control" v-model="newItem.commission" type="number" min="0">
                         </div>
-
                         <div class="form-group mb-0">
                           <label class="mb-1">Description :</label>
                           <textarea class="form-control" rows="2"></textarea>
@@ -147,12 +152,10 @@
                     </div>
                   </form>
                 </div>
-
                 <div class="modal-footer">
                   <button class="btn btn-primary" type="button" @click="saveNewItem">Save</button>
                   <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
                 </div>
-
               </div>
             </div>
           </div>
@@ -162,12 +165,10 @@
           <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
-
                 <div class="modal-header">
                   <h5 class="modal-title f-w-600">Edit Product</h5>
                   <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body">
                   <form>
                     <div class="form-group mb-3">
@@ -178,7 +179,6 @@
                       <label class="mb-1">Stock :</label>
                       <input class="form-control" v-model="editItem.stock" type="number" min="0">
                     </div>
-
                     <div class="form-group mb-3">
                       <label class="mb-1">Category :</label>
                       <select class="form-select" v-model="editItem.category">
@@ -187,7 +187,6 @@
                         </option>
                       </select>
                     </div>
-
                     <div class="form-group mb-3">
                       <label class="mb-1">Price :</label>
                       <input class="form-control" v-model="editItem.price" type="number" min="0">
@@ -202,12 +201,10 @@
                     </div>
                   </form>
                 </div>
-
                 <div class="modal-footer">
                   <button class="btn btn-primary" type="button" @click="saveEdit">Save Changes</button>
                   <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
                 </div>
-
               </div>
             </div>
           </div>
@@ -247,6 +244,51 @@
           </div>
         </ClientOnly>
 
+        <ClientOnly>
+          <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title f-w-600">Manage Categories</h5>
+                  <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="input-group mb-3">
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      placeholder="New Category Name" 
+                      v-model="newCategoryInput"
+                      @keyup.enter="addNewCategory"
+                    >
+                    <button class="btn btn-primary" type="button" @click="addNewCategory">Add</button>
+                  </div>
+                  <hr>
+                  <h6 class="mb-2">Current Categories:</h6>
+                  <ul class="list-group">
+                    <li 
+                      class="list-group-item d-flex justify-content-between align-items-center"
+                      v-for="(cat, index) in categoryOptions" 
+                      :key="index"
+                    >
+                      {{ cat }}
+                      <Icon 
+                        name="feather:trash-2" 
+                        class="text-danger" 
+                        style="cursor: pointer; width: 18px; height: 18px;"
+                        @click="removeCategory(index)"
+                      />
+                    </li>
+                  </ul>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ClientOnly>
+
       </div>
     </div>
   </div>
@@ -265,6 +307,39 @@ const data = ref(productcategory.data)
 const categoryOptions = ref([
   'Electronics', 'Jewellery', 'Fashion', 'Shoes', 'Watch', 'Beauty'
 ])
+
+// --- Status Logic (NEW) ---
+// ฟังก์ชันเช็คสต็อกและคืนค่า class สี
+const getStockStatus = (stock) => {
+  const s = parseInt(stock)
+  if (s >= 100) {
+    return 'success' // สีเขียว
+  } else if (s >= 25) {
+    return 'warning' // สีส้ม
+  } else {
+    return 'danger'  // สีแดง
+  }
+}
+
+// --- Category Logic ---
+const newCategoryInput = ref('')
+
+const addNewCategory = () => {
+  if (newCategoryInput.value.trim() !== '') {
+    if (!categoryOptions.value.includes(newCategoryInput.value.trim())) {
+      categoryOptions.value.push(newCategoryInput.value.trim())
+      newCategoryInput.value = '' 
+    } else {
+      alert('This category already exists!')
+    }
+  }
+}
+
+const removeCategory = (index) => {
+  if (confirm('Delete this category?')) {
+    categoryOptions.value.splice(index, 1)
+  }
+}
 
 // --- Add Product Logic ---
 const newItem = ref({
@@ -291,7 +366,7 @@ const saveNewItem = () => {
     price: newItem.value.price,
     commission: newItem.value.commission,
     category: newItem.value.category,
-    status: 'success', 
+    status: 'success', // ค่าเริ่มต้น (แต่มันจะถูกทับด้วยการคำนวณจริงในหน้าจอ)
     image: newItem.value.image || '/images/dashboard/product/1.png'
   })
   newItem.value = { name: '', stock: '', price: '', commission: '', category: '', image: '', previewImage: null }
@@ -327,17 +402,14 @@ const deleteItem = (index) => {
   }
 }
 
-// --- Add Stock Logic (NEW) ---
+// --- Add Stock Logic ---
 const stockForm = ref({ id: '', quantity: '' })
 
 const saveAddStock = () => {
   const targetProduct = data.value.find(p => p.id === stockForm.value.id)
   
   if (targetProduct && stockForm.value.quantity > 0) {
-    // บวกค่าสต็อก (แปลงเป็น Int ก่อน)
     targetProduct.stock = parseInt(targetProduct.stock) + parseInt(stockForm.value.quantity)
-    
-    // Reset และปิด Modal
     stockForm.value = { id: '', quantity: '' }
     const modalEle = document.getElementById('addStockModal')
     const modal = bootstrap.Modal.getInstance(modalEle) || new bootstrap.Modal(modalEle)
@@ -349,6 +421,18 @@ const saveAddStock = () => {
 </script>
 
 <style scoped>
+/* กำหนดสีของวงกลมสถานะ */
+.font-success {
+  color: #28c76f !important; /* สีเขียว */
+}
+.font-warning {
+  color: #ff9f43 !important; /* สีส้ม */
+}
+.font-danger {
+  color: #ea5455 !important; /* สีแดง */
+}
+
+/* --- CSS เดิม --- */
 .img-40 {
   width: 40px;
   height: 40px;
@@ -381,5 +465,40 @@ const saveAddStock = () => {
   height: 100%;
   object-fit: contain;
   background-color: #fff;
+}
+
+/* Button Styling */
+.btn {
+  border-radius: 6px; 
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0d6efd 0%, #4facfe 100%);
+  color: white;
+}
+
+.btn-outline-secondary {
+  border: 1px solid #6c757d;
+  color: #555;
+  background: transparent;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  color: white;
+  transform: translateY(-2px);
 }
 </style>

@@ -34,10 +34,8 @@
       <ul>
         <li><NuxtLink to="/SellerPage/dashboard" :class="['menu-item', { 'is-active': isActive('/SellerPage/dashboard') }]"><span class="icon-slot">📊</span><span class="menu-label" v-show="!isCollapsed">Dashboard</span></NuxtLink></li>
         <li><NuxtLink to="/SellerPage/productPage" :class="['menu-item', { 'is-active': isActive('/SellerPage/productPage') }]"><span class="icon-slot">📦</span><span class="menu-label" v-show="!isCollapsed">Product</span></NuxtLink></li>
-        <li><NuxtLink to="/SellerPage/shippingPage" :class="['menu-item', { 'is-active': isActive('/SellerPage/shippingPage') }]"><span class="icon-slot">🚚</span><span class="menu-label" v-show="!isCollapsed">Shipping</span></NuxtLink></li>
-        <li><NuxtLink to="/SellerPage/category" :class="['menu-item', { 'is-active': isActive('/SellerPage/category') }]"><span class="icon-slot">📂</span><span class="menu-label" v-show="!isCollapsed">Category</span></NuxtLink></li>
         <li><NuxtLink to="/SellerPage/order" :class="['menu-item', { 'is-active': isActive('/SellerPage/order') }]"><span class="icon-slot">📋</span><span class="menu-label" v-show="!isCollapsed">Order</span></NuxtLink></li>
-        <li><NuxtLink to="/SellerPage/orderStatus" :class="['menu-item', { 'is-active': isActive('/SellerPage/orderStatus') }]"><span class="icon-slot">📝</span><span class="menu-label" v-show="!isCollapsed">Order Status</span></NuxtLink></li>
+        <li><NuxtLink to="/SellerPage/orderStatus" :class="['menu-item', { 'is-active': isActive('/SellerPage/orderStatus') }]"><span class="icon-slot">🚚</span><span class="menu-label" v-show="!isCollapsed">Order Status</span></NuxtLink></li>
         <li><NuxtLink to="/SellerPage/setting" :class="['menu-item', { 'is-active': isActive('/SellerPage/setting') }]"><span class="icon-slot">⚙️</span><span class="menu-label" v-show="!isCollapsed">Settings</span></NuxtLink></li>
       </ul>
     </nav>
