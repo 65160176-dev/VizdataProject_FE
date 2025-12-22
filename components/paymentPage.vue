@@ -5,7 +5,8 @@
         <div class="checkout-form">
           <form>
             <div class="row">
-              <div class="col-lg-6 col-sm-12">
+
+              <div class="col-12">
                 <div class="checkout-title">
                   <h3>Billing Details</h3>
                 </div>
@@ -62,7 +63,8 @@
                   </div>
                 </div>
               </div>
-              <div class="col-lg-6 col-sm-12">
+
+              <div class="col-12 mt-4">
                 <div class="checkout-details">
                   <div class="order-box">
                     <div class="title-box">
@@ -84,7 +86,6 @@
                       </li>
                       <li>Shipping
                         <div class="shipping">
-
                           <div class="shopping-option d-flex justify-content-between align-items-center">
                             <div>
                               <label class="mb-0" v-if="selectedShipping">
@@ -93,7 +94,6 @@
                                 <small class="text-muted">({{ selectedShipping.time }})</small>
                               </label>
                             </div>
-
                             <div class="text-end">
                               <span class="count fw-bold">
                                 {{ selectedShipping && selectedShipping.price === 0 ? 'Free' : (selectedShipping ?
@@ -105,12 +105,9 @@
                               </a>
                             </div>
                           </div>
-
                         </div>
                       </li>
                     </ul>
-
-
                     <ul class="sub-total">
                       <li>
                         Total
@@ -118,12 +115,11 @@
                       </li>
                     </ul>
                   </div>
-                  <div class="payment-box">
 
+                  <div class="payment-box">
                     <div class="checkout-title">
                       <h3>Payment Method</h3>
                     </div>
-
                     <div class="upper-box">
                       <div class="payment-options">
                         <ul>
@@ -134,7 +130,6 @@
                               PayPal
                             </label>
                           </li>
-
                           <li>
                             <label class="d-block" for="edo-ani1">
                               <input class="radio_animated" id="edo-ani1" value="promptpay" v-model="selectedPayment"
@@ -145,19 +140,17 @@
                         </ul>
                       </div>
                     </div>
-
                     <div class="text-end">
                       <div id="paypal-button-container" :class="[{ 'd-none': selectedPayment != 'paypal' }]"></div>
-
                       <div class="order-place" v-if="selectedPayment === 'promptpay' && cart.length">
                         <button class="btn btn-primary" @click.prevent="payWithPromptPay">Place Order
                           (PromptPay)</button>
                       </div>
                     </div>
-
                   </div>
                 </div>
               </div>
+
             </div>
           </form>
         </div>
@@ -184,10 +177,10 @@ export default {
   },
   computed: {
     cart() {
-      return useCartStore().cartItems
+      return useCartStore().selectedCheckoutItems
     },
     cartTotal() {
-      return useCartStore().cartTotalAmount
+      return useCartStore().selectedCheckoutTotal
     },
     curr() {
       return useProductStore().changeCurrency
@@ -348,6 +341,12 @@ export default {
     else if (this.isLogin && this.cart.length == 0) {
       useNuxtApp().$showToast({ msg: "Cart is Empty.", type: "error" })
       this.$router.replace('/page/account/cart')
+    }
+
+    if (this.cart.length === 0) {
+      useNuxtApp().$showToast({ msg: "Please select items to checkout.", type: "error" });
+      this.$router.replace('/page/account/cart');
+      return; // จบการทำงาน
     }
 
   },
