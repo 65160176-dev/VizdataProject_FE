@@ -46,14 +46,21 @@
           <span v-if="loading">Logging in...</span>
           <span v-else>Login</span>
         </button>
+        <button
+          class="btn btn-outline-secondary mt-2"
+          type="button"
+          @click="demoSellerLogin"
+          :disabled="loading"
+        >
+          Login as Seller (Demo)
+        </button>
       </div>
       <div class="form-footer">
         <span>Or Login with social platforms</span>
         <ul class="social">
           <li><a class="ti-facebook" href="#"></a></li>
-          <li><a class="ti-twitter" href="#"></a></li>
-          <li><a class="ti-instagram" href="#"></a></li>
-          <li><a class="ti-pinterest" href="#"></a></li>
+          <li><a class="ti-google" href="#"></a></li>
+          <li><a class="fa fa-telegram" href="#"></a></li>
         </ul>
       </div>
       
@@ -107,6 +114,14 @@ onMounted(() => {
 // Toggle password visibility
 function togglePassword() {
   passwordType.value = passwordType.value === 'password' ? 'text' : 'password'
+}
+
+// Prefill demo seller credentials and submit
+async function demoSellerLogin() {
+  email.value = 'seller@demo.com'
+  password.value = 'seller123'
+  rememberMe.value = true
+  await doLogin()
 }
 
 // Login function
@@ -396,9 +411,8 @@ async function doLogin() {
         }
         
         &.ti-facebook:hover { background: #3b5998; }
-        &.ti-twitter:hover { background: #1da1f2; }
-        &.ti-instagram:hover { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
-        &.ti-pinterest:hover { background: #bd081c; }
+        &.ti-google:hover { background: #1da1f2; }
+        &.fa-telegram:hover { background: #bd081c; }
       }
     }
   }

@@ -70,7 +70,26 @@
         }
       ]
     },
-    
+    {
+      "title": "Features",
+      "type": "sub",
+      "active": false,
+      "children": [
+        { "path": "/shop/fashion", "title": "Clothing", "type": "link" },
+        { "path": "/shop/watch", "title": "Watch", "type": "link" },
+        { "path": "/shop/shoes", "title": "Shoes", "type": "link" },
+        { "path": "/shop/bags", "title": "Bags", "type": "link" },
+        { "path": "/shop/pets", "title": "Pets", "type": "link" },
+        { "path": "/shop/furniture", "title": "Furniture", "type": "link" },
+        { "path": "/shop/flower", "title": "Flower", "type": "link" },
+        { "path": "/shop/electronics-1", "title": "Electronics", "type": "link" },
+        { "path": "/shop/vegetables", "title": "Vegetables", "type": "link" },
+        { "path": "/shop/beauty", "title": "Beauty", "type": "link" },
+        { "path": "/shop/tools", "title": "Tools", "type": "link" },
+        { "path": "/shop/jewellery", "title": "Jewellery", "type": "link" },
+        { "path": "/shop/gym", "title": "Gym", "type": "link" }
+      ]
+    },
     {
       "title": "Pages",
       "type": "sub",
