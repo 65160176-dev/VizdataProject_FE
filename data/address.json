@@ -1,0 +1,50 @@
+[
+    {
+        "id": 1,
+        "firstName": "สมชาย",
+        "lastName": "ใจดี",
+        "phone": "081-234-5678",
+        "email": "somchai@example.com",
+        "address": "123/45 ถนนสุขุมวิท แขวงคลองเตย",
+        "city": "เขตคลองเตย",
+        "state": "กรุงเทพมหานคร",
+        "pincode": "10110",
+        "isDefault": true
+    },
+    {
+        "id": 2,
+        "firstName": "สมชาย",
+        "lastName": "ใจดี",
+        "phone": "089-999-8888",
+        "email": "somchai.work@example.com",
+        "address": "88 อาคารทาวเวอร์ ชั้น 15 ถนนสาทร",
+        "city": "เขตบางรัก",
+        "state": "กรุงเทพมหานคร",
+        "pincode": "10500",
+        "isDefault": false
+    },
+    {
+        "id": 3,
+        "firstName": "สมหญิง",
+        "lastName": "รักเรียน",
+        "phone": "086-555-4321",
+        "email": "somying@example.com",
+        "address": "555/99 คอนโดหรู ชั้น 20 ถนนรัชดาภิเษก แขวงจันทรเกษม",
+        "city": "เขตจตุจักร",
+        "state": "กรุงเทพมหานคร",
+        "pincode": "10900",
+        "isDefault": false
+    },
+    {
+        "id": 4,
+        "firstName": "มานะ",
+        "lastName": "อดทน",
+        "phone": "091-888-7777",
+        "email": "mana.test@example.com",
+        "address": "99/9 หมู่บ้านสุขสันต์ ซอย 5 ถนนติวานนท์ ต.บางตลาด",
+        "city": "อำเภอปากเกร็ด",
+        "state": "นนทบุรี",
+        "pincode": "11120",
+        "isDefault": false
+    }
+]

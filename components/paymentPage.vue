@@ -20,10 +20,10 @@
                       </div>
                       <div class="phone">Tel: {{ user.phone.value }}</div>
                       <div class="address-detail pe-5">
-                        {{ user.address.value }}, {{ user.city.value }},
-                        {{ user.state.value }} {{ user.pincode.value }}
+                        {{ user.address.value }}<br>
+                        {{ user.city.value }}, {{ user.state.value }} {{ user.pincode.value }}
                       </div>
-                      <div class="email text-muted small">{{ user.email.value }}</div>
+                      <div class="email text-muted small mt-1">{{ user.email.value }}</div>
 
                       <div class="edit-btn-icon" @click="editCurrentAddress">
                         <i class="ti-pencil-alt"></i>
@@ -51,7 +51,11 @@
                           :key="index" :class="{ 'active': isCurrentAddress(addr) }" @click="selectFromList(addr)">
 
                           <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold">{{ addr.firstName }} {{ addr.lastName }}</span>
+                            <span class="fw-bold">
+                              {{ addr.firstName }} {{ addr.lastName }}
+                              <span v-if="addr.isDefault" class="badge bg-success ms-2"
+                                style="font-size: 10px;">Default</span>
+                            </span>
                             <span class="check-icon text-primary" v-if="isCurrentAddress(addr)">
                               <i class="ti-check"></i>
                             </span>
@@ -184,7 +188,6 @@
                     </div>
 
                     <div class="text-center mt-4">
-
                       <div v-if="isQRVisible && selectedPayment === 'promptpay'"
                         class="qr-payment-section mb-3 p-3 border rounded bg-white">
                         <h5 class="fw-bold mb-3">Scan to Pay</h5>
@@ -225,9 +228,7 @@
                             </button>
                           </div>
                         </div>
-
                       </div>
-
                     </div>
                   </div>
                 </div>
@@ -248,6 +249,7 @@
 <script>
 import { useProductStore } from '~~/store/products'
 import shipmentMethod from './widgets/Payment/shipmentMethod.vue';
+import addressDataJSON from '~/data/address.json' // Import JSON
 
 export default {
   components: {
@@ -257,25 +259,15 @@ export default {
     return {
       checkoutItems: [],
       selectedPayment: 'promptpay',
-
       isLoading: false,
       isQRVisible: false,
 
-      savedAddressesList: [
-        {
-          firstName: "สมชาย", lastName: "ใจดี", phone: "081-234-5678", email: "somchai@example.com",
-          address: "123/45 ถนนสุขุมวิท แขวงคลองเตย", city: "เขตคลองเตย", state: "กรุงเทพมหานคร", pincode: "10110"
-        },
-        {
-          firstName: "สมหญิง", lastName: "รักเรียน", phone: "099-888-7777", email: "somying@test.com",
-          address: "99 หมู่ 1 ต.สุเทพ", city: "เมืองเชียงใหม่", state: "เชียงใหม่", pincode: "50200"
-        }
-      ],
+      savedAddressesList: [], // เริ่มต้นเป็นว่าง เดี๋ยวโหลดใส่
 
       isAddressListVisible: false,
       isFormVisible: false,
 
-      formTemp: { firstName: '', lastName: '', phone: '', email: '', address: '', city: '', state: '', pincode: '' },
+      formTemp: { firstName: '', lastName: '', phone: '', email: '', address: '', city: '', state: '', pincode: '', isDefault: false },
 
       user: {
         firstName: { value: '', errormsg: '' },
@@ -297,13 +289,11 @@ export default {
       ],
     }
   },
-
   watch: {
     selectedPayment(val) {
       this.isQRVisible = false;
     }
   },
-
   computed: {
     curr() { return useProductStore().changeCurrency },
     cart() { return this.checkoutItems; },
@@ -314,20 +304,26 @@ export default {
     }
   },
   methods: {
+    // โหลด Address เข้าฟอร์ม User
     loadAddressToUser(addr) {
-      this.user.firstName.value = addr.firstName;
-      this.user.lastName.value = addr.lastName;
-      this.user.phone.value = addr.phone;
-      this.user.email.value = addr.email;
-      this.user.address.value = addr.address;
-      this.user.city.value = addr.city;
-      this.user.state.value = addr.state;
-      this.user.pincode.value = addr.pincode;
+      if (!addr) return;
+      this.user.firstName.value = addr.firstName || '';
+      this.user.lastName.value = addr.lastName || '';
+      this.user.phone.value = addr.phone || '';
+      this.user.email.value = addr.email || '';
+      this.user.address.value = addr.address || '';
+      this.user.city.value = addr.city || '';
+      this.user.state.value = addr.state || '';
+      this.user.pincode.value = addr.pincode || '';
     },
     toggleAddressList() { this.isAddressListVisible = !this.isAddressListVisible; this.isFormVisible = false; },
     selectFromList(addr) { this.loadAddressToUser(addr); this.isAddressListVisible = false; },
     isCurrentAddress(addr) { return this.user.phone.value === addr.phone; },
-    openAddressForm() { this.isFormVisible = true; this.isAddressListVisible = false; this.formTemp = { firstName: '', lastName: '', phone: '', email: '', address: '', city: '', state: '', pincode: '' }; },
+    openAddressForm() {
+      this.isFormVisible = true;
+      this.isAddressListVisible = false;
+      this.formTemp = { firstName: '', lastName: '', phone: '', email: '', address: '', city: '', state: '', pincode: '', isDefault: false };
+    },
     editCurrentAddress() {
       this.formTemp = {
         firstName: this.user.firstName.value, lastName: this.user.lastName.value, phone: this.user.phone.value, email: this.user.email.value,
@@ -335,108 +331,112 @@ export default {
       };
       this.isFormVisible = true; this.isAddressListVisible = false;
     },
-    editSavedAddress(index) { this.formTemp = { ...this.savedAddressesList[index] }; this.isFormVisible = true; this.isAddressListVisible = false; },
+    editSavedAddress(index) {
+      this.formTemp = { ...this.savedAddressesList[index] };
+      this.isFormVisible = true;
+      this.isAddressListVisible = false;
+    },
     cancelAddressForm() { this.isFormVisible = false; },
+
+    // บันทึกที่อยู่ใหม่ และ Save ลง Local Storage
     saveNewAddress() {
-      if (!this.formTemp.firstName || !this.formTemp.phone) { useNuxtApp().$showToast({ msg: "Please fill required fields", type: "error" }); return; }
+      if (!this.formTemp.firstName || !this.formTemp.phone) {
+        useNuxtApp().$showToast({ msg: "Please fill required fields", type: "error" });
+        return;
+      }
+
       const newAddr = { ...this.formTemp };
-      const exists = this.savedAddressesList.some(addr => addr.phone === newAddr.phone);
-      if (!exists) { this.savedAddressesList.push(newAddr); }
-      this.loadAddressToUser(newAddr); this.isFormVisible = false;
+
+      // เช็คว่ามีอยู่แล้วไหม (ใช้เบอร์โทรเช็ค)
+      const index = this.savedAddressesList.findIndex(addr => addr.phone === newAddr.phone);
+
+      if (index !== -1) {
+        // อัปเดตของเดิม
+        this.savedAddressesList[index] = newAddr;
+      } else {
+        // เพิ่มใหม่
+        this.savedAddressesList.push(newAddr);
+      }
+
+      // บันทึกลง Local Storage
+      localStorage.setItem('my_app_addresses', JSON.stringify(this.savedAddressesList));
+
+      this.loadAddressToUser(newAddr);
+      this.isFormVisible = false;
     },
+
     handleShippingSelection(option) { this.selectedShipping = option; this.showShippingModal = false; },
-
-    // [เพิ่ม] ฟังก์ชันกลับหน้าแรก
-    cancelToHome() {
-      this.$router.push('/');
-    },
-
+    cancelToHome() { this.$router.push('/'); },
     handlePlaceOrder() {
       this.onSubmit();
       if (this.user.firstName.errormsg || this.user.phone.errormsg) {
         try { useNuxtApp().$showToast({ msg: "Please check your details.", type: "error" }); } catch (e) { }
         return;
       }
-
       if (this.selectedPayment === 'promptpay') {
         this.isQRVisible = true;
       } else if (this.selectedPayment === 'cod') {
         this.confirmOrder();
       }
     },
-
-    cancelPromptPay() {
-      this.isQRVisible = false;
-    },
-
+    cancelPromptPay() { this.isQRVisible = false; },
     async confirmOrder() {
       this.isLogin = useCookie('userlogin').value;
       if (!this.isLogin) {
         this.$router.replace('/page/auth/LoginPage?redirect=/page/account/checkout');
         return;
       }
-
       this.isLoading = true;
-
       try {
         await new Promise(resolve => setTimeout(resolve, 1000));
-
-        /* await this.$store.dispatch('products/createOrder', {
-            product: this.cart,
-            userDetail: this.user,
-            token: this.selectedPayment + '-manual',
-            paymentMethod: this.selectedPayment,
-            amt: this.grandTotal
-        });
-        */
-
         this.isQRVisible = false;
         localStorage.removeItem('checkout_items');
-
         if (this.selectedPayment === 'cod') {
-          try {
-            useNuxtApp().$showToast({ msg: "สั่งซื้อสินค้าสำเร็จ", type: "success" });
-          } catch (e) {
-            console.log("Toast error:", e);
-          }
-          setTimeout(() => {
-            if (this.$router) {
-              this.$router.replace('/');
-            } else {
-              window.location.href = '/';
-            }
-          }, 500);
+          try { useNuxtApp().$showToast({ msg: "สั่งซื้อสินค้าสำเร็จ", type: "success" }); } catch (e) { }
+          setTimeout(() => { window.location.href = '/'; }, 500);
         } else {
           this.$router.push('/page/order-success');
         }
-
       } catch (error) {
         console.error("Order Failed:", error);
-        alert("เกิดข้อผิดพลาดในการสั่งซื้อ");
       } finally {
         this.isLoading = false;
       }
     },
-
     onSubmit() {
       if (!this.user.firstName.value || this.user.firstName.value.length <= 1) this.user.firstName.errormsg = 'empty not allowed'; else this.user.firstName.errormsg = '';
       if (!this.user.phone.value) this.user.phone.errormsg = 'empty not allowed'; else this.user.phone.errormsg = '';
-    },
-    validEmail(email) {
-      const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-      return re.test(email);
     }
   },
   mounted() {
+    // 1. โหลด Cart Items
     const items = localStorage.getItem('checkout_items');
     if (items) { this.checkoutItems = JSON.parse(items); } else {
       try { useNuxtApp().$showToast({ msg: "No items selected.", type: "error" }); } catch (e) { }
       this.$router.replace('/page/account/cart');
       return;
     }
-    if (this.savedAddressesList.length > 0) { this.loadAddressToUser(this.savedAddressesList[0]); }
+
+    // 2. โหลด Address (JSON + LocalStorage)
+    const storedAddr = localStorage.getItem('my_app_addresses');
+    if (storedAddr) {
+      // ถ้ามีใน Local Storage ให้ใช้จาก Local Storage
+      this.savedAddressesList = JSON.parse(storedAddr);
+    } else {
+      // ถ้าไม่มี ให้ใช้จาก JSON และบันทึกไว้
+      this.savedAddressesList = addressDataJSON || [];
+      // (Optional) ถ้าอยากให้ sync กลับไป local storage เลย ก็เปิดบรรทัดล่าง
+      // localStorage.setItem('my_app_addresses', JSON.stringify(this.savedAddressesList));
+    }
+
+    // 3. เลือก Address ที่เป็น Default หรืออันแรกสุด
+    if (this.savedAddressesList.length > 0) {
+      const defaultAddr = this.savedAddressesList.find(addr => addr.isDefault) || this.savedAddressesList[0];
+      this.loadAddressToUser(defaultAddr);
+    }
+
+    // 4. Init อื่นๆ
     this.selectedShipping = this.shippingOptions[1];
-    if (window.paypal) window.paypal.Buttons({}).render('#paypal-button-container');
     this.isLogin = useCookie('userlogin').value;
     if (!this.isLogin) { this.$router.replace('/page/auth/LoginPage?redirect=/page/account/checkout'); }
   }
@@ -444,6 +444,7 @@ export default {
 </script>
 
 <style scoped>
+/* (Style เดิม) */
 .address-box {
   border: 1px solid #ddd;
   padding: 20px;
@@ -479,11 +480,6 @@ export default {
   color: #ff5722;
 }
 
-.check-icon {
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
 .btn-outline {
   background-color: transparent;
   border: 1px solid #ddd;
@@ -496,15 +492,19 @@ export default {
   color: #ff5722;
 }
 
-.gap-2 {
-  gap: 0.5rem;
+.btn-solid {
+  background-color: #ff5722;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  transition: 0.3s;
 }
 
-.me-2 {
-  margin-right: 0.5rem;
+.btn-solid:hover {
+  background-color: #e64a19;
+  box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3);
 }
 
-/* QR Section */
 .qr-payment-section {
   background-color: #f8f9fa;
   border: 1px solid #dee2e6;
@@ -521,24 +521,5 @@ export default {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.btn-block {
-  display: block;
-  width: 100%;
-}
-
-/* ปุ่มสีส้ม */
-.btn-solid {
-  background-color: #ff5722;
-  color: #fff;
-  border: none;
-  font-weight: 700;
-  transition: 0.3s;
-}
-
-.btn-solid:hover {
-  background-color: #e64a19;
-  box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3);
 }
 </style>
