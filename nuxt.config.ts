@@ -23,8 +23,19 @@ export default defineNuxtConfig({
 
   },
 
+  // Frontend dev server configuration
+  devServer: {
+    port: 3001,
+  },
+
   css: ["@/assets/scss/app.scss"],
   ssr:false,
+
+  runtimeConfig: {
+    public: {
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3000', // Backend API port
+    }
+  },
 
   modules: [
     'nuxt-icon',
