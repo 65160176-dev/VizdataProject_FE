@@ -114,10 +114,14 @@
               </div>
             </li>
             <li>
-              <div class="buttons" style="display: flex; justify-content: flex-end;">
+              <div class="buttons">
                 <nuxt-link :to="{ path: '/page/account/cart' }" :class="'view-cart'">
                   view cart
                 </nuxt-link>
+                <a href="javascript:void(0)" @click="goToCheckout" :class="'checkout'">
+                  checkout
+                </a>
+
               </div>
             </li>
           </ul>

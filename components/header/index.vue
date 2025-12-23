@@ -1,7 +1,7 @@
 <template>
   <div>
     <header>
-     
+
       <div class="mobile-fix-option"></div>
       <WidgetsTopbar />
       <div class="container">
@@ -38,7 +38,7 @@ export default {
       leftSidebarVal: false
     }
   },
-  
+
   methods: {
     left_sidebar() {
       this.leftSidebarVal = !this.leftSidebarVal
