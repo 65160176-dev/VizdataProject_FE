@@ -8,7 +8,6 @@
       "email": "somchai@email.com",
       "address": "123 Sukhumvit Rd, Bangkok",
       "total": 1250,
-      "paymentMethod": "Credit Card",
       "status": "Pending Review",
       "items": [
         { "name": "Wireless Headphones", "price": 1250, "qty": 1 }
@@ -22,7 +21,6 @@
       "email": "nancy@email.com",
       "address": "456 Pattaya, Chonburi",
       "total": 4500,
-      "paymentMethod": "COD",
       "status": "Accepted",
       "items": [
         { "name": "Smart Watch Series 5", "price": 4500, "qty": 1 }
@@ -36,7 +34,6 @@
       "email": "tony@stark.com",
       "address": "890 Malibu Point",
       "total": 35000,
-      "paymentMethod": "Bank Transfer",
       "status": "Pending Review",
       "items": [
         { "name": "Iron Man Suit Mark 50", "price": 30000, "qty": 1 },
@@ -51,7 +48,6 @@
       "email": "peter@spidey.web",
       "address": "20 Ingram St, NY",
       "total": 550,
-      "paymentMethod": "Credit Card",
       "status": "Cancelled",
       "items": [
         { "name": "Web Fluid Refill", "price": 275, "qty": 2 }
