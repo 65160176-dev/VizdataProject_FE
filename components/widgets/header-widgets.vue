@@ -118,6 +118,7 @@
                 <nuxt-link :to="{ path: '/page/account/cart' }" :class="'view-cart'">
                   view cart
                 </nuxt-link>
+
                 <a href="javascript:void(0)" @click="goToCheckout" :class="'checkout'">
                   checkout
                 </a>
@@ -135,6 +136,7 @@
 import { useProductStore } from '~/store/products'
 import { useCartStore } from '~/store/cart'
 import { mapState } from 'pinia'
+
 export default {
   data() {
     return {
@@ -161,7 +163,6 @@ export default {
       return this.lang.filter((lang) => lang.code != this.$i18n.locale)
     },
     ...mapState(useCartStore, {
-
       cartTotal: (store) => store.cartTotalAmount,
     }),
     cart() {
@@ -171,10 +172,8 @@ export default {
       return useProductStore().changeCurrency
     },
     totalItems() {
-      // ใช้ reduce เพื่อรวมค่า quantity ของสินค้าทุกชิ้น
       return this.cart.reduce((total, item) => total + item.quantity, 0);
     }
-
   },
   watch: {
     searchString() {
@@ -209,13 +208,24 @@ export default {
       this.currencyChange = { value: currency, symbol: currSymbol }
       useProductStore().changeCurrency2(this.currencyChange)
     },
+
+    // --- แก้ไขฟังก์ชันนี้ ---
     goToCheckout() {
+      // 1. ตรวจสอบว่ามีสินค้าในตะกร้าไหม
+      if (this.cart.length === 0) {
+        useNuxtApp().$showToast({ msg: "Cart is empty", type: "error" });
+        return;
+      }
+
+      // 2. บันทึกสินค้า "ทั้งหมด" ลงใน LocalStorage
+      // ชื่อตัวแปร 'checkout_items' ต้องตรงกับที่หน้า PaymentPage เรียกใช้
+      localStorage.setItem('checkout_items', JSON.stringify(this.cart));
+
+      // 3. ตรวจสอบ Login และเปลี่ยนหน้า
       const user = localStorage.getItem('user')
       if (user) {
-        // User is logged in, go to checkout
         this.$router.push('/page/account/checkout')
       } else {
-        // User not logged in, redirect to login with return URL
         this.$router.push('/page/auth/LoginPage?redirect=/page/account/checkout')
       }
     }

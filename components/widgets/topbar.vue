@@ -16,9 +16,9 @@
         <div class="col-lg-6 text-end">
           <ul class="header-dropdown">
 
-            <HeaderNotification />
+            <HeaderNotification v-if="isLogin" />
 
-            <li class="mobile-wishlist">
+            <li class="mobile-wishlist" v-if="isLogin">
               <a href="javascript:void(0)" @click="checkAffiliateStatus" style="color: inherit;">
                 <i class="fa fa-handshake-o" aria-hidden="true"></i> Affiliate
               </a>
@@ -106,10 +106,10 @@ export default {
     }
   },
   created() {
+    // ตรวจสอบสถานะ Login ตอนโหลดหน้าเว็บ
     this.isLogin = Boolean(useCookie('userlogin').value || (import.meta.client && localStorage.getItem('user')))
   },
   computed: {
-    // ไม่ต้องมี unreadCount แล้ว
   }
 }   
 </script>

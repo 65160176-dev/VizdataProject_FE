@@ -120,46 +120,42 @@
 
                 </div>
               </div>
-
               <div class="col-lg-6 col-sm-12">
                 <div class="checkout-details">
                   <div class="order-box">
+
                     <div class="title-box">
-                      <div>Product <span>Total</span></div>
+                      <div class="d-flex align-items-center mb-3">
+                        <span class="fw-bold" style="width: 100px;">Shop</span>
+                        <span class="fw-bold flex-grow-1">Product</span>
+                        <span class="fw-bold text-end" style="width: 100px;">Total</span>
+                        <span class="fw-bold text-end ms-3" style="width: 80px;">Shipping</span>
+                      </div>
                     </div>
+
                     <ul class="qty" v-if="cart.length">
                       <li v-for="(item, index) in cart" :key="index">
-                        {{ item.title }} X {{ item.quantity }}
-                        <span>{{ (item.price * curr.curr * item.quantity).toFixed(2) }}</span>
-                      </li>
-                    </ul>
-                    <ul class="sub-total">
-                      <li>Subtotal <span class="count">{{ (cartTotal * curr.curr).toFixed(2) }}</span></li>
-                      <li>Shipping
-                        <div class="shipping">
-                          <div class="shopping-option d-flex justify-content-between align-items-center">
-                            <div>
-                              <label class="mb-0" v-if="selectedShipping">
-                                {{ selectedShipping.name }}<br>
-                                <small class="text-muted">({{ selectedShipping.time }})</small>
-                              </label>
-                            </div>
-                            <div class="text-end">
-                              <span class="count fw-bold">
-                                {{ selectedShipping && selectedShipping.price === 0 ? 'Free' : (selectedShipping ?
-                                  (selectedShipping.price * curr.curr).toFixed(2) : 0) }}
-                              </span>
-                              <a href="javascript:void(0)" class="d-block text-primary"
-                                style="font-size: 0.8rem; cursor: pointer;"
-                                @click="showShippingModal = true">(เปลี่ยน)</a>
-                            </div>
-                          </div>
+                        <div class="d-flex align-items-center w-100">
+                          <span class="text-muted text-uppercase small"
+                            style="width: 100px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                            {{ item.brand || '-' }}
+                          </span>
+                          <span class="flex-grow-1 pe-2">
+                            {{ item.title }} X {{ item.quantity }}
+                          </span>
+                          <span class="text-end" style="width: 100px;">
+                            {{ (item.price * curr.curr * item.quantity).toFixed(2) }}
+                          </span>
+                          <span class="ms-3" style="width: 80px;"></span>
                         </div>
                       </li>
                     </ul>
+
                     <ul class="sub-total">
+                      <li>Subtotal <span class="count">{{ (cartTotal * curr.curr).toFixed(2) }}</span></li>
                       <li>Total <span class="count">{{ (grandTotal * curr.curr).toFixed(2) }}</span></li>
                     </ul>
+
                   </div>
 
                   <div class="payment-box">
@@ -248,8 +244,9 @@
 
 <script>
 import { useProductStore } from '~~/store/products'
+import { useCartStore } from '~~/store/cart' // Import Store
 import shipmentMethod from './widgets/Payment/shipmentMethod.vue';
-import addressDataJSON from '~/data/address.json' // Import JSON
+import addressDataJSON from '~/data/address.json'
 
 export default {
   components: {
@@ -262,7 +259,7 @@ export default {
       isLoading: false,
       isQRVisible: false,
 
-      savedAddressesList: [], // เริ่มต้นเป็นว่าง เดี๋ยวโหลดใส่
+      savedAddressesList: [],
 
       isAddressListVisible: false,
       isFormVisible: false,
@@ -296,15 +293,20 @@ export default {
   },
   computed: {
     curr() { return useProductStore().changeCurrency },
-    cart() { return this.checkoutItems; },
+    cart() {
+      // เรียงลำดับตาม brand (Shop)
+      return [...this.checkoutItems].sort((a, b) => {
+        const brandA = (a.brand || '').toLowerCase();
+        const brandB = (b.brand || '').toLowerCase();
+        if (brandA < brandB) return -1;
+        if (brandA > brandB) return 1;
+        return 0;
+      });
+    },
     cartTotal() { return this.checkoutItems.reduce((total, item) => total + (item.price * item.quantity), 0); },
-    grandTotal() {
-      let shippingCost = this.selectedShipping ? this.selectedShipping.price : 0;
-      return this.cartTotal + shippingCost;
-    }
+    grandTotal() { return this.cartTotal; }
   },
   methods: {
-    // โหลด Address เข้าฟอร์ม User
     loadAddressToUser(addr) {
       if (!addr) return;
       this.user.firstName.value = addr.firstName || '';
@@ -337,34 +339,22 @@ export default {
       this.isAddressListVisible = false;
     },
     cancelAddressForm() { this.isFormVisible = false; },
-
-    // บันทึกที่อยู่ใหม่ และ Save ลง Local Storage
     saveNewAddress() {
       if (!this.formTemp.firstName || !this.formTemp.phone) {
         useNuxtApp().$showToast({ msg: "Please fill required fields", type: "error" });
         return;
       }
-
       const newAddr = { ...this.formTemp };
-
-      // เช็คว่ามีอยู่แล้วไหม (ใช้เบอร์โทรเช็ค)
       const index = this.savedAddressesList.findIndex(addr => addr.phone === newAddr.phone);
-
       if (index !== -1) {
-        // อัปเดตของเดิม
         this.savedAddressesList[index] = newAddr;
       } else {
-        // เพิ่มใหม่
         this.savedAddressesList.push(newAddr);
       }
-
-      // บันทึกลง Local Storage
       localStorage.setItem('my_app_addresses', JSON.stringify(this.savedAddressesList));
-
       this.loadAddressToUser(newAddr);
       this.isFormVisible = false;
     },
-
     handleShippingSelection(option) { this.selectedShipping = option; this.showShippingModal = false; },
     cancelToHome() { this.$router.push('/'); },
     handlePlaceOrder() {
@@ -380,62 +370,122 @@ export default {
       }
     },
     cancelPromptPay() { this.isQRVisible = false; },
+
+    // --- ฟังก์ชันหลักในการบันทึกออเดอร์ (แก้ไขแล้ว) ---
     async confirmOrder() {
       this.isLogin = useCookie('userlogin').value;
       if (!this.isLogin) {
         this.$router.replace('/page/auth/LoginPage?redirect=/page/account/checkout');
         return;
       }
+
       this.isLoading = true;
       try {
         await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // 1. แยกออเดอร์ตาม Brand
+        const itemsByBrand = {};
+        this.checkoutItems.forEach(item => {
+          const brandName = item.brand || 'Official Store';
+          if (!itemsByBrand[brandName]) itemsByBrand[brandName] = [];
+          itemsByBrand[brandName].push(item);
+        });
+
+        const storedOrders = JSON.parse(localStorage.getItem('my_app_orders') || "[]");
+        const now = new Date();
+        const dateString = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+        // 2. สร้าง Order ตามจำนวน Brand
+        Object.keys(itemsByBrand).forEach((brand, index) => {
+          const brandItems = itemsByBrand[brand];
+          const subtotal = brandItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+          const shippingFee = this.selectedShipping ? this.selectedShipping.price : 0;
+          const total = subtotal + shippingFee;
+          const orderId = 'ORD-' + Math.floor(10000 + Math.random() * 90000) + '-' + (index + 1);
+
+          const newOrder = {
+            id: Date.now() + index,
+            orderId: orderId,
+            date: dateString,
+            shopName: brand,
+            customer: `${this.user.firstName.value} ${this.user.lastName.value}`,
+            email: this.user.email.value,
+            address: `${this.user.address.value}, ${this.user.city.value}, ${this.user.state.value} ${this.user.pincode.value}`,
+            subtotal: subtotal,
+            shippingFee: shippingFee,
+            total: total,
+            paymentMethod: this.selectedPayment === 'cod' ? 'COD' : 'PromptPay',
+            status: 'Pending Review',
+            items: brandItems.map(item => ({
+              name: item.title,
+              brand: brand,
+              price: item.price,
+              qty: item.quantity,
+              image: item.images ? item.images[0].src : ''
+            }))
+          };
+          storedOrders.unshift(newOrder);
+        });
+
+        // 3. บันทึก
+        localStorage.setItem('my_app_orders', JSON.stringify(storedOrders));
+
+        // 4. เคลียร์ค่า
         this.isQRVisible = false;
         localStorage.removeItem('checkout_items');
-        if (this.selectedPayment === 'cod') {
-          try { useNuxtApp().$showToast({ msg: "สั่งซื้อสินค้าสำเร็จ", type: "success" }); } catch (e) { }
-          setTimeout(() => { window.location.href = '/'; }, 500);
-        } else {
-          this.$router.push('/page/order-success');
-        }
+
+        const cartStore = useCartStore();
+        if (cartStore.cartItems) cartStore.cartItems = [];
+
+        // 5. แสดงผลและกลับหน้า Homepage (รวมกันทั้ง COD และ PromptPay)
+        try { useNuxtApp().$showToast({ msg: "สั่งซื้อสินค้าสำเร็จ", type: "success" }); } catch (e) { }
+
+        setTimeout(() => {
+          this.$router.push('/');
+        }, 500);
+
       } catch (error) {
         console.error("Order Failed:", error);
       } finally {
         this.isLoading = false;
       }
     },
+
     onSubmit() {
       if (!this.user.firstName.value || this.user.firstName.value.length <= 1) this.user.firstName.errormsg = 'empty not allowed'; else this.user.firstName.errormsg = '';
       if (!this.user.phone.value) this.user.phone.errormsg = 'empty not allowed'; else this.user.phone.errormsg = '';
     }
   },
   mounted() {
-    // 1. โหลด Cart Items
-    const items = localStorage.getItem('checkout_items');
-    if (items) { this.checkoutItems = JSON.parse(items); } else {
+    let items = localStorage.getItem('checkout_items');
+    if (!items || items === '[]') {
+      const cartStore = useCartStore();
+      if (cartStore.cartItems && cartStore.cartItems.length > 0) {
+        items = JSON.stringify(cartStore.cartItems);
+        localStorage.setItem('checkout_items', items);
+      }
+    }
+
+    if (items && items !== '[]') {
+      this.checkoutItems = JSON.parse(items);
+    } else {
       try { useNuxtApp().$showToast({ msg: "No items selected.", type: "error" }); } catch (e) { }
       this.$router.replace('/page/account/cart');
       return;
     }
 
-    // 2. โหลด Address (JSON + LocalStorage)
     const storedAddr = localStorage.getItem('my_app_addresses');
     if (storedAddr) {
-      // ถ้ามีใน Local Storage ให้ใช้จาก Local Storage
       this.savedAddressesList = JSON.parse(storedAddr);
     } else {
-      // ถ้าไม่มี ให้ใช้จาก JSON และบันทึกไว้
       this.savedAddressesList = addressDataJSON || [];
-      // (Optional) ถ้าอยากให้ sync กลับไป local storage เลย ก็เปิดบรรทัดล่าง
-      // localStorage.setItem('my_app_addresses', JSON.stringify(this.savedAddressesList));
     }
 
-    // 3. เลือก Address ที่เป็น Default หรืออันแรกสุด
     if (this.savedAddressesList.length > 0) {
       const defaultAddr = this.savedAddressesList.find(addr => addr.isDefault) || this.savedAddressesList[0];
       this.loadAddressToUser(defaultAddr);
     }
 
-    // 4. Init อื่นๆ
     this.selectedShipping = this.shippingOptions[1];
     this.isLogin = useCookie('userlogin').value;
     if (!this.isLogin) { this.$router.replace('/page/auth/LoginPage?redirect=/page/account/checkout'); }

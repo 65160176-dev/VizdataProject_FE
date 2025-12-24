@@ -9,7 +9,7 @@
             <table class="table cart-table table-responsive-xs" v-if="cart.length">
               <thead>
                 <tr class="table-head">
-                  <th scope="col">
+                  <th scope="col" style="width: 1%; text-align: center; white-space: nowrap;">
                     <input type="checkbox" v-model="isAllSelected" />
                   </th>
                   <th scope="col">image</th>
@@ -20,9 +20,10 @@
                   <th scope="col">total</th>
                 </tr>
               </thead>
+
               <tbody v-for="(item, index) in cart" :key="index">
                 <tr>
-                  <td>
+                  <td style="text-align: center;">
                     <input type="checkbox" :value="item" v-model="selectedItems" />
                   </td>
                   <td>
@@ -88,17 +89,19 @@
                   </td>
                 </tr>
               </tbody>
-            </table>
-            <table class="table cart-table table-responsive-md" v-if="cart.length">
+
               <tfoot>
                 <tr>
-                  <td>total price (Selected):</td>
+                  <td colspan="6" class="text-end" style="padding-right: 20px; font-weight: bold;">
+                    total price (Selected):
+                  </td>
                   <td>
-                    <h2>{{ curr.symbol }}{{ (selectedTotal * curr.curr).toFixed(2) }}</h2>
+                    <h2 class="td-color">{{ curr.symbol }}{{ (selectedTotal * curr.curr).toFixed(2) }}</h2>
                   </td>
                 </tr>
               </tfoot>
             </table>
+
             <div class="col-sm-12 empty-cart-cls text-center" v-if="!cart.length">
               <img src='/images/icon-empty-cart.png' class="img-fluid" alt="empty cart" />
               <h3 class="mt-3">
@@ -135,14 +138,13 @@ import { useProductStore } from '~~/store/products'
 export default {
   data() {
     return {
-      selectedItems: [] // เก็บรายการที่เลือก
+      selectedItems: []
     }
   },
   computed: {
     cart() {
       return useCartStore().cartItems
     },
-    // คำนวณราคารวมเฉพาะที่เลือก
     selectedTotal() {
       return this.selectedItems.reduce((total, item) => {
         return total + (item.price * item.quantity);
@@ -151,7 +153,6 @@ export default {
     curr() {
       return useProductStore().changeCurrency
     },
-    // Logic สำหรับ Checkbox เลือกทั้งหมด
     isAllSelected: {
       get() {
         return this.cart.length > 0 && this.selectedItems.length === this.cart.length;
@@ -166,7 +167,6 @@ export default {
     }
   },
   watch: {
-    // ถ้ามีการลบของออกจากตะกร้า ให้ลบออกจาก selectedItems ด้วยเพื่อกัน error
     cart: {
       handler(newVal) {
         this.selectedItems = this.selectedItems.filter(selected =>
@@ -189,17 +189,12 @@ export default {
     decrement(product, qty = -1) {
       useCartStore().updateCartQuantity({ product: product, qty: qty })
     },
-    // ฟังก์ชันไปหน้า Checkout
     goToCheckout() {
       if (this.selectedItems.length === 0) {
         useNuxtApp().$showToast({ msg: "Please select items to checkout.", type: "error" })
         return;
       }
-
-      // 1. บันทึกสินค้าที่ติ๊กเลือก ลงใน LocalStorage
       localStorage.setItem('checkout_items', JSON.stringify(this.selectedItems));
-
-      // 2. ไปหน้า Checkout
       this.$router.push('/page/account/checkout');
     }
   },
