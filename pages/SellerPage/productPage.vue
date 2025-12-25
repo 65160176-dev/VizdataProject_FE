@@ -3,7 +3,7 @@
     <div class="card">
       
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h5>Products Category</h5>
+        <h5>Products Category 📦</h5>
         <div>
           <button type="button" class="btn btn-outline-secondary me-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#categoryModal">
             <Icon name="feather:list" size="16" class="me-1" style="margin-bottom:2px;"/> Category
@@ -279,9 +279,8 @@ import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 definePageMeta({ layout: 'seller' })
 
-// --- 🔗 1. เชื่อมต่อ Backend (NestJS) ---
-// ดึงข้อมูลสินค้าจาก API แทน JSON
-const { data: products, refresh } = await useFetch('http://localhost:3000/product')
+// --- 🔗 แก้ URL ตรงนี้เป็น /api/product ---
+const { data: products, refresh } = await useFetch('http://localhost:3001/api/product')
 
 const categoryOptions = ref(['Electronics', 'Jewellery', 'Fashion', 'Shoes', 'Watch', 'Beauty'])
 
@@ -313,6 +312,21 @@ const calculateOptions = (weight) => {
   return options
 }
 
+const safeCloseModal = (modalId) => {
+  const modalEle = document.getElementById(modalId)
+  if (modalEle) {
+    const modalInstance = bootstrap.Modal.getInstance(modalEle)
+    if (modalInstance) {
+      modalInstance.hide()
+    } else {
+      new bootstrap.Modal(modalEle).hide()
+    }
+  }
+  document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
+  document.body.classList.remove('modal-open')
+  document.body.style = ''
+}
+
 // --- Add Product ---
 const newItem = ref({ 
   name: '', stock: 0, price: 0, commission: 0, 
@@ -324,7 +338,6 @@ const availableOptionsAdd = ref([])
 watch(() => newItem.value.weight, (newVal) => {
   const options = calculateOptions(newVal)
   availableOptionsAdd.value = options
-  
   if (options.length > 0) {
     const lastOption = options[options.length - 1]
     newItem.value.shippingCost = lastOption.text
@@ -343,8 +356,8 @@ const onFileChange = (e) => {
 
 const saveNewItem = async () => {
   try {
-    // 🔗 2. ยิง API POST เพื่อสร้างสินค้า
-    await $fetch('http://localhost:3000/product', {
+    // 🔗 แก้ URL ตรงนี้
+    await $fetch('http://localhost:3001/api/product', {
       method: 'POST',
       body: {
         name: newItem.value.name,
@@ -359,12 +372,9 @@ const saveNewItem = async () => {
       }
     })
     
-    await refresh() // โหลดข้อมูลใหม่จาก Backend
-    
-    // Reset Form
+    await refresh()
     newItem.value = { name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 'Free', description: '', category: '', image: '', previewImage: null }
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addModal'))
-    modal.hide()
+    safeCloseModal('addModal')
 
   } catch (error) {
     alert('Error adding product: ' + error.message)
@@ -372,16 +382,22 @@ const saveNewItem = async () => {
 }
 
 // --- Edit Product ---
-const editItem = ref({ _id: null, name: '', stock: '', price: '', commission: '', weight: '', shippingCost: '', description: '', category: '', image: '' })
+const editItem = ref({ 
+  _id: null, 
+  name: '', stock: 0, price: 0, commission: 0, 
+  weight: 0, shippingCost: '', description: '', category: '', 
+  image: '' 
+})
 const availableOptionsEdit = ref([])
 
 function goEdit(id) {
-  // หาจาก products ที่ดึงมาจาก API (ใช้ _id)
   const found = products.value.find((x) => x._id === id)
   if (!found) return
   editItem.value = { ...found }
   availableOptionsEdit.value = calculateOptions(editItem.value.weight)
-  new bootstrap.Modal(document.getElementById('editModal')).show()
+  const modalEle = document.getElementById('editModal')
+  const modal = bootstrap.Modal.getInstance(modalEle) || new bootstrap.Modal(modalEle)
+  modal.show()
 }
 
 watch(() => editItem.value.weight, (newVal) => {
@@ -395,15 +411,25 @@ watch(() => editItem.value.weight, (newVal) => {
 
 async function saveEdit() {
   try {
-    // 🔗 3. ยิง API PUT เพื่อแก้ไข (ใช้ _id)
-    await $fetch(`http://localhost:3000/product/${editItem.value._id}`, {
+    // 🔗 แก้ URL ตรงนี้
+    await $fetch(`http://localhost:3001/api/product/${editItem.value._id}`, {
       method: 'PUT',
-      body: editItem.value
+      body: {
+        name: editItem.value.name,
+        stock: parseInt(editItem.value.stock),
+        price: parseFloat(editItem.value.price),
+        commission: parseFloat(editItem.value.commission),
+        weight: parseFloat(editItem.value.weight),
+        shippingCost: editItem.value.shippingCost,
+        description: editItem.value.description,
+        category: editItem.value.category,
+        image: editItem.value.image
+      }
     })
 
     await refresh()
-    const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'))
-    modal.hide()
+    safeCloseModal('editModal')
+
   } catch (error) {
     alert('Error updating: ' + error.message)
   }
@@ -412,8 +438,8 @@ async function saveEdit() {
 async function deleteItem(id) {
   if (confirm('Are you sure you want to delete this product?')) {
     try {
-      // 🔗 4. ยิง API DELETE เพื่อลบ
-      await $fetch(`http://localhost:3000/product/${id}`, { method: 'DELETE' })
+      // 🔗 แก้ URL ตรงนี้
+      await $fetch(`http://localhost:3001/api/product/${id}`, { method: 'DELETE' })
       await refresh()
     } catch (error) {
       alert('Error deleting: ' + error.message)
@@ -431,16 +457,16 @@ const saveAddStock = async () => {
     try {
       const newStock = parseInt(targetProduct.stock) + parseInt(stockForm.value.quantity)
       
-      // 🔗 5. ยิง API PUT เพื่ออัปเดตสต็อก
-      await $fetch(`http://localhost:3000/product/${stockForm.value.id}`, {
+      // 🔗 แก้ URL ตรงนี้
+      await $fetch(`http://localhost:3001/api/product/${stockForm.value.id}`, {
         method: 'PUT',
         body: { stock: newStock }
       })
 
       await refresh()
       stockForm.value = { id: '', quantity: '' }
-      const modal = bootstrap.Modal.getInstance(document.getElementById('addStockModal'))
-      modal.hide()
+      safeCloseModal('addStockModal')
+
     } catch (error) {
        alert('Error updating stock: ' + error.message)
     }
@@ -457,9 +483,11 @@ const removeCategory = (index) => { if (confirm('Delete Category?')) categoryOpt
 .font-success { color: #28c76f !important; }
 .font-warning { color: #ff9f43 !important; }
 .font-danger { color: #ea5455 !important; }
+
 .badge-btn { border-radius: 20px; padding: 4px 12px; font-size: 12px; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
 .badge-btn:hover { transform: translateY(-1px); }
 .active-badge { box-shadow: 0 0 0 2px rgba(0,0,0,0.1); font-weight: bold; }
+
 .img-40 { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
 .upload-box { width: 100%; height: 250px; border: 2px dashed #dee2e6; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #f8f9fa; overflow: hidden; }
 .upload-box:hover { border-color: #0d6efd; background-color: #e9ecef; }
