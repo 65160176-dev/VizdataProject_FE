@@ -16,8 +16,7 @@
                 <div class="footer-logo">
                   <img src='/images/icon/logo.png' alt="logo" />
                 </div>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
-                  et dolore magna aliqua. Ut enim ad minim veniam,</p>
+                <p>เอาข้อมูลอะไรก็ได้มาใส่</p>
                 <div class="footer-social">
                   <ul>
                     <li>
@@ -54,7 +53,7 @@
                 <div class="footer-title">
                   <h4>my account</h4>
                 </div>
-                <div class="footer-contant">
+                <!-- <div class="footer-contant">
                   <ul>
                     <li>
                       <a href="#">mens</a>
@@ -72,7 +71,7 @@
                       <a href="#">featured</a>
                     </li>
                   </ul>
-                </div>
+                </div> -->
               </div>
             </div>
             <div class="col">
@@ -80,7 +79,7 @@
                 <div class="footer-title">
                   <h4>why we choose</h4>
                 </div>
-                <div class="footer-contant">
+                <!-- <div class="footer-contant">
                   <ul>
                     <li>
                       <a href="#">shipping & return</a>
@@ -98,7 +97,7 @@
                       <a href="#">contacts</a>
                     </li>
                   </ul>
-                </div>
+                </div> -->
               </div>
             </div>
             <div class="col">
@@ -106,7 +105,7 @@
                 <div class="footer-title">
                   <h4>store information</h4>
                 </div>
-                <div class="footer-contant">
+                <!-- <div class="footer-contant">
                   <ul class="contact-list">
                     <li>
                       <i class="fa fa-map-marker"></i>Multikart Demo Store, Demo store India 345-659
@@ -122,7 +121,7 @@
                       <i class="fa fa-fax"></i>Fax: 123456
                     </li>
                   </ul>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>

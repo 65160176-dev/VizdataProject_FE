@@ -35,7 +35,6 @@
                   <nuxt-link :to="{ path: '/seller/' + encodeURIComponent(getDetail.brand) }" class="btn btn-link p-0 seller-name">
                     <i class="ti-user"></i> ร้านค้า: {{ getDetail.brand }}
                   </nuxt-link>
-                  <small class="d-block text-muted">คะแนนร้านค้า 4.9 · ตอบแชทเร็ว · ส่งฟรีบางรายการ</small>
                 </div>
                 <div class="border-product">
                   <h6 class="product-title">product details</h6>
@@ -58,10 +57,7 @@
                         <td>Brand:</td>
                         <td>{{ getDetail.brand }}</td>
                       </tr>
-                      <tr>
-                        <td>Material:</td>
-                        <td>Crepe printed</td>
-                      </tr>
+
                     </tbody>
                   </table>
                 </div>
@@ -81,48 +77,27 @@
                     </form>
                   </div>
                 </div>
-                <div class="border-product">
-                  <h6 class="product-title">100% SECURE PAYMENT</h6>
-                  <div class="payment-card-bottom">
-                    <ul>
-                      <li>
-                        <a href="javascript:void(0)"><img src='/images/icon/visa.png' alt=""></a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)"><img src='/images/icon/mastercard.png' alt=""></a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)"><img src='/images/icon/paypal.png' alt=""></a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)"><img src='/images/icon/american-express.png' alt=""></a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0)"><img src='/images/icon/discover.png' alt=""></a>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
+                
               </div>
             </div>
             <div class="col-lg-4">
               <div class="product-right product-form-box">
-                <h4 v-if="getDetail.sale">
+                <!-- <h4 v-if="getDetail.sale">
                   <del>{curr.symbol}}{{ (getDetail.price * curr.curr).toFixed(2) }}</del>
                   <span>{{ getDetail.discount }}% off</span>
-                </h4>
+                </h4> -->
                 <h3 v-if="getDetail.sale">{{ curr.symbol }}{{ discountedPrice(getDetail) }}</h3>
                 <h3 v-else>{{ curr.symbol }}{{ (getDetail.price * curr.curr).toFixed(2) }}</h3>
-                <ul class="color-variant">
+                <!-- <ul class="color-variant">
                   <li v-bind:class="{ active: activeColor == variant }"
                     v-for="(variant, variantIndex) in Color(getDetail.variants)" :key="variantIndex">
                     <a :class="[variant]" v-bind:style="{ 'background-color': variant }"
                       v-on:click="sizeVariant(getDetail.variants[variantIndex].image_id, variantIndex, variant)"></a>
                   </li>
-                </ul>
+                </ul> -->
                 <div class="product-description border-product">
-                  <h6 class="product-title">Time Reminder</h6>
-                  <WidgetsTimer date="December 20, 2020" />
+                  <!-- <h6 class="product-title">Time Reminder</h6>
+                  <WidgetsTimer date="December 20, 2020" /> -->
                   <h6 class="product-title three-col-text">
                     select size
                     <span>
@@ -186,18 +161,8 @@
                     aria-selected="true"><i class="icofont icofont-ui-home"></i>Details</a>
                   <div class="material-border"></div>
                 </li>
-                <li class="nav-item"><a class="nav-link" id="profile-top-tab" data-bs-toggle="tab" href="#top-profile"
-                    role="tab" aria-selected="false"><i class="icofont icofont-man-in-glasses"></i>Specification</a>
-                  <div class="material-border"></div>
-                </li>
-                <li class="nav-item"><a class="nav-link" id="contact-top-tab" data-bs-toggle="tab" href="#top-contact"
-                    role="tab" aria-selected="false"><i class="icofont icofont-contacts"></i>Video</a>
-                  <div class="material-border"></div>
-                </li>
-                <li class="nav-item"><a class="nav-link" id="review-top-tab" data-bs-toggle="tab" href="#top-review"
-                    role="tab" aria-selected="false"><i class="icofont icofont-contacts"></i>Write Review</a>
-                  <div class="material-border"></div>
-                </li>
+            
+                
               </ul>
               <div class="tab-content nav-material" id="top-tabContent">
                 <div class="tab-pane fade show active" id="top-home" role="tabpanel" aria-labelledby="top-home-tab">
@@ -311,7 +276,7 @@
         </div>
       </section>
     </section>
-    <WidgetsRelatedProducts :productTYpe="productTYpe" :productId="productId" />
+    <WidgetsRelatedProducts :brand="getDetail.brand" :productId="getDetail.id" />
     <div class="modal fade " id="modal-1" aria-hidden="true" tabindex="-1" role="dialog"
       aria-labelledby="modal-cartLabel">
       <div class="modal-dialog modal-md modal-dialog-centered">
@@ -334,7 +299,6 @@
         <div class="modal-header">
           <div>
             <h5 class="modal-title">ร้านค้า: {{ brand }}</h5>
-            <div class="text-muted">คะแนนร้านค้า 4.9 · ตอบแชทเร็ว · ผู้ติดตาม 1.2k</div>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -342,9 +306,6 @@
           <div class="row mb-3">
             <div class="col-md-8">
               <p>สวัสดีจากร้าน <strong>{{ brand }}</strong> — นี่เป็น mockup หน้าร้านภายในหน้าสินค้า คุณสามารถดูตัวอย่างสินค้าที่ร้านนี้ขายได้ด้านล่าง</p>
-            </div>
-            <div class="col-md-4 text-end">
-              <button class="btn btn-primary">ติดตามร้านนี้</button>
             </div>
           </div>
 

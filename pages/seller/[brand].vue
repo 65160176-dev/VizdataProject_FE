@@ -12,8 +12,7 @@
       <section class="seller-page">
         <div class="row mb-3">
           <div class="col-md-8">
-            <h2>ร้านค้า: {{ sellerName }}</h2>
-            <p class="text-muted">คะแนนร้านค้า 4.9 · ตอบแชทเร็ว · ผู้ติดตาม 1.2k</p>
+            <h2>ร้านค้า: {{ sellerName }}</h2><p class="text-muted">คะแนนร้านค้า 4.9 · ตอบแชทเร็ว · ผู้ติดตาม 1.2k</p>
           </div>
         </div>
 

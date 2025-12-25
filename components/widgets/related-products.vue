@@ -26,12 +26,12 @@
 <script>
 import { useProductStore } from '~~/store/products'
 export default {
-  props: ['productTYpe', 'productId'],
+  props: ['brand', 'productId'],
   components: {
   },
   data() {
     return {
-      title: 'Related Products',
+      title: 'สินค้าอื่นในร้านนี้',
       products: [],
       showquickviewmodel: false,
       showcomparemodal: false,
@@ -53,7 +53,7 @@ export default {
 
     productsArray: function () {
       this.productslist.map((item) => {
-        if (item.type === this.productTYpe) {
+        if (item.brand && this.brand && item.brand.toLowerCase() === this.brand.toLowerCase()) {
           if (item.id !== this.productId) {
             this.products.push(item)
           }

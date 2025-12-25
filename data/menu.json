@@ -46,27 +46,6 @@
               "type": "link"
             }
           ]
-        },
-        {
-          "title": "3 column",
-          "type": "sub",
-          "active": false,
-          "children": [{
-              "path": "/product/three-column/thumbnail-left",
-              "title": "Thumbnail left",
-              "type": "link"
-            },
-            {
-              "path": "/product/three-column/thumbnail-right",
-              "title": "Thumbnail Right",
-              "type": "link"
-            },
-            {
-              "path": "/product/three-column/thumbnail-bottom",
-              "title": "Thumbnail bottom",
-              "type": "link"
-            }
-          ]
         }
       ]
     },
@@ -92,28 +71,12 @@
               "type": "link"
             },
             {
-              "path": "/page/account/dashboard",
-              "title": "Dashboard",
-              "type": "link"
-            },
-            {
               "path": "/page/auth/LoginPage",
               "title": "Login",
               "type": "link"
             },
             {
-              "path": "/page/auth/LoginPage",
-              "title": "Register",
-              "type": "link"
-            },
-            
-            {
-              "path": "/page/account/forget-password",
-              "title": "Forget password",
-              "type": "link"
-            },
-            {
-              "path": "/page/account/profile",
+              "path": "/page/account/userdashboard",
               "title": "Profile",
               "type": "link"
             },
