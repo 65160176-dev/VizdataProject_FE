@@ -1,17 +1,21 @@
 import { defineStore } from 'pinia'
+import { authService } from '~/services/authService'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     userName: null,
     isLoggedIn: false,
-    // role: 0 = seller, 1 = user
-    role: 1,
+    token: null,
+    // userType: 0 = seller, 1 = user
+    userType: 1,
   }),
   
   getters: {
     getUser: (state) => state.user,
     isAuthenticated: (state) => state.isLoggedIn,
+    isSeller: (state) => state.userType === 0,
+    isNormalUser: (state) => state.userType === 1,
   },
   
   actions: {
@@ -20,73 +24,69 @@ export const useAuthStore = defineStore('auth', {
       if (import.meta.client) {
         const savedUser = localStorage.getItem('user')
         const savedUserName = localStorage.getItem('userName')
-        const savedRole = localStorage.getItem('userRole')
-        if (savedUser) {
-          this.user = savedUser
-          if (savedUserName) this.userName = savedUserName
+        const savedUserType = localStorage.getItem('userType')
+        const savedToken = localStorage.getItem('token')
+        
+        if (savedUser && savedToken) {
+          this.user = JSON.parse(savedUser)
+          this.userName = savedUserName
+          this.token = savedToken
           this.isLoggedIn = true
-          if (savedRole !== null) this.role = Number(savedRole)
+          if (savedUserType !== null) this.userType = Number(savedUserType)
         }
       }
     },
     
-    // Login action (made async to support API later)
+    // Real API Login
     async login(email, password) {
-      // Demo credentials - ในระบบจริงควรเรียก API
-      const validUsers = [
-        { email: 'test@admin.com', password: 'test@123456', name: 'Test Admin', role: 1 },
-        { email: 'user@demo.com', password: 'demo123', name: 'Demo User', role: 1 },
-        { email: 'seller@demo.com', password: 'seller123', name: 'Demo Seller', role: 0 }
-      ]
-      
-      // First check demo valid users
-      let foundUser = validUsers.find(
-        u => u.email === email && u.password === password
-      )
+      try {
+        const response = await authService.login({ email, password })
+        
+        if (response.success) {
+          const { user, token } = response.data
+          
+          this.user = user
+          this.userName = user.username
+          this.userType = user.userType
+          this.token = token
+          this.isLoggedIn = true
 
-      // If not found in demo list, check users registered via the mock register() (stored in localStorage)
-      if (!foundUser && import.meta.client) {
-        try {
-          const stored = JSON.parse(localStorage.getItem('registeredUsers') || '[]')
-          const reg = stored.find(u => u.email === email && u.password === password)
-          if (reg) foundUser = reg
-        } catch (e) {
-          // ignore parse errors
-        }
-      }
-      
-      if (foundUser) {
-        this.user = foundUser.email
-        this.userName = foundUser.name || (foundUser.email ? foundUser.email.split('@')[0] : null)
-        this.role = typeof foundUser.role !== 'undefined' ? foundUser.role : 1
-        this.isLoggedIn = true
+          // Save to localStorage
+          if (import.meta.client) {
+            localStorage.setItem('user', JSON.stringify(user))
+            localStorage.setItem('userName', user.username)
+            localStorage.setItem('userType', String(user.userType))
+            localStorage.setItem('token', token)
+            
+            // Set cookie for backward compatibility
+            try {
+              const expires = new Date()
+              expires.setDate(expires.getDate() + 7)
+              document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`
+            } catch (e) {
+              // ignore if cookies unavailable
+            }
+          }
 
-        // Save to localStorage
-        if (import.meta.client) {
-          localStorage.setItem('user', foundUser.email)
-          if (this.userName) localStorage.setItem('userName', this.userName)
-          localStorage.setItem('userRole', String(this.role))
-          // Also set a cookie 'userlogin' for components that check cookie-based login
-          try {
-            const expires = new Date();
-            // cookie valid for 7 days
-            expires.setDate(expires.getDate() + 7);
-            document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`;
-          } catch (e) {
-            // ignore if cookies unavailable
+          return { 
+            success: true, 
+            message: response.message, 
+            userType: user.userType 
           }
         }
-
-        return { success: true, message: 'Login successful!', role: this.role }
+        
+        return { success: false, message: response.message }
+      } catch (error) {
+        console.error('Login error:', error)
+        const message = error?.data?.message || 'Login failed. Please try again.'
+        return { success: false, message }
       }
-      
-      return { success: false, message: 'Invalid email or password' }
     },
     
-    // Register action (accept optional username)
-    async register(email, password, confirmPassword, role = 1, username = '') {
+    // Real API Register
+    async register(username, email, password, confirmPassword, userType = 1) {
       // Validation
-      if (!email || !password || !confirmPassword) {
+      if (!username || !email || !password || !confirmPassword) {
         return { success: false, message: 'Please fill in all fields' }
       }
       
@@ -97,34 +97,57 @@ export const useAuthStore = defineStore('auth', {
       if (password.length < 6) {
         return { success: false, message: 'Password must be at least 6 characters' }
       }
-      
-      // Demo registration - ในระบบจริงควรเรียก API
-      this.user = email
-      const displayName = username && username.trim() ? username.trim() : email.split('@')[0]
-      this.userName = displayName
-      this.role = role
-      this.isLoggedIn = true
 
-      if (import.meta.client) {
-        localStorage.setItem('user', email)
-        localStorage.setItem('userName', displayName)
-        localStorage.setItem('userRole', String(this.role))
-        // Persist mock-registered user so login() can find it later
-        try {
-          const regs = JSON.parse(localStorage.getItem('registeredUsers') || '[]')
-          regs.push({ email, password, name: displayName, role })
-          localStorage.setItem('registeredUsers', JSON.stringify(regs))
-        } catch (e) {
-          // ignore
-        }
-        try {
-          const expires = new Date();
-          expires.setDate(expires.getDate() + 7);
-          document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`;
-        } catch (e) {}
+      if (username.length < 3) {
+        return { success: false, message: 'Username must be at least 3 characters' }
       }
+      
+      try {
+        const response = await authService.register({
+          username,
+          email,
+          password,
+          userType,
+        })
+        
+        if (response.success) {
+          const { user, token } = response.data
+          
+          this.user = user
+          this.userName = user.username
+          this.userType = user.userType
+          this.token = token
+          this.isLoggedIn = true
 
-      return { success: true, message: 'Registration successful!' }
+          // Save to localStorage
+          if (import.meta.client) {
+            localStorage.setItem('user', JSON.stringify(user))
+            localStorage.setItem('userName', user.username)
+            localStorage.setItem('userType', String(user.userType))
+            localStorage.setItem('token', token)
+            
+            try {
+              const expires = new Date()
+              expires.setDate(expires.getDate() + 7)
+              document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`
+            } catch (e) {}
+          }
+
+          return { success: true, message: response.message }
+        }
+        
+        return { success: false, message: response.message }
+      } catch (error) {
+        console.error('Register error:', error)
+        console.error('Error details:', {
+          message: error?.message,
+          data: error?.data,
+          statusCode: error?.statusCode,
+          response: error?.response
+        })
+        const message = error?.data?.message || error?.message || 'Registration failed. Please try again.'
+        return { success: false, message }
+      }
     },
     
     // Logout action
@@ -132,12 +155,15 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.userName = null
       this.isLoggedIn = false
-      this.role = 1
+      this.token = null
+      this.userType = 1
       
       if (import.meta.client) {
         localStorage.removeItem('user')
         localStorage.removeItem('userName')
-        localStorage.removeItem('userRole')
+        localStorage.removeItem('userType')
+        localStorage.removeItem('token')
+        
         // remove cookie
         try {
           document.cookie = 'userlogin=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
@@ -148,3 +174,4 @@ export const useAuthStore = defineStore('auth', {
     }
   }
 })
+

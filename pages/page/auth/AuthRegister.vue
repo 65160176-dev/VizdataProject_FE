@@ -49,12 +49,12 @@
       <div class="form-group">
             <label class="d-block">Register as</label>
             <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" id="roleUser" value="1" v-model="role" :disabled="loading">
-              <label class="form-check-label" for="roleUser">User</label>
+              <input class="form-check-input" type="radio" id="userTypeUser" value="1" v-model="userType" :disabled="loading">
+              <label class="form-check-label" for="userTypeUser">User</label>
             </div>
             <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" id="roleSeller" value="0" v-model="role" :disabled="loading">
-              <label class="form-check-label" for="roleSeller">Seller</label>
+              <input class="form-check-input" type="radio" id="userTypeSeller" value="0" v-model="userType" :disabled="loading">
+              <label class="form-check-label" for="userTypeSeller">Seller</label>
             </div>
           </div>
       <div class="form-terms">
@@ -94,8 +94,8 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-// role: default to user (1). seller = 0
-const role = ref(1)
+// userType: default to user (1). seller = 0
+const userType = ref(1)
 const username = ref('')
 
 // Form data
@@ -125,8 +125,16 @@ async function doRegister() {
       return
     }
     
-    // Call auth store register (email, password, confirmPassword, role, username)
-    const result = authStore.register(email.value, password.value, confirmPassword.value, Number(role.value), username.value)
+    console.log('Registering with:', {
+      username: username.value,
+      email: email.value,
+      userType: Number(userType.value)
+    })
+    
+    // Call auth store register (username, email, password, confirmPassword, userType)
+    const result = await authStore.register(username.value, email.value, password.value, confirmPassword.value, Number(userType.value))
+    
+    console.log('Register result:', result)
     
     if (result.success) {
       message.value = result.message
@@ -147,9 +155,9 @@ async function doRegister() {
           return
         }
 
-        // If role is seller (0) send to seller dashboard
-        if (Number(role.value) === 0) {
-          router.replace('/page/account/seller-dashboard')
+        // If userType is seller (0) send to seller dashboard
+        if (Number(userType.value) === 0) {
+          router.replace('/SellerPage/dashboard')
           return
         }
 

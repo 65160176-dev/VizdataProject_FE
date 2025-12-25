@@ -25,7 +25,7 @@ export default defineNuxtConfig({
 
   // Frontend dev server configuration
   devServer: {
-    port: 3001,
+    port: 3000,
   },
 
   css: ["@/assets/scss/app.scss"],
@@ -33,7 +33,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3000', // Backend API port
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3001', // Backend API port
     }
   },
 

@@ -118,8 +118,8 @@ function togglePassword() {
 
 // Prefill demo seller credentials and submit
 async function demoSellerLogin() {
-  email.value = 'seller@demo.com'
-  password.value = 'seller123'
+  email.value = 'TestSeller@gmail.com'
+  password.value = '111111'
   rememberMe.value = true
   await doLogin()
 }
@@ -149,9 +149,9 @@ async function doLogin() {
       // Small delay to show success message
       setTimeout(() => {
         // If a redirect query is present (e.g., from checkout), only follow it
-        // when it's appropriate for the logged-in role. Otherwise prefer
-        // role-based default destinations.
-        const currentRole = authStore.role || Number(localStorage.getItem('userRole') || 1)
+        // when it's appropriate for the logged-in userType. Otherwise prefer
+        // userType-based default destinations.
+        const currentUserType = authStore.userType || Number(localStorage.getItem('userType') || 1)
 
         if (redirectUrl.value) {
           // redirectUrl may be encoded by middleware, decode it first
@@ -164,19 +164,19 @@ async function doLogin() {
             return p.includes('/SellerPage') || p.includes('/seller') || p.includes('seller-dashboard') || p.includes('/page/account/seller')
           }
 
-          // Only follow the redirect if it makes sense for the role
-          if ((currentRole === 0 && isSellerPath(decoded)) || (currentRole !== 0 && !isSellerPath(decoded))) {
+          // Only follow the redirect if it makes sense for the userType
+          if ((currentUserType === 0 && isSellerPath(decoded)) || (currentUserType !== 0 && !isSellerPath(decoded))) {
             router.replace(decoded)
             return
           }
-          // otherwise fall through to role defaults
+          // otherwise fall through to userType defaults
         }
 
         // Otherwise, if cart has items, go to checkout (only for regular users)
         const cartStore = useCartStore()
         const cartLength = (cartStore.cart && cartStore.cart.length) || (cartStore.cartItems && cartStore.cartItems.length) || 0
 
-        if (currentRole === 0) {
+        if (currentUserType === 0) {
           router.replace('/SellerPage/dashboard')
           return
         }
