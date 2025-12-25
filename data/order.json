@@ -8,9 +8,15 @@
       "email": "somchai@email.com",
       "address": "123 Sukhumvit Rd, Bangkok",
       "total": 1250,
-      "status": "Pending Review",
+      "status": "Pending",
+      "paymentMethod": "Credit Card",
       "items": [
-        { "name": "Wireless Headphones", "price": 1250, "qty": 1 }
+        {
+          "name": "Wireless Headphones",
+          "price": 1250,
+          "qty": 1,
+          "image": "/images/products/headphone.jpg"
+        }
       ]
     },
     {
@@ -22,8 +28,14 @@
       "address": "456 Pattaya, Chonburi",
       "total": 4500,
       "status": "Accepted",
+      "paymentMethod": "PromptPay",
       "items": [
-        { "name": "Smart Watch Series 5", "price": 4500, "qty": 1 }
+        {
+          "name": "Smart Watch Series 5",
+          "price": 4500,
+          "qty": 1,
+          "image": "/images/products/watch.jpg"
+        }
       ]
     },
     {
@@ -34,10 +46,21 @@
       "email": "tony@stark.com",
       "address": "890 Malibu Point",
       "total": 35000,
-      "status": "Pending Review",
+      "status": "Accepted",
+      "paymentMethod": "Credit Card",
       "items": [
-        { "name": "Iron Man Suit Mark 50", "price": 30000, "qty": 1 },
-        { "name": "Arc Reactor", "price": 5000, "qty": 1 }
+        {
+          "name": "Iron Man Suit Mark 50",
+          "price": 30000,
+          "qty": 1,
+          "image": "/images/products/suit.jpg"
+        },
+        {
+          "name": "Arc Reactor",
+          "price": 5000,
+          "qty": 1,
+          "image": "/images/products/reactor.jpg"
+        }
       ]
     },
     {
@@ -49,8 +72,110 @@
       "address": "20 Ingram St, NY",
       "total": 550,
       "status": "Cancelled",
+      "paymentMethod": "Cash on Delivery",
       "items": [
-        { "name": "Web Fluid Refill", "price": 275, "qty": 2 }
+        {
+          "name": "Web Fluid Refill",
+          "price": 275,
+          "qty": 2,
+          "image": "/images/products/web.jpg"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "orderId": "ORD-8863",
+      "date": "19 Dec 2025, 08:00 AM",
+      "customer": "Bruce Wayne",
+      "email": "bruce@wayne.corp",
+      "address": "1007 Mountain Drive, Gotham",
+      "total": 1200,
+      "status": "Shipping",
+      "paymentMethod": "Credit Card",
+      "shippingFee": 50,
+      "items": [
+        {
+          "name": "Tactical Grappling Hook",
+          "price": 1150,
+          "qty": 1,
+          "image": "/images/products/hook.jpg"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "orderId": "ORD-8864",
+      "date": "15 Dec 2025, 11:30 AM",
+      "customer": "Natasha Romanoff",
+      "email": "natasha@shield.gov",
+      "address": "Unknown Location",
+      "total": 8900,
+      "status": "Completed",
+      "paymentMethod": "Credit Card",
+      "items": [
+        {
+          "name": "Spy Camera 4K",
+          "price": 8900,
+          "qty": 1,
+          "image": "/images/products/camera.jpg"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "orderId": "ORD-8865",
+      "date": "20 Dec 2025, 09:15 AM",
+      "customer": "Thor Odinson",
+      "email": "thor@asgard.god",
+      "address": "New Asgard, Norway",
+      "total": 500,
+      "status": "Pending",
+      "paymentMethod": "PromptPay",
+      "items": [
+        {
+          "name": "Craft Beer Mug (XL)",
+          "price": 500,
+          "qty": 1,
+          "image": "/images/products/mug.jpg"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "orderId": "ORD-8866",
+      "date": "14 Dec 2025, 04:45 PM",
+      "customer": "Steve Rogers",
+      "email": "cap@avengers.com",
+      "address": "Brooklyn, NY",
+      "total": 2500,
+      "status": "Shipped",
+      "paymentMethod": "Cash on Delivery",
+      "items": [
+        {
+          "name": "Punching Bag",
+          "price": 2500,
+          "qty": 1,
+          "image": "/images/products/bag.jpg"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "orderId": "ORD-8867",
+      "date": "12 Dec 2025, 10:20 AM",
+      "customer": "Wanda Maximoff",
+      "email": "wanda@hex.magic",
+      "address": "Westview, NJ",
+      "total": 3200,
+      "status": "Completed",
+      "paymentMethod": "Credit Card",
+      "items": [
+        {
+          "name": "Vintage TV Set",
+          "price": 3200,
+          "qty": 1,
+          "image": "/images/products/tv.jpg"
+        }
       ]
     }
   ]

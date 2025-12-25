@@ -66,20 +66,6 @@
                                 You have not set a default billing address.<br />
                               </address>
                             </div>
-                            <!-- <div class="col-sm-6">
-                              <h6>Default Shipping Address</h6>
-                              <address v-if="defaultAddress">
-                                {{ defaultAddress.firstName }} {{ defaultAddress.lastName }}<br>
-                                {{ defaultAddress.address }} <br>
-                                {{ defaultAddress.city }}, {{ defaultAddress.state }} {{ defaultAddress.pincode }}<br>
-                                {{ defaultAddress.country }}<br>
-                                Phone: {{ defaultAddress.phone }}<br>
-                                <a href="javascript:void(0)" @click="openModal(defaultAddress)">Edit Address</a>
-                              </address>
-                              <address v-else>
-                                You have not set a default shipping address.<br />
-                              </address>
-                            </div> -->
                           </div>
                         </div>
                       </div>
@@ -146,13 +132,27 @@
               <div class="tab-pane fade" id="orders">
                 <div class="dashboard-right">
                   <div class="dashboard">
+
                     <div class="page-title mb-3" v-if="!selectedOrder">
                       <h2 class="mb-0">My Orders</h2>
                     </div>
+
                     <template v-if="isAuthenticated">
                       <div v-if="!selectedOrder">
-                        <div v-if="orders && orders.length > 0">
-                          <div v-for="(order, index) in orders" :key="index" class="card mb-3 border-0 shadow-sm">
+
+                        <div class="d-flex overflow-auto mb-4 pb-2 border-bottom text-nowrap custom-scrollbar">
+                          <button v-for="tab in tabs" :key="tab.value" class="btn rounded-pill me-2 px-3"
+                            :class="activeTab === tab.value ? 'btn-dark' : 'btn-outline-secondary border-0'"
+                            @click="activeTab = tab.value">
+                            {{ tab.label }}
+                            <span class="small ms-1 opacity-75">({{ getCount(tab.value) }})</span>
+                          </button>
+                        </div>
+
+                        <div v-if="filteredOrders && filteredOrders.length > 0">
+
+                          <div v-for="(order, index) in paginatedOrders" :key="index"
+                            class="card mb-3 border-0 shadow-sm cursor-pointer" @click="selectedOrder = order">
                             <div
                               class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center py-3">
                               <div>
@@ -168,7 +168,9 @@
                                 <div class="col-md-2 text-center">
                                   <div class="bg-light rounded d-flex align-items-center justify-content-center"
                                     style="width: 80px; height: 80px; margin: 0 auto;">
-                                    <i class="fa fa-shopping-bag text-secondary" style="font-size: 24px;"></i>
+                                    <img v-if="order.items[0].image" :src="order.items[0].image"
+                                      class="w-100 h-100 rounded" style="object-fit: cover;">
+                                    <i v-else class="fa fa-shopping-bag text-secondary" style="font-size: 24px;"></i>
                                   </div>
                                 </div>
                                 <div class="col-md-7">
@@ -185,19 +187,49 @@
                                 <div class="col-md-3 text-end">
                                   <div class="mb-2 fw-bold text-primary">฿{{ order.total.toLocaleString() }}</div>
                                   <button class="btn btn-outline-secondary btn-sm" style="min-width: 120px;"
-                                    @click="selectedOrder = order">ดูรายละเอียด</button>
+                                    @click.stop="selectedOrder = order">ดูรายละเอียด</button>
                                 </div>
                               </div>
                             </div>
                           </div>
+
+                          <div class="d-flex justify-content-center mt-4 mb-3" v-if="totalPages > 1">
+                            <nav aria-label="Page navigation">
+                              <ul class="pagination">
+                                <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                                  <button class="page-link" @click="changePage(currentPage - 1)" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                  </button>
+                                </li>
+
+                                <li class="page-item" v-for="page in totalPages" :key="page"
+                                  :class="{ active: currentPage === page }">
+                                  <button class="page-link" @click="changePage(page)">{{ page }}</button>
+                                </li>
+
+                                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                                  <button class="page-link" @click="changePage(currentPage + 1)" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                  </button>
+                                </li>
+                              </ul>
+                            </nav>
+                          </div>
+
                         </div>
+
                         <div v-else class="text-center py-5">
-                          <p>ไม่พบประวัติการสั่งซื้อ</p>
+                          <i class="fa fa-clipboard-list text-muted mb-3" style="font-size: 48px; opacity: 0.3;"></i>
+                          <p class="text-muted">ไม่มีรายการคำสั่งซื้อในสถานะนี้</p>
                         </div>
+
                       </div>
+
                       <div v-else>
-                        <OrderDetail :order="selectedOrder" @back="selectedOrder = null" />
+                        <OrderDetail :order="selectedOrder" @back="selectedOrder = null" @cancel="handleOrderCancel"
+                          @update="saveOrderChanges" />
                       </div>
+
                     </template>
                     <div v-else class="welcome-msg">
                       <p class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูประวัติการสั่งซื้อ</p>
@@ -205,7 +237,6 @@
                   </div>
                 </div>
               </div>
-
 
               <div class="tab-pane fade" id="profile">
                 <div class="dashboard-right">
@@ -253,12 +284,111 @@ const selectedAddress = ref(null)
 const selectedOrder = ref(null)
 const orders = ref(ordersFile.data || [])
 
+// --- ส่วน Pagination ---
+const currentPage = ref(1)
+const itemsPerPage = 5
+
+const saveOrderChanges = (updatedOrder) => {
+  const index = orders.value.findIndex(o => o.orderId === updatedOrder.orderId)
+  if (index !== -1) {
+    orders.value[index] = updatedOrder
+    orders.value = [...orders.value]
+  }
+}
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredOrders.value.length / itemsPerPage)
+})
+
+const paginatedOrders = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredOrders.value.slice(start, end)
+})
+
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+// --------------------
+
+const activeTab = ref('all')
+
+const tabs = [
+  { label: 'ทั้งหมด', value: 'all' },
+  { label: 'รอยืนยัน', value: 'pending' },
+  { label: 'กำลังเตรียมสินค้า', value: 'processing' },
+  { label: 'กำลังส่ง', value: 'accepted' },
+  { label: 'ที่ต้องได้รับ', value: 'shipping' },
+  { label: 'สำเร็จ', value: 'completed' },
+  { label: 'ยกเลิก', value: 'cancelled' },
+]
+
+// [แก้ไข 1] ย้าย Logic ในการกรองข้อมูล
+const filteredOrders = computed(() => {
+  if (activeTab.value === 'all') return orders.value
+
+  return orders.value.filter(o => {
+    const s = o.status
+
+    // ย้าย 'Cancellation Requested' มาไว้ที่นี่ (รอยืนยัน)
+    if (activeTab.value === 'pending') {
+      return s === 'Pending Review' || s === 'Pending' || s === 'Cancellation Requested'
+    }
+
+    if (activeTab.value === 'processing') return s === 'Accepted' || s === 'Processing'
+    if (activeTab.value === 'accepted') return s === 'Shipping'
+    if (activeTab.value === 'shipping') return s === 'Shipped' || s === 'Arrived'
+    if (activeTab.value === 'completed') return s === 'Completed' || s === 'Delivered'
+
+    // เอาออกจากแท็บยกเลิก (เหลือแค่ Cancelled จริงๆ)
+    if (activeTab.value === 'cancelled') return s === 'Cancelled'
+
+    return false
+  })
+})
+
+watch(activeTab, () => {
+  currentPage.value = 1
+})
+
+// [แก้ไข 2] ย้าย Logic ในการนับจำนวน Badge
+const getCount = (tabValue) => {
+  if (tabValue === 'all') return orders.value.length
+  return orders.value.filter(o => {
+    const s = o.status
+
+    // ย้ายมานับรวมที่นี่
+    if (tabValue === 'pending') {
+      return s === 'Pending Review' || s === 'Pending' || s === 'Cancellation Requested'
+    }
+
+    if (tabValue === 'processing') return s === 'Accepted' || s === 'Processing'
+    if (tabValue === 'accepted') return s === 'Shipping'
+    if (tabValue === 'shipping') return s === 'Shipped' || s === 'Arrived'
+    if (tabValue === 'completed') return s === 'Completed' || s === 'Delivered'
+
+    // เอาออกจากแท็บยกเลิก
+    if (tabValue === 'cancelled') return s === 'Cancelled'
+
+    return false
+  }).length
+}
+
 const getStatusClass = (status) => {
   switch (status) {
     case 'Accepted': return 'bg-success text-white'
-    case 'Pending Review': return 'bg-warning text-dark'
+    case 'Pending Review':
+    case 'Pending':
+    case 'Cancellation Requested': // สีเหลือง (Warning) เหมาะกับ "รอยืนยัน" อยู่แล้ว
+      return 'bg-warning text-dark'
+    case 'Shipping': return 'bg-info text-white'
+    case 'Shipped': return 'bg-info text-white'
+    case 'Arrived': return 'bg-info text-white'
+    case 'Completed': return 'bg-secondary text-white'
     case 'Cancelled': return 'bg-danger text-white'
-    default: return 'bg-secondary text-white'
+    default: return 'bg-light text-dark border'
   }
 }
 
@@ -293,11 +423,16 @@ onMounted(() => {
 
     const storedOrders = localStorage.getItem('my_app_orders')
     const jsonOrders = ordersFile.data || []
+
     if (storedOrders) {
       try {
         const parsedStoredOrders = JSON.parse(storedOrders)
-        orders.value = [...parsedStoredOrders, ...jsonOrders]
-      } catch (e) { orders.value = jsonOrders }
+        const existingIds = new Set(parsedStoredOrders.map(o => o.orderId))
+        const missingJsonOrders = jsonOrders.filter(o => !existingIds.has(o.orderId))
+        orders.value = [...parsedStoredOrders, ...missingJsonOrders]
+      } catch (e) {
+        orders.value = jsonOrders
+      }
     } else {
       orders.value = jsonOrders
     }
@@ -306,6 +441,10 @@ onMounted(() => {
 
 watch(addressList, (newVal) => {
   if (import.meta.client) localStorage.setItem('my_app_addresses', JSON.stringify(newVal))
+}, { deep: true })
+
+watch(orders, (newVal) => {
+  if (import.meta.client) localStorage.setItem('my_app_orders', JSON.stringify(newVal))
 }, { deep: true })
 
 const openModal = (item = null) => {
@@ -338,6 +477,13 @@ const setDefaultAddress = (selectedItem) => {
   sortAddresses()
 }
 
+const handleOrderCancel = (cancelledOrder) => {
+  if (cancelledOrder) {
+    saveOrderChanges(cancelledOrder)
+  }
+  selectedOrder.value = null
+}
+
 const handleLogout = () => {
   if (confirm('Are you sure you want to log out?')) {
     if (typeof auth.logout === 'function') auth.logout()
@@ -350,5 +496,54 @@ const handleLogout = () => {
 <style scoped>
 .custom-radio input[type="radio"] {
   accent-color: #28a745;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e9ecef;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ced4da;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e9ecef transparent;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cursor-pointer:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+}
+
+/* Pagination Style */
+.pagination .page-link {
+  color: #333;
+  border: 1px solid #dee2e6;
+  margin: 0 2px;
+  border-radius: 5px;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #fff;
+  border-color: #dee2e6;
 }
 </style>
