@@ -21,9 +21,6 @@
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#payment" class="nav-link">Change Password</a>
-                  </li>
-                  <li class="nav-item">
                     <a data-bs-toggle="tab" data-bs-target="#profile" class="nav-link">Logout</a>
                   </li>
                 </ul>
@@ -44,7 +41,7 @@
                       <p v-if="isAuthenticated">Hello, {{ userName || userEmail }} !</p>
                       <p v-else class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
                     </div>
-                    <div class="box-account box-info">
+                    <div class="box-account box-info" v-if="isAuthenticated">
                       <div class="row">
                         <div class="col-sm-12"></div>
                       </div>
@@ -52,23 +49,37 @@
                         <div class="box">
                           <div class="box-title">
                             <h3>Address Book</h3>
-                            <a href="#">Manage Addresses</a>
+                            <a href="javascript:void(0)" @click="changeTab('address')">Manage Addresses</a>
                           </div>
                           <div class="row">
                             <div class="col-sm-6">
                               <h6>Default Billing Address</h6>
-                              <address>
+                              <address v-if="defaultAddress">
+                                {{ defaultAddress.firstName }} {{ defaultAddress.lastName }}<br>
+                                {{ defaultAddress.address }} <br>
+                                {{ defaultAddress.city }}, {{ defaultAddress.state }} {{ defaultAddress.pincode }}<br>
+                                {{ defaultAddress.country }}<br>
+                                Phone: {{ defaultAddress.phone }}<br>
+                                <a href="javascript:void(0)" @click="openModal(defaultAddress)">Edit Address</a>
+                              </address>
+                              <address v-else>
                                 You have not set a default billing address.<br />
-                                <a href="#">Edit Address</a>
                               </address>
                             </div>
-                            <div class="col-sm-6">
+                            <!-- <div class="col-sm-6">
                               <h6>Default Shipping Address</h6>
-                              <address>
-                                You have not set a default shipping address.<br />
-                                <a href="#">Edit Address</a>
+                              <address v-if="defaultAddress">
+                                {{ defaultAddress.firstName }} {{ defaultAddress.lastName }}<br>
+                                {{ defaultAddress.address }} <br>
+                                {{ defaultAddress.city }}, {{ defaultAddress.state }} {{ defaultAddress.pincode }}<br>
+                                {{ defaultAddress.country }}<br>
+                                Phone: {{ defaultAddress.phone }}<br>
+                                <a href="javascript:void(0)" @click="openModal(defaultAddress)">Edit Address</a>
                               </address>
-                            </div>
+                              <address v-else>
+                                You have not set a default shipping address.<br />
+                              </address>
+                            </div> -->
                           </div>
                         </div>
                       </div>
@@ -80,14 +91,13 @@
               <div class="tab-pane fade" id="address">
                 <div class="dashboard-right">
                   <div class="dashboard">
-                    <div class="page-title d-flex justify-content-between align-items-center">
-                      <h2>My Address</h2>
+                    <div class="page-title d-flex justify-content-between align-items-center mb-3">
+                      <h2 class="mb-0">My Address</h2>
                       <button v-if="isAuthenticated" class="btn btn-solid btn-sm"
                         style="padding: 8px 16px; font-weight: 600;" @click="openModal(null)">
                         <i class="fa fa-plus mr-1"></i> Add New Address
                       </button>
                     </div>
-
                     <div v-if="isAuthenticated" class="box-account box-info mt-3">
                       <div class="row">
                         <div class="col-12 mb-3" v-for="(item, index) in addressList" :key="item.id || index">
@@ -136,11 +146,9 @@
               <div class="tab-pane fade" id="orders">
                 <div class="dashboard-right">
                   <div class="dashboard">
-
-                    <div class="page-title" v-if="!selectedOrder">
-                      <h2>My Orders</h2>
+                    <div class="page-title mb-3" v-if="!selectedOrder">
+                      <h2 class="mb-0">My Orders</h2>
                     </div>
-
                     <template v-if="isAuthenticated">
                       <div v-if="!selectedOrder">
                         <div v-if="orders && orders.length > 0">
@@ -165,14 +173,10 @@
                                 </div>
                                 <div class="col-md-7">
                                   <div class="mb-1 text-muted" style="font-size: 0.85rem;">
-                                    ร้านค้า:
-                                    <span class="fw-bold text-dark">
-                                      {{ order.items[0].brand || 'Official Store' }}
-                                    </span>
+                                    ร้านค้า: <span class="fw-bold text-dark">{{ order.items[0].brand || 'Official Store'
+                                    }}</span>
                                   </div>
-
                                   <h6 class="mb-1 text-dark">{{ order.items[0]?.name || 'สินค้า' }}</h6>
-
                                   <div class="text-muted small" v-if="order.items.length > 1">
                                     และสินค้าอื่นๆ อีก {{ order.items.length - 1 }} รายการ
                                   </div>
@@ -181,9 +185,7 @@
                                 <div class="col-md-3 text-end">
                                   <div class="mb-2 fw-bold text-primary">฿{{ order.total.toLocaleString() }}</div>
                                   <button class="btn btn-outline-secondary btn-sm" style="min-width: 120px;"
-                                    @click="selectedOrder = order">
-                                    ดูรายละเอียด
-                                  </button>
+                                    @click="selectedOrder = order">ดูรายละเอียด</button>
                                 </div>
                               </div>
                             </div>
@@ -197,32 +199,13 @@
                         <OrderDetail :order="selectedOrder" @back="selectedOrder = null" />
                       </div>
                     </template>
-
                     <div v-else class="welcome-msg">
                       <p class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูประวัติการสั่งซื้อ</p>
                     </div>
-
                   </div>
                 </div>
               </div>
 
-              <div class="tab-pane fade" id="payment">
-                <div class="dashboard-right">
-                  <div class="dashboard">
-                    <div class="page-title">
-                      <h2>Change password</h2>
-                    </div>
-                    <div class="box-account box-info">
-                      <div class="box-head">
-                        <h2>Account Information</h2>
-                      </div>
-                      <div class="row">
-                        <div class="col-sm-6"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               <div class="tab-pane fade" id="profile">
                 <div class="dashboard-right">
@@ -231,7 +214,10 @@
                       <h2>Log Out</h2>
                     </div>
                     <div class="welcome-msg">
-                      <p>Log out From your Account Dashboard.</p>
+                      <p>คุณต้องการออกจากระบบหรือไม่?</p>
+                      <button class="btn btn-solid btn-sm mt-3" @click="handleLogout">
+                        Log Out
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -265,7 +251,6 @@ const addressList = ref([])
 const showAddModal = ref(false)
 const selectedAddress = ref(null)
 const selectedOrder = ref(null)
-
 const orders = ref(ordersFile.data || [])
 
 const getStatusClass = (status) => {
@@ -276,6 +261,22 @@ const getStatusClass = (status) => {
     default: return 'bg-secondary text-white'
   }
 }
+
+const changeTab = (tabId) => {
+  if (import.meta.client) {
+    const triggerEl = document.querySelector(`#top-tab a[data-bs-target="#${tabId}"]`)
+    if (triggerEl) triggerEl.click()
+  }
+}
+
+const defaultAddress = computed(() => {
+  if (!addressList.value || addressList.value.length === 0) return null
+  return addressList.value.find(item => item.isDefault) || addressList.value[0] || null
+})
+
+const isAuthenticated = computed(() => !!auth.isLoggedIn)
+const userEmail = computed(() => auth.user || '')
+const userName = computed(() => auth.userName || '')
 
 onMounted(() => {
   if (import.meta.client) {
@@ -292,15 +293,11 @@ onMounted(() => {
 
     const storedOrders = localStorage.getItem('my_app_orders')
     const jsonOrders = ordersFile.data || []
-
     if (storedOrders) {
       try {
         const parsedStoredOrders = JSON.parse(storedOrders)
         orders.value = [...parsedStoredOrders, ...jsonOrders]
-      } catch (e) {
-        console.error('Error parsing orders:', e)
-        orders.value = jsonOrders
-      }
+      } catch (e) { orders.value = jsonOrders }
     } else {
       orders.value = jsonOrders
     }
@@ -308,9 +305,7 @@ onMounted(() => {
 })
 
 watch(addressList, (newVal) => {
-  if (import.meta.client) {
-    localStorage.setItem('my_app_addresses', JSON.stringify(newVal))
-  }
+  if (import.meta.client) localStorage.setItem('my_app_addresses', JSON.stringify(newVal))
 }, { deep: true })
 
 const openModal = (item = null) => {
@@ -350,10 +345,6 @@ const handleLogout = () => {
     router.push('/')
   }
 }
-
-const isAuthenticated = computed(() => !!auth.isLoggedIn)
-const userEmail = computed(() => auth.user || '')
-const userName = computed(() => auth.userName || '')
 </script>
 
 <style scoped>
