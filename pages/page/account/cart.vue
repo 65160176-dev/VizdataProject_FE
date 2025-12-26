@@ -24,17 +24,20 @@
                 </thead>
 
                 <tbody v-for="(item, index) in cart" :key="index">
-                  <tr>
-                    <td style="text-align: center;">
+                  <tr class="align-middle">
+                    <td>
                       <input type="checkbox" :value="item" v-model="selectedItems" />
                     </td>
                     <td>
                       <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
-                        <img :src="getImgUrl(item.images[0].src)" alt />
+                        <img :src="getImgUrl(item.images[0].src)" alt style="height: 60px; object-fit: contain;" />
                       </nuxt-link>
                     </td>
                     <td>
-                      <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">{{ item.title }}</nuxt-link>
+                      <nuxt-link :to="{ path: '/product/sidebar/' + item.id }" style="font-size: 14px;">
+                        {{ item.title }}
+                      </nuxt-link>
+
                       <div class="mobile-cart-content row">
                         <div class="col-xs-3">
                           <div class="qty-box">
@@ -45,34 +48,30 @@
                           </div>
                         </div>
                         <div class="col-xs-3">
-                          <h2 class="td-color">{{ curr.symbol }}{{ (item.price * curr.curr).toFixed(2) }}</h2>
+                          <h2 class="td-color">{{ curr.symbol }}{{ (calcPrice(item) * curr.curr).toFixed(2) }}</h2>
                         </div>
                         <div class="col-xs-3">
-                          <h2 class="td-color">
-                            <a href="#" class="icon">
-                              <i class="ti-close"></i>
-                            </a>
-                          </h2>
+                          <h2 class="td-color"><a href="#" class="icon"><i class="ti-close"></i></a></h2>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <h2>{{ curr.symbol }}{{ (item.price * curr.curr).toFixed(2) }}</h2>
+                      <h2 class="td-color" style="font-size: 16px;">
+                        {{ curr.symbol }}{{ (calcPrice(item) * curr.curr).toFixed(2) }}
+                      </h2>
                     </td>
                     <td>
-                      <div class="qty-box">
-                        <div class="input-group">
+                      <div class="qty-box d-flex justify-content-center">
+                        <div class="input-group input-group-sm" style="width: 100px;">
                           <span class="input-group-prepend">
-                            <button type="button" class="btn quantity-left-minus" data-type="minus" data-field
-                              @click="decrement(item)">
+                            <button type="button" class="btn quantity-left-minus p-1" @click="decrement(item)">
                               <i class="ti-angle-left"></i>
                             </button>
                           </span>
-                          <input type="text" name="quantity" class="form-control input-number"
-                            :disabled="item.quantity > item.stock" v-model="item.quantity" />
+                          <input type="text" name="quantity" class="form-control input-number text-center p-1"
+                            :disabled="item.quantity > item.stock" v-model="item.quantity" style="height: 30px;" />
                           <span class="input-group-prepend">
-                            <button type="button" class="btn quantity-right-plus" data-type="plus" data-field
-                              @click="increment(item)">
+                            <button type="button" class="btn quantity-right-plus p-1" @click="increment(item)">
                               <i class="ti-angle-right"></i>
                             </button>
                           </span>
@@ -81,12 +80,12 @@
                     </td>
                     <td>
                       <a class="icon" href="#" @click.prevent="removeCartItem(item)">
-                        <i class="ti-close"></i>
+                        <i class="ti-close" style="font-size: 16px;"></i>
                       </a>
                     </td>
                     <td>
-                      <h2 class="td-color">
-                        {{ curr.symbol }} {{ ((item.price * curr.curr) * item.quantity).toFixed(2) }}
+                      <h2 class="td-color" style="font-size: 18px;">
+                        {{ curr.symbol }} {{ ((calcPrice(item) * curr.curr) * item.quantity).toFixed(2) }}
                       </h2>
                     </td>
                   </tr>
@@ -148,9 +147,10 @@ export default {
     cart() {
       return useCartStore().cartItems
     },
+    // [แก้ไข] คำนวณราคารวมโดยใช้ราคาที่ลดแล้ว
     selectedTotal() {
       return this.selectedItems.reduce((total, item) => {
-        return total + (item.price * item.quantity);
+        return total + (this.calcPrice(item) * item.quantity);
       }, 0);
     },
     curr() {
@@ -183,6 +183,14 @@ export default {
     getImgUrl(path) {
       return ('/images/' + path)
     },
+    // [เพิ่มใหม่] ฟังก์ชันคำนวณราคา (ถ้าราคาเต็มให้คืนค่าเดิม ถ้าลดให้คำนวณ % ส่วนลด)
+    calcPrice(item) {
+      if (item.sale && item.discount) {
+        // สูตร: ราคาเต็ม - (ราคาเต็ม * เปอร์เซ็นต์ส่วนลด / 100)
+        return item.price - (item.price * (parseFloat(item.discount) / 100));
+      }
+      return item.price;
+    },
     removeCartItem(product) {
       useCartStore().removeCartItem(product)
     },
@@ -197,6 +205,8 @@ export default {
         useNuxtApp().$showToast({ msg: "Please select items to checkout.", type: "error" })
         return;
       }
+      // บันทึกข้อมูลสินค้าที่เลือก (พร้อมราคาที่คำนวณแล้ว ถ้าจำเป็น แต่ปกติหน้า Checkout จะคำนวณใหม่)
+      // ในที่นี้เราส่ง object เดิมไป แต่หน้า Checkout ควรมี logic คำนวณราคาแบบเดียวกัน
       localStorage.setItem('checkout_items', JSON.stringify(this.selectedItems));
       this.$router.push('/page/account/checkout');
     }

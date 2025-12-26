@@ -123,7 +123,7 @@
 
                                     <div class="text-muted small">จำนวน: x{{ item.qty }}</div>
                                 </div>
-                                <div class="fw-bold text-dark">฿{{ item.price.toLocaleString() }}</div>
+                                <div class="fw-bold text-dark">฿{{ (item.price * item.qty).toLocaleString() }}</div>
                             </div>
                         </div>
                     </div>

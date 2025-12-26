@@ -144,13 +144,12 @@
                             {{ item.title }} X {{ item.quantity }}
                           </span>
                           <span class="text-end" style="width: 100px;">
-                            {{ (item.price * curr.curr * item.quantity).toFixed(2) }}
+                            {{ (calcPrice(item) * curr.curr * item.quantity).toFixed(2) }}
                           </span>
                           <span class="ms-3" style="width: 80px;"></span>
                         </div>
                       </li>
                     </ul>
-
                     <ul class="sub-total">
                       <li>Subtotal <span class="count">{{ (cartTotal * curr.curr).toFixed(2) }}</span></li>
                       <li>Total <span class="count">{{ (grandTotal * curr.curr).toFixed(2) }}</span></li>
@@ -303,10 +302,22 @@ export default {
         return 0;
       });
     },
-    cartTotal() { return this.checkoutItems.reduce((total, item) => total + (item.price * item.quantity), 0); },
+    // [แก้ไข] คำนวณราคารวมโดยใช้ราคาที่ลดแล้ว (calcPrice)
+    cartTotal() {
+      return this.checkoutItems.reduce((total, item) => total + (this.calcPrice(item) * item.quantity), 0);
+    },
     grandTotal() { return this.cartTotal; }
   },
   methods: {
+    // [เพิ่มใหม่] ฟังก์ชันคำนวณราคา (คิดส่วนลดถ้ามี)
+    calcPrice(item) {
+      if (item.sale && item.discount) {
+        // สูตร: ราคาเต็ม - (ราคาเต็ม * %ส่วนลด / 100)
+        return item.price - (item.price * (parseFloat(item.discount) / 100));
+      }
+      return item.price;
+    },
+
     loadAddressToUser(addr) {
       if (!addr) return;
       this.user.firstName.value = addr.firstName || '';
@@ -371,7 +382,7 @@ export default {
     },
     cancelPromptPay() { this.isQRVisible = false; },
 
-    // --- ฟังก์ชันหลักในการบันทึกออเดอร์ (แก้ไขแล้ว) ---
+    // --- ฟังก์ชันหลักในการบันทึกออเดอร์ ---
     async confirmOrder() {
       this.isLogin = useCookie('userlogin').value;
       if (!this.isLogin) {
@@ -398,7 +409,10 @@ export default {
         // 2. สร้าง Order ตามจำนวน Brand
         Object.keys(itemsByBrand).forEach((brand, index) => {
           const brandItems = itemsByBrand[brand];
-          const subtotal = brandItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+          // [แก้ไข] คำนวณ Subtotal โดยใช้ราคาที่ลดแล้ว
+          const subtotal = brandItems.reduce((sum, item) => sum + (this.calcPrice(item) * item.quantity), 0);
+
           const shippingFee = this.selectedShipping ? this.selectedShipping.price : 0;
           const total = subtotal + shippingFee;
           const orderId = 'ORD-' + Math.floor(10000 + Math.random() * 90000) + '-' + (index + 1);
@@ -417,10 +431,13 @@ export default {
             paymentMethod: this.selectedPayment === 'cod' ? 'COD' : 'PromptPay',
             status: 'Pending',
             items: brandItems.map(item => ({
-              id: item.id, // [แก้ไข] เพิ่มบรรทัดนี้ เพื่อดึง ID สินค้ามาเก็บไว้
+              id: item.id,
               name: item.title,
               brand: brand,
-              price: item.price,
+
+              // [แก้ไข] บันทึกราคาที่ลดแล้วลงไปในออเดอร์
+              price: this.calcPrice(item),
+
               qty: item.quantity,
               image: item.images ? item.images[0].src : ''
             }))
@@ -438,7 +455,7 @@ export default {
         const cartStore = useCartStore();
         if (cartStore.cartItems) cartStore.cartItems = [];
 
-        // 5. แสดงผลและกลับหน้า Homepage (รวมกันทั้ง COD และ PromptPay)
+        // 5. แสดงผลและกลับหน้า Homepage
         try { useNuxtApp().$showToast({ msg: "สั่งซื้อสินค้าสำเร็จ", type: "success" }); } catch (e) { }
 
         setTimeout(() => {
