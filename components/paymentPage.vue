@@ -415,8 +415,9 @@ export default {
             shippingFee: shippingFee,
             total: total,
             paymentMethod: this.selectedPayment === 'cod' ? 'COD' : 'PromptPay',
-            status: 'Pending Review',
+            status: 'Pending',
             items: brandItems.map(item => ({
+              id: item.id, // [แก้ไข] เพิ่มบรรทัดนี้ เพื่อดึง ID สินค้ามาเก็บไว้
               name: item.title,
               brand: brand,
               price: item.price,

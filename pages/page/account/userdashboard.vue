@@ -169,32 +169,41 @@
                             <div class="card-body p-3">
                               <div class="row align-items-center">
                                 <div class="col-md-2 text-center">
-                                  <div class="bg-light rounded d-flex align-items-center justify-content-center"
-                                    style="width: 80px; height: 80px; margin: 0 auto;">
+                                  <NuxtLink
+                                    :to="`/product/three-column/thumbnail-left?id=${order.items[0].id || order.items[0].productId || '1'}`"
+                                    class="bg-light rounded d-flex align-items-center justify-content-center"
+                                    style="width: 80px; height: 80px; margin: 0 auto; overflow: hidden; text-decoration: none;"
+                                    @click.stop>
                                     <img v-if="order.items[0].image" :src="order.items[0].image"
                                       class="w-100 h-100 rounded" style="object-fit: cover;">
                                     <i v-else class="fa fa-shopping-bag text-secondary" style="font-size: 24px;"></i>
-                                  </div>
+                                  </NuxtLink>
                                 </div>
 
                                 <div class="col-md-6 d-flex flex-column justify-content-center"
                                   style="min-height: 100px;">
 
                                   <div class="mb-1 text-muted" style="font-size: 0.85rem;">
-                                    ร้านค้า: <span class="fw-bold text-dark">{{ order.items[0].brand || 'Official Store'
-                                    }}</span>
+                                    ร้านค้า:
+                                    <NuxtLink
+                                      :to="`/seller/${order.shopName || order.items[0].brand || 'official-store'}`"
+                                      class="fw-bold text-dark text-decoration-none hover-underline" @click.stop>
+                                      {{ order.shopName || order.items[0].brand || 'Official Store' }}
+                                    </NuxtLink>
                                   </div>
 
-                                  <h6 class="mb-1 text-dark text-truncate" style="max-width: 100%;">
+                                  <NuxtLink
+                                    :to="`/product/three-column/thumbnail-left?id=${order.items[0].id || order.items[0].productId || '1'}`"
+                                    class="mb-1 text-dark text-truncate text-decoration-none hover-underline"
+                                    style="max-width: 100%; font-weight: 600;" @click.stop>
                                     {{ order.items[0]?.name || 'สินค้า' }}
-                                  </h6>
+                                  </NuxtLink>
 
                                   <div class="text-muted small" v-if="order.items.length > 1">
                                     และสินค้าอื่นๆ อีก {{ order.items.length - 1 }} รายการ
                                   </div>
 
                                   <div class="text-muted small mt-1">ชำระโดย: {{ order.paymentMethod }}</div>
-
                                 </div>
 
                                 <div class="col-md-4 text-end">
@@ -204,6 +213,29 @@
                                 </div>
                               </div>
                             </div>
+                          </div>
+
+                          <div class="d-flex justify-content-center mt-4 mb-3" v-if="totalPages > 1">
+                            <nav aria-label="Page navigation">
+                              <ul class="pagination">
+                                <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                                  <button class="page-link" @click="changePage(currentPage - 1)" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                  </button>
+                                </li>
+
+                                <li class="page-item" v-for="page in totalPages" :key="page"
+                                  :class="{ active: currentPage === page }">
+                                  <button class="page-link" @click="changePage(page)">{{ page }}</button>
+                                </li>
+
+                                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                                  <button class="page-link" @click="changePage(currentPage + 1)" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                  </button>
+                                </li>
+                              </ul>
+                            </nav>
                           </div>
 
                         </div>

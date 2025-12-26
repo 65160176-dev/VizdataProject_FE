@@ -103,7 +103,7 @@
                 <div v-for="(item, index) in order.items" :key="index" class="p-3 border-top">
                     <div class="d-flex">
 
-                        <NuxtLink :to="`/product/${item.id || item.productId || '1'}`"
+                        <NuxtLink :to="`/product/three-column/thumbnail-left?id=${item.id || item.productId || '1'}`"
                             class="bg-light rounded d-flex align-items-center justify-content-center me-3 flex-shrink-0"
                             style="width: 70px; height: 70px; overflow: hidden; text-decoration: none;">
                             <img v-if="item.image" :src="item.image"
@@ -114,7 +114,8 @@
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <NuxtLink :to="`/product/${item.id || item.productId || '1'}`"
+                                    <NuxtLink
+                                        :to="`/product/three-column/thumbnail-left?id=${item.id || item.productId || '1'}`"
                                         class="mb-1 text-dark text-decoration-none hover-underline d-block"
                                         style="line-height: 1.4; font-weight: 600;">
                                         {{ item.name }}
@@ -200,7 +201,7 @@
                     </label>
 
                     <textarea v-model="cancelReasonText" class="form-control border-0 shadow-sm" rows="5"
-                        placeholder="เช่น เปลี่ยนใจ, ใส่ที่อยู่ผิด, ลืมใส่โค้ดส่วนลด หรือต้องการแก้ไขรายการสินค้า..."></textarea>
+                        placeholder="เช่น เปลี่ยนใจ, ใส่ที่อยู่ผิด หรือต้องการแก้ไขรายการสินค้า..."></textarea>
 
                     <div class="d-flex justify-content-end mt-2">
                         <small :class="isReasonValid ? 'text-success' : 'text-muted'">
@@ -269,7 +270,7 @@ const submitRequestCancellation = () => {
 // ======================================================================
 
 const handleConfirmReceived = () => {
-    if (confirm('คุณได้รับสินค้าและตรวจสอบความถูกต้องเรียบร้อยแล้วใช่หรือไม่? \nเมื่อกดยืนยันแล้วจะไม่สามารถขอคืนเงินได้')) {
+    if (confirm('คุณได้รับสินค้าและตรวจสอบความถูกต้องเรียบร้อยแล้วใช่หรือไม่?')) {
         props.order.status = 'Completed'
         emit('update', props.order)
     }
