@@ -6,101 +6,104 @@
       <div class="container">
         <div class="row">
           <div class="col-sm-12">
-            <table class="table cart-table table-responsive-xs" v-if="cart.length">
-              <thead>
-                <tr class="table-head">
-                  <th scope="col" style="width: 1%; text-align: center; white-space: nowrap;">
-                    <input type="checkbox" v-model="isAllSelected" />
-                  </th>
-                  <th scope="col">image</th>
-                  <th scope="col">product name</th>
-                  <th scope="col">price</th>
-                  <th scope="col">quantity</th>
-                  <th scope="col">action</th>
-                  <th scope="col">total</th>
-                </tr>
-              </thead>
+            <div class="cart-table-wrapper" v-if="cart.length">
+              <table class="table cart-table">
 
-              <tbody v-for="(item, index) in cart" :key="index">
-                <tr>
-                  <td style="text-align: center;">
-                    <input type="checkbox" :value="item" v-model="selectedItems" />
-                  </td>
-                  <td>
-                    <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
-                      <img :src="getImgUrl(item.images[0].src)" alt />
-                    </nuxt-link>
-                  </td>
-                  <td>
-                    <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">{{ item.title }}</nuxt-link>
-                    <div class="mobile-cart-content row">
-                      <div class="col-xs-3">
-                        <div class="qty-box">
-                          <div class="input-group">
-                            <input type="text" name="quantity" class="form-control input-number"
-                              v-model="item.quantity" />
+                <thead>
+                  <tr class="table-head">
+                    <th scope="col" style="width: 1%; text-align: center; white-space: nowrap;">
+                      <input type="checkbox" v-model="isAllSelected" />
+                    </th>
+                    <th scope="col">image</th>
+                    <th scope="col">product name</th>
+                    <th scope="col">price</th>
+                    <th scope="col">quantity</th>
+                    <th scope="col">action</th>
+                    <th scope="col">total</th>
+                  </tr>
+                </thead>
+
+                <tbody v-for="(item, index) in cart" :key="index">
+                  <tr>
+                    <td style="text-align: center;">
+                      <input type="checkbox" :value="item" v-model="selectedItems" />
+                    </td>
+                    <td>
+                      <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
+                        <img :src="getImgUrl(item.images[0].src)" alt />
+                      </nuxt-link>
+                    </td>
+                    <td>
+                      <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">{{ item.title }}</nuxt-link>
+                      <div class="mobile-cart-content row">
+                        <div class="col-xs-3">
+                          <div class="qty-box">
+                            <div class="input-group">
+                              <input type="text" name="quantity" class="form-control input-number"
+                                v-model="item.quantity" />
+                            </div>
                           </div>
                         </div>
+                        <div class="col-xs-3">
+                          <h2 class="td-color">{{ curr.symbol }}{{ (item.price * curr.curr).toFixed(2) }}</h2>
+                        </div>
+                        <div class="col-xs-3">
+                          <h2 class="td-color">
+                            <a href="#" class="icon">
+                              <i class="ti-close"></i>
+                            </a>
+                          </h2>
+                        </div>
                       </div>
-                      <div class="col-xs-3">
-                        <h2 class="td-color">{{ curr.symbol }}{{ (item.price * curr.curr).toFixed(2) }}</h2>
+                    </td>
+                    <td>
+                      <h2>{{ curr.symbol }}{{ (item.price * curr.curr).toFixed(2) }}</h2>
+                    </td>
+                    <td>
+                      <div class="qty-box">
+                        <div class="input-group">
+                          <span class="input-group-prepend">
+                            <button type="button" class="btn quantity-left-minus" data-type="minus" data-field
+                              @click="decrement(item)">
+                              <i class="ti-angle-left"></i>
+                            </button>
+                          </span>
+                          <input type="text" name="quantity" class="form-control input-number"
+                            :disabled="item.quantity > item.stock" v-model="item.quantity" />
+                          <span class="input-group-prepend">
+                            <button type="button" class="btn quantity-right-plus" data-type="plus" data-field
+                              @click="increment(item)">
+                              <i class="ti-angle-right"></i>
+                            </button>
+                          </span>
+                        </div>
                       </div>
-                      <div class="col-xs-3">
-                        <h2 class="td-color">
-                          <a href="#" class="icon">
-                            <i class="ti-close"></i>
-                          </a>
-                        </h2>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <h2>{{ curr.symbol }}{{ (item.price * curr.curr).toFixed(2) }}</h2>
-                  </td>
-                  <td>
-                    <div class="qty-box">
-                      <div class="input-group">
-                        <span class="input-group-prepend">
-                          <button type="button" class="btn quantity-left-minus" data-type="minus" data-field
-                            @click="decrement(item)">
-                            <i class="ti-angle-left"></i>
-                          </button>
-                        </span>
-                        <input type="text" name="quantity" class="form-control input-number"
-                          :disabled="item.quantity > item.stock" v-model="item.quantity" />
-                        <span class="input-group-prepend">
-                          <button type="button" class="btn quantity-right-plus" data-type="plus" data-field
-                            @click="increment(item)">
-                            <i class="ti-angle-right"></i>
-                          </button>
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <a class="icon" href="#" @click.prevent="removeCartItem(item)">
-                      <i class="ti-close"></i>
-                    </a>
-                  </td>
-                  <td>
-                    <h2 class="td-color">
-                      {{ curr.symbol }} {{ ((item.price * curr.curr) * item.quantity).toFixed(2) }}
-                    </h2>
-                  </td>
-                </tr>
-              </tbody>
+                    </td>
+                    <td>
+                      <a class="icon" href="#" @click.prevent="removeCartItem(item)">
+                        <i class="ti-close"></i>
+                      </a>
+                    </td>
+                    <td>
+                      <h2 class="td-color">
+                        {{ curr.symbol }} {{ ((item.price * curr.curr) * item.quantity).toFixed(2) }}
+                      </h2>
+                    </td>
+                  </tr>
+                </tbody>
 
-              <tfoot>
-                <tr>
-                  <td colspan="6" class="text-end" style="padding-right: 20px; font-weight: bold;">
-                    total price (Selected):
-                  </td>
-                  <td>
-                    <h2 class="td-color">{{ curr.symbol }}{{ (selectedTotal * curr.curr).toFixed(2) }}</h2>
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+                <tfoot>
+                  <tr>
+                    <td colspan="6" class="text-end" style="padding-right: 20px; font-weight: bold;">
+                      total price (Selected):
+                    </td>
+                    <td>
+                      <h2 class="td-color">{{ curr.symbol }}{{ (selectedTotal * curr.curr).toFixed(2) }}</h2>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
 
             <div class="col-sm-12 empty-cart-cls text-center" v-if="!cart.length">
               <img src='/images/icon-empty-cart.png' class="img-fluid" alt="empty cart" />
@@ -215,5 +218,10 @@ input[type="checkbox"] {
 .disabled {
   pointer-events: none;
   opacity: 0.6;
+}
+
+.cart-table-wrapper {
+  display: flex;
+  justify-content: center;
 }
 </style>

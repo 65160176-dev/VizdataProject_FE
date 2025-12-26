@@ -1135,6 +1135,7 @@ header {
         >li {
           padding-top: 40px;
           padding-right: 0;
+
           [dir="rtl"] & {
             padding-right: 25px;
             padding-left: 0;
@@ -9355,23 +9356,24 @@ footer {
 }
 
 /* breadcrumb section */
-.breadcrumb-main{
+.breadcrumb-main {
   padding: 0;
+
   .breadcrumb-section {
     background-color: $top-header;
     padding: 30px 0;
-  
+
     .page-title {
       display: flex;
       height: 100%;
       align-items: center;
-  
+
       h2 {
         font-size: 16px;
         margin-bottom: 0;
       }
     }
-  
+
     .breadcrumb {
       background-color: transparent;
       justify-content: flex-end;
@@ -9381,7 +9383,7 @@ footer {
       font-weight: 600;
       margin: 0;
       padding-right: 0;
-  
+
       a {
         color: $grey2;
         font-weight: 600;
@@ -10672,13 +10674,17 @@ footer {
         background: $white !important;
         border: 1px solid #ced4da;
         height: 100%;
+        padding: 2px 8px; // [แก้ไข] ลด padding ปุ่ม
       }
     }
 
     .form-control {
       text-align: center;
-      width: 80px;
+      width: 50px; // [แก้ไข] ลดความกว้างช่องใส่เลข (จาก 80px)
       flex: unset;
+      height: 30px; // [แก้ไข] กำหนดความสูงให้เล็กลง
+      padding: 0.25rem 0.5rem;
+      font-size: 13px;
     }
 
     button {
@@ -10686,8 +10692,8 @@ footer {
       border: 0;
       color: $grey;
       cursor: pointer;
-      padding-left: 12px;
-      font-size: 12px;
+      padding-left: 8px; // [แก้ไข] ลด padding
+      font-size: 10px; // [แก้ไข] ลดขนาดไอคอน
       font-weight: 900;
       line-height: 1;
 
@@ -10729,23 +10735,23 @@ footer {
   }
 
   .cart-buttons {
-    padding-top: 35px;
+    padding-top: 20px; // [แก้ไข] ลดช่องว่างด้านบนปุ่ม (จาก 35px)
 
     >div {
       &:last-child {
         text-align: right;
-        padding-right: 59px;
+        padding-right: 15px; // [แก้ไข] ลด padding ขวา
       }
     }
   }
 
   .wishlist-buttons {
-    padding-top: 35px;
+    padding-top: 20px; // [แก้ไข] ลดช่องว่าง
     text-align: right;
 
     &:last-child {
       a {
-        margin-left: 15px;
+        margin-left: 10px;
       }
     }
   }
@@ -10757,13 +10763,13 @@ footer {
     thead {
       th {
         border-bottom-width: 1px;
-        font-weight: 900;
+        font-weight: 700; // [แก้ไข] ลดความหนาตัวอักษรนิดหน่อย
         color: $dark-font;
         text-transform: uppercase;
-        font-size: 14px;
+        font-size: 13px; // [แก้ไข] ลดขนาด font หัวตาราง
         border-top: 0;
         text-align: center;
-        padding: 0 0.75rem 0.75rem 0.75rem;
+        padding: 0 0.5rem 0.5rem 0.5rem; // [แก้ไข] ลด padding
       }
     }
   }
@@ -10775,24 +10781,25 @@ footer {
 
     tr {
       td {
-        min-width: 210px;
+        min-width: 100px; // [แก้ไข] ลด min-width (จาก 210px) ให้คอลัมน์แคบลง
         vertical-align: middle;
         color: $grey;
         border-top: 0;
         border-bottom: 1px solid #eeeeee;
         text-align: center;
+        padding: 0.5rem; // [เพิ่ม] ลด padding ในเซลล์
 
         a,
         p {
           color: $grey;
           font-weight: 400;
-          font-size: 14px;
+          font-size: 13px; // [แก้ไข] ลด font size
           text-transform: capitalize;
           margin-bottom: 0;
           white-space: nowrap;
 
           img {
-            height: 90px;
+            height: 60px; // [แก้ไข] ลดขนาดรูปภาพ (จาก 90px)
           }
         }
 
@@ -10801,29 +10808,29 @@ footer {
         }
 
         h2 {
-          font-size: 24px;
+          font-size: 16px; // [แก้ไข] ลดขนาดตัวเลขราคา (จาก 24px)
           color: $dark-font;
-          font-weight: 400;
+          font-weight: 600;
         }
 
         .mobile-cart-content {
           display: none;
           justify-content: center;
-          margin-top: 10px;
+          margin-top: 5px; // [แก้ไข] ลด margin
 
           .qty-box {
             border-radius: 5px;
 
             .input-group {
               .form-control {
-                width: 48px;
-                padding: 6px;
+                width: 40px; // [แก้ไข] ปรับขนาดในมือถือ
+                padding: 4px;
               }
             }
           }
 
           h2 {
-            font-size: 20px;
+            font-size: 14px; // [แก้ไข] ปรับขนาดในมือถือ
           }
         }
       }
@@ -10833,25 +10840,25 @@ footer {
   tfoot {
     tr {
       th {
-        padding-top: 35px;
+        padding-top: 15px; // [แก้ไข] ลด padding (จาก 35px)
         text-align: right;
       }
 
       td {
-        padding-top: 35px;
+        padding-top: 15px; // [แก้ไข] ลด padding (จาก 35px)
         padding-bottom: 0;
         text-align: right;
         border: none;
-        padding-right: 63px;
+        padding-right: 15px; // [แก้ไข] ลด padding ขวา
 
         h2 {
-          font-size: 24px;
+          font-size: 20px; // [แก้ไข] ลดขนาดราคารวม (จาก 24px)
           margin-bottom: 0;
         }
 
         &:first-child {
           width: 85%;
-          font-size: 15px;
+          font-size: 14px; // [แก้ไข] ลด font size
           padding-right: 10px;
           text-transform: capitalize;
           font-weight: 700;
@@ -13444,75 +13451,76 @@ footer {
 
     .set-position {
       display: block;
-      .layout-container{
-          box-shadow: -1px 2px 5px 1px #ececec;
-          padding: 45px 25px;
-          background-color: white;
-    
-          &.demo1 {
-            background-image:url("#{$assetspath2}/kids.jpg");
-          }
-    
-          &.demo44 {
-            background-image:url("#{$assetspath2}/gym.jpg");
-          }
-    
-          &.demo45 {
-            background-image:url("#{$assetspath2}/tools.jpg");
-          }
-    
-          &.demo48 {
-            background-image:url("#{$assetspath2}/pets.jpg");
-          }
-    
-          &.demo51 {
-            background-image:url("#{$assetspath2}/jewellery.jpg");
-          }
-    
-          &.demo2 {
-            background-image:url("#{$assetspath2}/fashion-3.jpg");
-          }
-    
-          &.demo3 {
-            background-image:url("#{$assetspath2}/fashion-2.jpg");
-          }
-    
-          &.demo4 {
-            background-image:url("#{$assetspath2}/shoes.jpg");
-          }
-    
-          &.demo5 {
-            background-image:url("#{$assetspath2}/bag.jpg");
-          }
-    
-          &.demo6 {
-            background-image:url("#{$assetspath2}/watch.jpg");
-          }
-    
-          &.demo7 {
-            background-image:url("#{$assetspath2}/kids.jpg");
-          }
-    
-          &.demo8 {
-            background-image:url("#{$assetspath2}/flower.jpg");
-          }
-    
-          &.demo10 {
-            background-image:url("#{$assetspath2}/vegetables.jpg");
-          }
-    
-          &.demo11 {
-            background-image:url("#{$assetspath2}/beauty.jpg");
-          }
-    
-          &.demo16 {
-            background-image:url("#{$assetspath2}/electronics.jpg");
-          }
-    
-          &.demo21 {
-            background-image:url("#{$assetspath2}/furniture.jpg");
-          }
-    }
+
+      .layout-container {
+        box-shadow: -1px 2px 5px 1px #ececec;
+        padding: 45px 25px;
+        background-color: white;
+
+        &.demo1 {
+          background-image:url("#{$assetspath2}/kids.jpg");
+        }
+
+        &.demo44 {
+          background-image:url("#{$assetspath2}/gym.jpg");
+        }
+
+        &.demo45 {
+          background-image:url("#{$assetspath2}/tools.jpg");
+        }
+
+        &.demo48 {
+          background-image:url("#{$assetspath2}/pets.jpg");
+        }
+
+        &.demo51 {
+          background-image:url("#{$assetspath2}/jewellery.jpg");
+        }
+
+        &.demo2 {
+          background-image:url("#{$assetspath2}/fashion-3.jpg");
+        }
+
+        &.demo3 {
+          background-image:url("#{$assetspath2}/fashion-2.jpg");
+        }
+
+        &.demo4 {
+          background-image:url("#{$assetspath2}/shoes.jpg");
+        }
+
+        &.demo5 {
+          background-image:url("#{$assetspath2}/bag.jpg");
+        }
+
+        &.demo6 {
+          background-image:url("#{$assetspath2}/watch.jpg");
+        }
+
+        &.demo7 {
+          background-image:url("#{$assetspath2}/kids.jpg");
+        }
+
+        &.demo8 {
+          background-image:url("#{$assetspath2}/flower.jpg");
+        }
+
+        &.demo10 {
+          background-image:url("#{$assetspath2}/vegetables.jpg");
+        }
+
+        &.demo11 {
+          background-image:url("#{$assetspath2}/beauty.jpg");
+        }
+
+        &.demo16 {
+          background-image:url("#{$assetspath2}/electronics.jpg");
+        }
+
+        &.demo21 {
+          background-image:url("#{$assetspath2}/furniture.jpg");
+        }
+      }
     }
 
     >div {
@@ -16250,16 +16258,18 @@ body.rtl {
   }
 }
 
-.collection-brand-filter{
+.collection-brand-filter {
   &::-webkit-scrollbar-track {
     box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
     background-color: #F5F5F5;
     border-radius: 10px;
   }
+
   &::-webkit-scrollbar {
     width: 5px;
     background-color: #F5F5F5;
   }
+
   &::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background-image: -webkit-gradient(linear,
@@ -16754,12 +16764,11 @@ body.rtl {
   direction: ltr;
 }
 
-.modal-content{
- .size-chart{
-  display: flex;
-  margin: 0 auto;
- }
- .close{
-  
- }
+.modal-content {
+  .size-chart {
+    display: flex;
+    margin: 0 auto;
+  }
+
+  .close {}
 }
