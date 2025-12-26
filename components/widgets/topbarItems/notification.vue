@@ -12,43 +12,37 @@
             <div class="dropdown-header">การแจ้งเตือน ({{ unreadCount }})</div>
 
             <ul class="notification-list">
-                <li v-for="item in notifications" :key="item.id" class="notification-item"
-                    :class="{ 'item-unread': !item.isRead, 'item-read': item.isRead }">
+                <li v-if="notifications.length === 0" class="p-3 text-center text-muted small">
+                    ไม่มีการแจ้งเตือน
+                </li>
 
+                <li v-for="item in notifications.slice(0, 10)" :key="item.id" class="notification-item"
+                    :class="{ 'item-unread': !item.isRead, 'item-read': item.isRead }" @mouseenter="markAsRead(item)">
                     <div class="notif-box">
-
                         <div class="notif-img">
                             <img v-if="item.image" :src="item.image" alt="icon">
                             <div v-else class="default-icon-bg">
                                 <i class="fa fa-info" aria-hidden="true"></i>
                             </div>
                         </div>
-
                         <div class="notif-content">
                             <div class="notif-title">{{ item.title }}</div>
                             <div class="notif-message">{{ item.message }}</div>
                             <div class="notif-date">{{ item.date }}</div>
                         </div>
-
                     </div>
-
                 </li>
             </ul>
-
-            <!-- <div class="dropdown-footer">
-                <nuxt-link to="/page/account/notification">ดูทั้งหมด</nuxt-link>
-            </div> -->
         </div>
     </li>
 </template>
 
 <script>
-import notificationData from "~/data/notificationData.json"
 export default {
     name: 'HeaderNotification',
     data() {
         return {
-            notifications: notificationData
+            notifications: []
         }
     },
     computed: {
@@ -56,38 +50,61 @@ export default {
             if (!this.notifications) return 0;
             return this.notifications.filter(n => n.isRead === false).length;
         }
+    },
+    mounted() {
+        this.loadNotifications();
+        // [เพิ่ม] คอยฟัง event ชื่อ 'notification-updated'
+        if (typeof window !== 'undefined') {
+            window.addEventListener('notification-updated', this.loadNotifications);
+        }
+    },
+    beforeUnmount() {
+        // [เพิ่ม] ลบ listener เมื่อ component ถูกทำลาย
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('notification-updated', this.loadNotifications);
+        }
+    },
+    methods: {
+        loadNotifications() {
+            if (process.client) {
+                const stored = localStorage.getItem('my_app_notifications');
+                if (stored) {
+                    this.notifications = JSON.parse(stored);
+                } else {
+                    this.notifications = [];
+                }
+            }
+        }, markAsRead(item) {
+            // ทำงานเฉพาะตอนที่ยังไม่ได้อ่าน (เพื่อไม่ให้เซฟซ้ำซ้อน)
+            if (!item.isRead) {
+                item.isRead = true; // เปลี่ยนสถานะเป็นอ่านแล้ว (สีพื้นหลังจะเปลี่ยนทันที)
+
+                // บันทึกสถานะใหม่ลง LocalStorage
+                if (process.client) {
+                    localStorage.setItem('my_app_notifications', JSON.stringify(this.notifications));
+                }
+            }
+        }
     }
 }
 </script>
 
-
 <style scoped>
-/* จัดตำแหน่ง wrapper ให้เป็น relative เพื่อให้ badge อ้างอิงตำแหน่งได้ */
 .notification-icon-wrapper {
     position: relative;
     display: inline-block;
     margin-right: 5px;
-    /* เว้นระยะห่างจากคำว่า Notification เล็กน้อย */
 }
 
-/* ดีไซน์ตัวเลขแจ้งเตือน */
 .badge-count {
     position: absolute;
     top: -8px;
-    /* ปรับขึ้นลงตรงนี้ */
     right: -6px;
-    /* ปรับซ้ายขวาตรงนี้ */
-
     background-color: #ff4c3b;
-    /* สีแดง (หรือเปลี่ยนตาม Theme ร้าน) */
     color: white;
     border-radius: 50%;
-    /* ทำเป็นวงกลม */
-
     font-size: 10px;
     font-weight: bold;
-
-    /* กำหนดขนาดวงกลม */
     min-width: 16px;
     height: 16px;
     display: flex;
@@ -95,10 +112,8 @@ export default {
     justify-content: center;
     padding: 2px;
     border: 1px solid #fff;
-    /* ขอบขาวเล็กน้อยเพื่อให้ตัดกับพื้นหลัง */
 }
 
-/* --- โครงสร้าง Dropdown (เหมือนเดิม) --- */
 .notification-wrapper {
     position: relative;
 }
@@ -108,9 +123,7 @@ export default {
     position: absolute;
     top: 100%;
     right: 0;
-    /* หรือ left:0 ตามดีไซน์ */
     width: 400px;
-    /* ขยายความกว้างนิดหน่อยเพื่อให้ข้อความไม่เบียด */
     background: white;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
@@ -122,7 +135,6 @@ export default {
     display: block;
 }
 
-/* --- ส่วน Header & Footer --- */
 .dropdown-header {
     padding: 12px 15px;
     font-weight: bold;
@@ -130,15 +142,6 @@ export default {
     background: #fff;
 }
 
-.dropdown-footer {
-    text-align: center;
-    padding: 10px;
-    background: #f9f9f9;
-    font-size: 0.9em;
-    border-top: 1px solid #eee;
-}
-
-/* --- รายการ Notification --- */
 .notification-list {
     list-style: none;
     padding-left: 0;
@@ -157,7 +160,6 @@ export default {
 .notification-item .notif-box {
     display: flex;
     align-items: center;
-    /* จัดเรียงซ้ายขวา */
     padding: 12px 15px;
     text-decoration: none;
     color: #333;
@@ -170,48 +172,30 @@ export default {
     box-sizing: border-box;
 }
 
-/* .notification-item .notif-box:hover {
-    background-color: #e4e6eb;
-} */
 .notification-item:hover {
     background-color: #e4e6eb;
 }
 
-
-/* --- Logic สีพื้นหลัง (โจทย์หลัก) --- */
-/* ยังไม่อ่าน: พื้นหลังสีเทาเข้ม/ฟ้าอ่อน เพื่อให้เด่น */
 .item-unread {
     background-color: #f0f2f5;
 }
 
-/* อ่านแล้ว: พื้นหลังสีขาว */
 .item-read {
     background-color: #ffffff;
 }
 
-/* Hover: เปลี่ยนสีเล็กน้อยเมื่อชี้ */
-.notification-item a:hover {
-    background-color: #e4e6eb;
-    /* เข้มขึ้นอีกนิดตอนชี้ */
-}
-
-/* --- การจัดการรูปภาพ (Left Side) --- */
 .notif-img {
     margin-right: 12px;
     flex-shrink: 0;
-    /* ไม่ให้รูปหด */
 }
 
 .notif-img img {
     width: 40px;
     height: 40px;
     object-fit: cover;
-    /* ป้องกันรูปบิดเบี้ยว */
     border-radius: 50%;
-    /* รูปวงกลม */
 }
 
-/* กรณีไม่มีรูป (Default Icon) */
 .default-icon-bg {
     width: 40px;
     height: 40px;
@@ -227,11 +211,9 @@ export default {
     flex-grow: 1;
     overflow: hidden;
     min-width: 0;
-
     display: flex;
     flex-direction: column;
     justify-content: center;
-
     align-items: flex-start !important;
     text-align: left !important;
 }
@@ -243,10 +225,8 @@ export default {
     color: #222;
     text-align: left !important;
     width: 100%;
-
 }
 
-/* ถ้ายังไม่อ่าน title จะหนากว่าปกติ หรือเปลี่ยนสีก็ได้ */
 .item-unread .notif-title {
     color: #000;
 }
@@ -257,7 +237,6 @@ export default {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* ตัดคำยาวๆ เป็น ... */
     margin-bottom: 4px;
     text-align: left !important;
     width: 100%;

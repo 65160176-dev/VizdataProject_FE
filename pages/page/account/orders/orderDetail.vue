@@ -22,8 +22,7 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm mb-3 p-4"
-            v-if="!['Cancelled', 'Cancellation Requested'].includes(order.status)">
+        <div class="card border-0 shadow-sm mb-3 p-4" v-if="!['Cancelled', 'Cancel Requested'].includes(order.status)">
             <div class="stepper-wrapper">
                 <div class="stepper-item" :class="{ completed: step >= 1 }">
                     <div class="step-counter">1</div>
@@ -45,8 +44,7 @@
         </div>
 
         <div class="alert mb-3 shadow-sm border-0"
-            :class="['Cancelled', 'Cancellation Requested'].includes(order.status) ? 'alert-danger' : 'alert-warning'"
-            v-else>
+            :class="['Cancelled', 'Cancel Requested'].includes(order.status) ? 'alert-danger' : 'alert-warning'" v-else>
             <div class="d-flex align-items-center">
                 <i class="fa fs-4 me-3" :class="order.status === 'Cancelled' ? 'fa-times-circle' : 'fa-clock'"></i>
                 <div>
@@ -123,6 +121,7 @@
 
                                     <div class="text-muted small">จำนวน: x{{ item.qty }}</div>
                                 </div>
+
                                 <div class="fw-bold text-dark">฿{{ (item.price * item.qty).toLocaleString() }}</div>
                             </div>
                         </div>
@@ -151,7 +150,7 @@
                     <span class="fw-bold fs-4 text-primary">฿{{ order.total.toLocaleString() }}</span>
                 </div>
 
-                <div v-if="order.status === 'Cancellation Requested'" class="border-top pt-3 text-center">
+                <div v-if="order.status === 'Cancel Requested'" class="border-top pt-3 text-center">
                     <span class="text-muted small">กำลังดำเนินการตรวจสอบ...</span>
                 </div>
 
@@ -234,11 +233,40 @@ const props = defineProps({
 
 const emit = defineEmits(['back', 'cancel', 'update'])
 
+// --- ฟังก์ชันสำหรับสร้างการแจ้งเตือน ---
+const createNotification = (title, message) => {
+    if (typeof window === 'undefined') return // เช็คว่ารันบน Browser
+
+    const currentNotifs = JSON.parse(localStorage.getItem('my_app_notifications') || "[]")
+    const now = new Date()
+    const dateString = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+
+    const newNotif = {
+        id: Date.now(),
+        title: title,
+        message: message,
+        date: dateString,
+        isRead: false,
+        image: props.order.items[0]?.image || '' // เอารูปสินค้าแรกมาโชว์
+    }
+
+    // บันทึกลง LocalStorage (เอาอันใหม่ไว้บนสุด)
+    localStorage.setItem('my_app_notifications', JSON.stringify([newNotif, ...currentNotifs]))
+    window.dispatchEvent(new Event('notification-updated'))
+}
+
 // ================= 1. Direct Cancel Logic (No Dialog) =================
 const handleDirectCancel = () => {
     if (confirm('ยืนยันที่จะยกเลิกคำสั่งซื้อนี้?')) {
         props.order.status = 'Cancelled'
         props.order.cancelReason = 'User cancelled directly'
+
+        // [เพิ่ม] สร้างแจ้งเตือนเมื่อยกเลิกสำเร็จ
+        createNotification(
+            'ยกเลิกคำสั่งซื้อสำเร็จ',
+            `คำสั่งซื้อ #${props.order.orderId} ถูกยกเลิกเรียบร้อยแล้ว`
+        )
+
         emit('cancel', props.order)
     }
 }
@@ -261,8 +289,16 @@ const isReasonValid = computed(() => {
 })
 
 const submitRequestCancellation = () => {
-    props.order.status = 'Cancellation Requested'
+    // ใช้สถานะ Cancel Requested
+    props.order.status = 'Cancel Requested'
     props.order.cancelReason = cancelReasonText.value.trim()
+
+    // [เพิ่ม] สร้างแจ้งเตือนเมื่อส่งคำขอ
+    createNotification(
+        'ส่งคำขอยกเลิกแล้ว',
+        `คำขอยกเลิกคำสั่งซื้อ #${props.order.orderId} ได้ถูกส่งให้ร้านค้าตรวจสอบแล้ว`
+    )
+
     emit('update', props.order)
     closeCancelModal()
 }
@@ -272,6 +308,13 @@ const submitRequestCancellation = () => {
 const handleConfirmReceived = () => {
     if (confirm('คุณได้รับสินค้าและตรวจสอบความถูกต้องเรียบร้อยแล้วใช่หรือไม่?')) {
         props.order.status = 'Completed'
+
+        // [เพิ่ม] ส่งแจ้งเตือนเมื่อกดยอมรับสินค้า
+        createNotification(
+            'คำสั่งซื้อเสร็จสมบูรณ์',
+            `คุณได้ยืนยันการรับสินค้าสำหรับคำสั่งซื้อ #${props.order.orderId} เรียบร้อยแล้ว`
+        )
+
         emit('update', props.order)
     }
 }
@@ -293,8 +336,8 @@ const statusBadgeClass = computed(() => {
         case 'Pending Review':
         case 'Pending': return 'bg-warning text-dark'
 
-        // [แก้ไข] ย้าย Cancellation Requested มาอยู่กลุ่มสีแดง
-        case 'Cancellation Requested':
+        case 'Cancel Requested':
+        case 'Cancellation Requested': // เผื่อไว้รองรับทั้งสองแบบ
         case 'Cancelled': return 'bg-danger text-white'
 
         case 'Shipping':
@@ -408,5 +451,10 @@ textarea.form-control:focus {
 
 .stepper-item.completed .step-name {
     color: #28a745;
+}
+
+/* Hover Link Style */
+.hover-underline:hover {
+    text-decoration: underline !important;
 }
 </style>

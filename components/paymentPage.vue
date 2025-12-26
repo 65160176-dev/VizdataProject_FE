@@ -402,15 +402,19 @@ export default {
           itemsByBrand[brandName].push(item);
         });
 
+        // ดึงข้อมูลเก่าจาก LocalStorage
         const storedOrders = JSON.parse(localStorage.getItem('my_app_orders') || "[]");
+        const currentNotifs = JSON.parse(localStorage.getItem('my_app_notifications') || "[]"); // [แจ้งเตือน]
+
+        const newNotifications = []; // [แจ้งเตือน] เตรียม array สำหรับแจ้งเตือนใหม่
         const now = new Date();
         const dateString = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-        // 2. สร้าง Order ตามจำนวน Brand
+        // 2. สร้าง Order แยกตามร้านค้า
         Object.keys(itemsByBrand).forEach((brand, index) => {
           const brandItems = itemsByBrand[brand];
 
-          // [แก้ไข] คำนวณ Subtotal โดยใช้ราคาที่ลดแล้ว
+          // [ราคา] คำนวณ Subtotal โดยใช้ราคาที่ลดแล้ว (this.calcPrice)
           const subtotal = brandItems.reduce((sum, item) => sum + (this.calcPrice(item) * item.quantity), 0);
 
           const shippingFee = this.selectedShipping ? this.selectedShipping.price : 0;
@@ -429,33 +433,48 @@ export default {
             shippingFee: shippingFee,
             total: total,
             paymentMethod: this.selectedPayment === 'cod' ? 'COD' : 'PromptPay',
-            status: 'Pending',
+
+            status: 'Pending', // [สถานะ] ตั้งเป็น Pending ตามที่ต้องการ
+
             items: brandItems.map(item => ({
-              id: item.id,
+              id: item.id, // [ID] เก็บ ID สินค้า
               name: item.title,
               brand: brand,
-
-              // [แก้ไข] บันทึกราคาที่ลดแล้วลงไปในออเดอร์
-              price: this.calcPrice(item),
-
+              price: this.calcPrice(item), // [ราคา] เก็บราคาที่ลดแล้ว
               qty: item.quantity,
               image: item.images ? item.images[0].src : ''
             }))
           };
           storedOrders.unshift(newOrder);
+
+          // [แจ้งเตือน] สร้าง Notification object สำหรับออเดอร์นี้
+          const notif = {
+            id: Date.now() + index + 999, // สร้าง ID ไม่ให้ซ้ำ
+            title: 'สั่งซื้อสำเร็จ',
+            message: `คำสั่งซื้อ #${newOrder.orderId} จากร้าน ${brand} ได้ถูกส่งไปที่ทางร้านแล้ว`,
+            date: dateString,
+            isRead: false,
+            image: newOrder.items[0]?.image || ''
+          };
+          newNotifications.push(notif);
         });
 
-        // 3. บันทึก
+        // 3. บันทึก Order ลง LocalStorage
         localStorage.setItem('my_app_orders', JSON.stringify(storedOrders));
 
-        // 4. เคลียร์ค่า
+        // [แจ้งเตือน] บันทึก Notification ลง LocalStorage
+        const updatedNotifs = [...newNotifications, ...currentNotifs];
+        localStorage.setItem('my_app_notifications', JSON.stringify(updatedNotifs));
+        window.dispatchEvent(new Event('notification-updated'));
+
+        // 4. เคลียร์ค่าตะกร้าสินค้า
         this.isQRVisible = false;
         localStorage.removeItem('checkout_items');
 
         const cartStore = useCartStore();
         if (cartStore.cartItems) cartStore.cartItems = [];
 
-        // 5. แสดงผลและกลับหน้า Homepage
+        // 5. แสดง Toast และกลับหน้าหลัก
         try { useNuxtApp().$showToast({ msg: "สั่งซื้อสินค้าสำเร็จ", type: "success" }); } catch (e) { }
 
         setTimeout(() => {
@@ -468,7 +487,6 @@ export default {
         this.isLoading = false;
       }
     },
-
     onSubmit() {
       if (!this.user.firstName.value || this.user.firstName.value.length <= 1) this.user.firstName.errormsg = 'empty not allowed'; else this.user.firstName.errormsg = '';
       if (!this.user.phone.value) this.user.phone.errormsg = 'empty not allowed'; else this.user.phone.errormsg = '';
