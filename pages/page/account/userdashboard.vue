@@ -140,8 +140,9 @@
                     <template v-if="isAuthenticated">
                       <div v-if="!selectedOrder">
 
-                        <div class="d-flex overflow-auto mb-4 pb-2 border-bottom text-nowrap custom-scrollbar">
-                          <button v-for="tab in tabs" :key="tab.value" class="btn rounded-pill me-2 px-3"
+                        <div
+                          class="d-flex w-100 overflow-auto mb-4 pb-2 border-bottom text-nowrap custom-scrollbar gap-2">
+                          <button v-for="tab in tabs" :key="tab.value" class="btn rounded-pill px-3 flex-fill"
                             :class="activeTab === tab.value ? 'btn-dark' : 'btn-outline-secondary border-0'"
                             @click="activeTab = tab.value">
                             {{ tab.label }}
@@ -153,6 +154,7 @@
 
                           <div v-for="(order, index) in paginatedOrders" :key="index"
                             class="card mb-3 border-0 shadow-sm cursor-pointer" @click="selectedOrder = order">
+
                             <div
                               class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center py-3">
                               <div>
@@ -163,6 +165,7 @@
                                 {{ order.status }}
                               </span>
                             </div>
+
                             <div class="card-body p-3">
                               <div class="row align-items-center">
                                 <div class="col-md-2 text-center">
@@ -173,47 +176,34 @@
                                     <i v-else class="fa fa-shopping-bag text-secondary" style="font-size: 24px;"></i>
                                   </div>
                                 </div>
-                                <div class="col-md-7">
+
+                                <div class="col-md-6 d-flex flex-column justify-content-center"
+                                  style="min-height: 100px;">
+
                                   <div class="mb-1 text-muted" style="font-size: 0.85rem;">
                                     ร้านค้า: <span class="fw-bold text-dark">{{ order.items[0].brand || 'Official Store'
                                     }}</span>
                                   </div>
-                                  <h6 class="mb-1 text-dark">{{ order.items[0]?.name || 'สินค้า' }}</h6>
+
+                                  <h6 class="mb-1 text-dark text-truncate" style="max-width: 100%;">
+                                    {{ order.items[0]?.name || 'สินค้า' }}
+                                  </h6>
+
                                   <div class="text-muted small" v-if="order.items.length > 1">
                                     และสินค้าอื่นๆ อีก {{ order.items.length - 1 }} รายการ
                                   </div>
+
                                   <div class="text-muted small mt-1">ชำระโดย: {{ order.paymentMethod }}</div>
+
                                 </div>
-                                <div class="col-md-3 text-end">
+
+                                <div class="col-md-4 text-end">
                                   <div class="mb-2 fw-bold text-primary">฿{{ order.total.toLocaleString() }}</div>
                                   <button class="btn btn-outline-secondary btn-sm" style="min-width: 120px;"
                                     @click.stop="selectedOrder = order">ดูรายละเอียด</button>
                                 </div>
                               </div>
                             </div>
-                          </div>
-
-                          <div class="d-flex justify-content-center mt-4 mb-3" v-if="totalPages > 1">
-                            <nav aria-label="Page navigation">
-                              <ul class="pagination">
-                                <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                                  <button class="page-link" @click="changePage(currentPage - 1)" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                  </button>
-                                </li>
-
-                                <li class="page-item" v-for="page in totalPages" :key="page"
-                                  :class="{ active: currentPage === page }">
-                                  <button class="page-link" @click="changePage(page)">{{ page }}</button>
-                                </li>
-
-                                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                                  <button class="page-link" @click="changePage(currentPage + 1)" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                  </button>
-                                </li>
-                              </ul>
-                            </nav>
                           </div>
 
                         </div>
@@ -319,22 +309,20 @@ const tabs = [
   { label: 'ทั้งหมด', value: 'all' },
   { label: 'รอยืนยัน', value: 'pending' },
   { label: 'กำลังเตรียมสินค้า', value: 'processing' },
-  { label: 'กำลังส่ง', value: 'accepted' },
   { label: 'ที่ต้องได้รับ', value: 'shipping' },
   { label: 'สำเร็จ', value: 'completed' },
   { label: 'ยกเลิก', value: 'cancelled' },
 ]
 
-// [แก้ไข 1] ย้าย Logic ในการกรองข้อมูล
 const filteredOrders = computed(() => {
   if (activeTab.value === 'all') return orders.value
 
   return orders.value.filter(o => {
     const s = o.status
 
-    // ย้าย 'Cancellation Requested' มาไว้ที่นี่ (รอยืนยัน)
     if (activeTab.value === 'pending') {
-      return s === 'Pending Review' || s === 'Pending' || s === 'Cancellation Requested'
+      // เอา Cancellation Requested ออกจาก pending
+      return s === 'Pending Review' || s === 'Pending'
     }
 
     if (activeTab.value === 'processing') return s === 'Accepted' || s === 'Processing'
@@ -342,8 +330,10 @@ const filteredOrders = computed(() => {
     if (activeTab.value === 'shipping') return s === 'Shipped' || s === 'Arrived'
     if (activeTab.value === 'completed') return s === 'Completed' || s === 'Delivered'
 
-    // เอาออกจากแท็บยกเลิก (เหลือแค่ Cancelled จริงๆ)
-    if (activeTab.value === 'cancelled') return s === 'Cancelled'
+    // ย้ายมารวมที่นี่ (Tab ยกเลิก)
+    if (activeTab.value === 'cancelled') {
+      return s === 'Cancelled' || s === 'Cancellation Requested'
+    }
 
     return false
   })
@@ -353,15 +343,14 @@ watch(activeTab, () => {
   currentPage.value = 1
 })
 
-// [แก้ไข 2] ย้าย Logic ในการนับจำนวน Badge
 const getCount = (tabValue) => {
   if (tabValue === 'all') return orders.value.length
   return orders.value.filter(o => {
     const s = o.status
 
-    // ย้ายมานับรวมที่นี่
     if (tabValue === 'pending') {
-      return s === 'Pending Review' || s === 'Pending' || s === 'Cancellation Requested'
+      // เอา Cancellation Requested ออกจาก pending
+      return s === 'Pending Review' || s === 'Pending'
     }
 
     if (tabValue === 'processing') return s === 'Accepted' || s === 'Processing'
@@ -369,8 +358,10 @@ const getCount = (tabValue) => {
     if (tabValue === 'shipping') return s === 'Shipped' || s === 'Arrived'
     if (tabValue === 'completed') return s === 'Completed' || s === 'Delivered'
 
-    // เอาออกจากแท็บยกเลิก
-    if (tabValue === 'cancelled') return s === 'Cancelled'
+    // ย้ายมารวมที่นี่ (Tab ยกเลิก)
+    if (tabValue === 'cancelled') {
+      return s === 'Cancelled' || s === 'Cancellation Requested'
+    }
 
     return false
   }).length
@@ -379,15 +370,20 @@ const getCount = (tabValue) => {
 const getStatusClass = (status) => {
   switch (status) {
     case 'Accepted': return 'bg-success text-white'
+
     case 'Pending Review':
     case 'Pending':
-    case 'Cancellation Requested': // สีเหลือง (Warning) เหมาะกับ "รอยืนยัน" อยู่แล้ว
       return 'bg-warning text-dark'
+
     case 'Shipping': return 'bg-info text-white'
     case 'Shipped': return 'bg-info text-white'
     case 'Arrived': return 'bg-info text-white'
     case 'Completed': return 'bg-secondary text-white'
+
+    // ย้ายมากลุ่มสีแดง
+    case 'Cancellation Requested':
     case 'Cancelled': return 'bg-danger text-white'
+
     default: return 'bg-light text-dark border'
   }
 }

@@ -27,7 +27,7 @@
       "email": "nancy@email.com",
       "address": "456 Pattaya, Chonburi",
       "total": 4500,
-      "status": "Accepted",
+      "status": "Shipped",
       "paymentMethod": "PromptPay",
       "items": [
         {
@@ -90,7 +90,7 @@
       "email": "bruce@wayne.corp",
       "address": "1007 Mountain Drive, Gotham",
       "total": 1200,
-      "status": "Shipping",
+      "status": "Accepted",
       "paymentMethod": "Credit Card",
       "shippingFee": 50,
       "items": [
