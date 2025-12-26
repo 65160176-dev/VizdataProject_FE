@@ -50,12 +50,20 @@
                     </form>
                 </div>
 
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary px-4" @click="closeModal">ยกเลิก</button>
+                <div class="modal-footer border-0 pt-0 justify-content-end gap-2">
+
+                    <button type="button" class="btn btn-outline-secondary px-4"
+                        style="min-width: 120px; height: 45px; display: flex; align-items: center; justify-content: center;"
+                        @click="closeModal">
+                        ยกเลิก
+                    </button>
+
                     <button type="button" class="btn btn-solid px-4"
-                        style="background-color: #ff4c3b; border-color: #ff4c3b; color: white;" @click="submitForm">
+                        style="background-color: #ff4c3b; border-color: #ff4c3b; color: white; min-width: 120px; height: 45px; display: flex; align-items: center; justify-content: center;"
+                        @click="submitForm">
                         {{ isEditMode ? 'อัปเดต' : 'บันทึก' }}
                     </button>
+
                 </div>
 
             </div>
