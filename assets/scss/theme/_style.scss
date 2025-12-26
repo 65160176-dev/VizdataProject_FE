@@ -10762,14 +10762,15 @@ footer {
 
     thead {
       th {
+        font-size: 16px;
         border-bottom-width: 1px;
-        font-weight: 700; // [แก้ไข] ลดความหนาตัวอักษรนิดหน่อย
+        font-weight: 900;
         color: $dark-font;
         text-transform: uppercase;
-        font-size: 13px; // [แก้ไข] ลดขนาด font หัวตาราง
+        font-size: 13px;
         border-top: 0;
         text-align: center;
-        padding: 0 0.5rem 0.5rem 0.5rem; // [แก้ไข] ลด padding
+        padding: 0.75rem;
       }
     }
   }
