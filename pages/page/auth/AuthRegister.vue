@@ -74,10 +74,8 @@
       <div class="form-footer">
         <span>Or Sign up with social platforms</span>
         <ul class="social">
-          <li><a class="ti-facebook" href="#"></a></li>
-          <li><a class="ti-twitter" href="#"></a></li>
-          <li><a class="ti-instagram" href="#"></a></li>
-          <li><a class="ti-pinterest" href="#"></a></li>
+          <li><a class="ti-facebook" href="#" @click.prevent="loginWithFacebook"></a></li>
+          <li><a class="ti-google" href="#" @click.prevent="loginWithGoogle"></a></li>
         </ul>
       </div>
     </form>
@@ -109,6 +107,17 @@ const passwordType = ref('password')
 const loading = ref(false)
 const message = ref('')
 const messageType = ref('')
+
+// OAuth Login Functions
+function loginWithFacebook() {
+  const apiUrl = useRuntimeConfig().public.apiUrl || 'http://localhost:3001'
+  window.location.href = `${apiUrl}/api/auth/facebook`
+}
+
+function loginWithGoogle() {
+  const apiUrl = useRuntimeConfig().public.apiUrl || 'http://localhost:3001'
+  window.location.href = `${apiUrl}/api/auth/google`
+}
 
 // Register function
 async function doRegister() {
@@ -341,6 +350,7 @@ async function doRegister() {
         
         &.ti-facebook:hover { background: #3b5998; }
         &.ti-twitter:hover { background: #1da1f2; }
+        &.ti-google:hover { background: #db4437; }
         &.ti-instagram:hover { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
         &.ti-pinterest:hover { background: #bd081c; }
       }

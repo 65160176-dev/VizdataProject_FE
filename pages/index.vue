@@ -5,7 +5,7 @@
     <section class="marketplace py-4">
       <div class="container">
         <div class="hero position-relative mb-3">
-          <img src="/images/yoga/banner/Banner-1.jpg" alt="banner" />
+          <img src="/assets/images/Banner.png" alt="banner" />
           <div class="hero-text">
             <div class="title">ช็อปสินค้า Marketplace — ร้านค้าหลากหลาย</div>
             <div class="cta"><button class="btn btn-danger">ช้อปเลย</button></div>

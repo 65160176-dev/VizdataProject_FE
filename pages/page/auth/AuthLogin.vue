@@ -58,22 +58,9 @@
       <div class="form-footer">
         <span>Or Login with social platforms</span>
         <ul class="social">
-          <li><a class="ti-facebook" href="#"></a></li>
-          <li><a class="ti-google" href="#"></a></li>
-          <li><a class="fa fa-telegram" href="#"></a></li>
+          <li><a class="ti-facebook" href="#" @click.prevent="loginWithFacebook"></a></li>
+          <li><a class="ti-google" href="#" @click.prevent="loginWithGoogle"></a></li>
         </ul>
-      </div>
-      
-      <!-- Demo Credentials -->
-      <div class="demo-credentials">
-        <p><strong>Demo Account:</strong></p>
-        <small>Email: test@admin.com</small><br>
-        <small>Password: test@123456</small>
-      </div>
-      <div class="demo-credentials">
-        <p><strong>Demo Account:</strong></p>
-        <small>Email: seller@demo.com</small><br>
-        <small>Password: seller123</small>
       </div>
     </form>
   </div>
@@ -198,6 +185,18 @@ async function doLogin() {
     loading.value = false
   }
 }
+
+// OAuth Login Functions
+function loginWithFacebook() {
+  const apiUrl = useRuntimeConfig().public.apiUrl || 'http://localhost:3001'
+  window.location.href = `${apiUrl}/api/auth/facebook`
+}
+
+function loginWithGoogle() {
+  const apiUrl = useRuntimeConfig().public.apiUrl || 'http://localhost:3001'
+  window.location.href = `${apiUrl}/api/auth/google`
+}
+
 </script>
 <style scoped lang="scss">
 /* Alert Messages */
@@ -411,8 +410,7 @@ async function doLogin() {
         }
         
         &.ti-facebook:hover { background: #3b5998; }
-        &.ti-google:hover { background: #1da1f2; }
-        &.fa-telegram:hover { background: #bd081c; }
+        &.ti-google:hover { background: #db4437; }
       }
     }
   }

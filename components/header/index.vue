@@ -9,11 +9,6 @@
           <div class="col-12">
             <div class="main-menu">
               <div class="menu-left">
-                <div class="navbar">
-                  <a @click="left_sidebar">
-                  </a>
-                  <WidgetsLeftSidebar :leftSidebarVal="leftSidebarVal" @closeVal="closeBarValFromChild" />
-                </div>
                 <div class="brand-logo">
                   <nuxt-link :to="{ path: '/' }">
                     <img src="/images/icon/logo.png" class="img-fluid" alt />
