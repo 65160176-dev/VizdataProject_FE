@@ -172,7 +172,7 @@
                     <p class="text-muted small mb-2 text-center">กรุณาตรวจสอบสินค้าก่อนกดยืนยัน</p>
                     <div class="d-flex gap-2 w-100">
                         <button class="btn btn-outline-danger rounded-pill fw-bold w-50" @click="handleDirectCancel">
-                            ยกเลิกออเดอร์
+                            ปฏิเสธออเดอร์
                         </button>
                         <button class="btn rounded-pill fw-bold text-white w-50"
                             style="background-color: #28a745; border: none;" @click="handleConfirmReceived">

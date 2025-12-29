@@ -26,10 +26,10 @@
                                 <label class="form-label text-muted mb-1">Phone</label>
                                 <input type="text" class="form-control" v-model="form.phone" required>
                             </div>
-                            <div class="col-md-6">
+                            <!-- <div class="col-md-6">
                                 <label class="form-label text-muted mb-1">Email</label>
                                 <input type="email" class="form-control" v-model="form.email" required>
-                            </div>
+                            </div> -->
                             <div class="col-12">
                                 <label class="form-label text-muted mb-1">Address</label>
                                 <input type="text" class="form-control" v-model="form.address" required>

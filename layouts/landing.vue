@@ -8,7 +8,7 @@
   export default {
     head() {
       return {
-        title: 'MultiKart Ecommerce | NuxtJs Shopping Theme'
+        title: 'BDN Ecommerce | Online Shop'
       }
     },
    

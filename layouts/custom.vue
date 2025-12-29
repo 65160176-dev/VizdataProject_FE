@@ -17,7 +17,7 @@
 export default {
   head() {
     return {
-      title: 'MultiKart Ecommerce | Vuejs Shopping Theme'
+      title: 'BDN Ecommerce | Online Shop'
     }
   },
  data(){

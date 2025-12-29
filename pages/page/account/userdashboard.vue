@@ -115,7 +115,7 @@
                               </address>
                               <div class="mt-2 text-muted">
                                 <span class="mr-3"><strong>Mobile:</strong> {{ item.phone }}</span>
-                                <span><strong>Email:</strong> {{ item.email }}</span>
+                                <!-- <span><strong>Email:</strong> {{ item.email }}</span> -->
                               </div>
                             </div>
                           </div>
