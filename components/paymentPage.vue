@@ -82,14 +82,14 @@
                         <label>Last Name</label>
                         <input type="text" v-model="formTemp.lastName" class="form-control" />
                       </div>
-                      <div class="form-group col-md-6 col-sm-6">
+                      <div class="form-group col-md-12">
                         <label>Phone</label>
                         <input type="tel" v-model="formTemp.phone" class="form-control" />
                       </div>
-                      <div class="form-group col-md-6 col-sm-6">
+                      <!-- <div class="form-group col-md-6 col-sm-6">
                         <label>Email</label>
                         <input type="email" v-model="formTemp.email" class="form-control" />
-                      </div>
+                      </div> -->
                       <div class="form-group col-md-12">
                         <label>Address</label>
                         <input type="text" v-model="formTemp.address" class="form-control" />
