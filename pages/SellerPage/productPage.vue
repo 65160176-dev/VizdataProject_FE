@@ -166,7 +166,7 @@
               </div>
               <div class="modal-footer">
                 <button class="btn btn-primary" @click="saveNewItem">Save</button>
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal" @click="resetNewItemForm">Close</button>
               </div>
             </div>
           </div>
@@ -274,13 +274,42 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 definePageMeta({ layout: 'seller' })
 
-// --- 🔗 แก้ URL ตรงนี้เป็น /api/product ---
-const { data: products, refresh } = await useFetch('http://localhost:3001/api/product')
+// --- 🔗 ดึงเฉพาะสินค้าของ seller ที่ login ---
+const products = ref([])
+
+const fetchProducts = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    
+    if (!token) {
+      products.value = []
+      return
+    }
+    
+    const response = await $fetch('http://localhost:3001/api/product/my-products', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    products.value = response || []
+  } catch (error) {
+    console.error('Error fetching products:', error)
+    products.value = []
+  }
+}
+
+const refresh = fetchProducts
+
+// Load products on mount
+onMounted(() => {
+  fetchProducts()
+})
 
 const categoryOptions = ref(['Electronics', 'Jewellery', 'Fashion', 'Shoes', 'Watch', 'Beauty'])
 
@@ -354,11 +383,41 @@ const onFileChange = (e) => {
   }
 }
 
+const resetNewItemForm = () => {
+  newItem.value = { 
+    name: '', 
+    stock: 0, 
+    price: 0, 
+    commission: 0, 
+    weight: 0, 
+    shippingCost: 'Free', 
+    description: '', 
+    category: '', 
+    image: '', 
+    previewImage: null 
+  }
+  availableOptionsAdd.value = []
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
 const saveNewItem = async () => {
   try {
+    const token = localStorage.getItem('token')
+    
+    if (!token) {
+      alert('กรุณาเข้าสู่ระบบก่อน')
+      navigateTo('/page/auth/LoginPage')
+      return
+    }
+    
     // 🔗 แก้ URL ตรงนี้
     await $fetch('http://localhost:3001/api/product', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       body: {
         name: newItem.value.name,
         stock: parseInt(newItem.value.stock),
@@ -373,11 +432,18 @@ const saveNewItem = async () => {
     })
     
     await refresh()
-    newItem.value = { name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 'Free', description: '', category: '', image: '', previewImage: null }
+    resetNewItemForm()
     safeCloseModal('addModal')
 
   } catch (error) {
-    alert('Error adding product: ' + error.message)
+    console.error('Error adding product:', error)
+    if (error.statusCode === 401) {
+      alert('เซสชันหมดอายุ กรุณา Login ใหม่อีกครั้ง')
+      localStorage.clear()
+      navigateTo('/page/auth/LoginPage')
+    } else {
+      alert('Error adding product: ' + (error.data?.message || error.message))
+    }
   }
 }
 
@@ -411,9 +477,18 @@ watch(() => editItem.value.weight, (newVal) => {
 
 async function saveEdit() {
   try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      alert('กรุณาเข้าสู่ระบบก่อน')
+      return
+    }
+    
     // 🔗 แก้ URL ตรงนี้
     await $fetch(`http://localhost:3001/api/product/${editItem.value._id}`, {
       method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       body: {
         name: editItem.value.name,
         stock: parseInt(editItem.value.stock),
@@ -438,8 +513,19 @@ async function saveEdit() {
 async function deleteItem(id) {
   if (confirm('Are you sure you want to delete this product?')) {
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        alert('กรุณาเข้าสู่ระบบก่อน')
+        return
+      }
+      
       // 🔗 แก้ URL ตรงนี้
-      await $fetch(`http://localhost:3001/api/product/${id}`, { method: 'DELETE' })
+      await $fetch(`http://localhost:3001/api/product/${id}`, { 
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       await refresh()
     } catch (error) {
       alert('Error deleting: ' + error.message)

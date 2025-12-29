@@ -6,16 +6,18 @@
         {{ message }}
       </div>
       <div class="form-group">
+        <label class="form-label mb-2">{{ userType == 0 ? 'Shop Name' : 'Username' }}</label>
         <input 
           required 
           type="text" 
           v-model="username" 
           class="form-control" 
-          placeholder="Username"
+          :placeholder="userType == 0 ? 'Enter shop name' : 'Username'"
           :disabled="loading"
         >
       </div>
       <div class="form-group">
+        <label class="form-label mb-2">Email</label>
         <input 
           required 
           type="email" 
@@ -27,6 +29,7 @@
       </div>
           
       <div class="form-group">
+        <label class="form-label mb-2">Password</label>
         <input 
           required 
           v-model="password" 
@@ -37,6 +40,7 @@
         >
       </div>
       <div class="form-group">
+        <label class="form-label mb-2">Confirm Password</label>
         <input 
           required 
           v-model="confirmPassword" 
@@ -47,7 +51,7 @@
         >
       </div>
       <div class="form-group">
-            <label class="d-block">Register as</label>
+            <label class="d-block mb-2">Register as</label>
             <div class="form-check form-check-inline">
               <input class="form-check-input" type="radio" id="userTypeUser" value="1" v-model="userType" :disabled="loading">
               <label class="form-check-label" for="userTypeUser">User</label>
