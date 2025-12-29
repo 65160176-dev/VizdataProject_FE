@@ -364,7 +364,7 @@ const filteredOrders = computed(() => {
 
     // ย้ายมารวมที่นี่ (Tab ยกเลิก)
     if (activeTab.value === 'cancelled') {
-      return s === 'Cancelled' || s === 'Cancellation Requested'
+      return s === 'Cancelled' || s === 'Cancel Requested'
     }
 
     return false
@@ -392,7 +392,7 @@ const getCount = (tabValue) => {
 
     // ย้ายมารวมที่นี่ (Tab ยกเลิก)
     if (tabValue === 'cancelled') {
-      return s === 'Cancelled' || s === 'Cancellation Requested'
+      return s === 'Cancelled' || s === 'Cancel Requested'
     }
 
     return false
@@ -413,7 +413,7 @@ const getStatusClass = (status) => {
     case 'Completed': return 'bg-secondary text-white'
 
     // ย้ายมากลุ่มสีแดง
-    case 'Cancellation Requested':
+    case 'Cancel Requested':
     case 'Cancelled': return 'bg-danger text-white'
 
     default: return 'bg-light text-dark border'
