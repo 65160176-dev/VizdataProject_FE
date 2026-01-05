@@ -9,7 +9,28 @@
 
     <div class="sidebar-top">
       <div class="profile">
-        <img :src="avatar" alt="avatar" class="avatar" />
+        
+        <div class="avatar-container" @click="triggerFileInput" title="คลิกเพื่อเปลี่ยนรูป">
+            <img 
+                :src="avatar" 
+                alt="avatar" 
+                class="avatar" 
+                :class="{ 'uploading': isUploading }" 
+                @error="handleImageError"
+            />
+            <div v-if="isUploading" class="loading-overlay">
+                <div class="spinner-border text-white spinner-border-sm" role="status"></div>
+            </div>
+        </div>
+
+        <input 
+            type="file" 
+            ref="fileInputRef" 
+            class="d-none" 
+            accept="image/*"
+            @click.stop 
+            @change="handleFileUpload" 
+        />
         
         <div class="profile-info" v-show="!isCollapsed">
           <div class="name text-truncate">{{ displayName }}</div>
@@ -31,23 +52,15 @@
                 <span>การแจ้งเตือน</span>
                 <button class="mark-read-btn" @click="markAllRead">อ่านทั้งหมด</button>
               </div>
-              
               <div class="noti-list">
-                <div 
-                  v-for="item in notifications" 
-                  :key="item.id" 
-                  class="noti-item"
-                  :class="{ 'unread': item.isUnread }"
-                >
+                <div v-for="item in notifications" :key="item.id" class="noti-item" :class="{ 'unread': item.isUnread }">
                   <div class="noti-dot"></div>
                   <div class="noti-content">
                     <p class="noti-text">{{ item.text }}</p>
                     <span class="noti-time">{{ item.time }}</span>
                   </div>
                 </div>
-                <div v-if="notifications.length === 0" class="noti-empty">
-                  ไม่มีการแจ้งเตือน
-                </div>
+                <div v-if="notifications.length === 0" class="noti-empty">ไม่มีการแจ้งเตือน</div>
               </div>
             </div>
           </transition>
@@ -98,31 +111,82 @@ const router = useRouter()
 const auth = useAuthStore()
 const route = useRoute()
 const config = useRuntimeConfig()
-
-// --- 🔥 ตั้งค่า URL ของ Backend (Port 3001) ---
-const API_BASE_URL = config.public.apiBase || 'http://localhost:3001' 
+const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
 
 const displayName = computed(() => auth.userName || 'ร้านของฉัน')
 
-// --- 🔥 Logic การแสดงรูปภาพ ---
+// ✅ Logic แสดงรูปภาพ: ป้องกัน URL พัง (Connection Reset)
 const avatar = computed(() => {
-  // 1. ลองดึงจาก Store หรือ LocalStorage
   const userAvatar = auth.user?.avatar || (process.client ? localStorage.getItem('sellerAvatar') : null)
 
   if (userAvatar) {
-    // 2. ถ้าเป็น URL เต็มอยู่แล้ว (เช่น รูปจาก Google Login) ให้ใช้เลย
-    if (userAvatar.startsWith('http')) {
-      return userAvatar
+    // กันเหนียว: ถ้าข้อมูลพัง (มี http ปนกับ data:image)
+    if (userAvatar.includes('http') && userAvatar.includes('data:image')) {
+        return '/images/avtar.jpg'
     }
-    // 3. ถ้าเป็น Path จาก Backend (เช่น /uploads/avatars/...) 
-    // ให้เติม http://localhost:3001 เข้าไปข้างหน้า
+
+    // 1. ถ้าเป็น Base64 หรือ Blob (Preview) ใช้เลย
+    if (userAvatar.startsWith('data:') || userAvatar.startsWith('blob:')) return userAvatar
+    
+    // 2. ถ้าเป็น URL ภายนอก (Google/Facebook) ใช้เลย
+    if (userAvatar.startsWith('http')) return userAvatar
+
+    // 3. ถ้าเป็น Path จาก Backend (/uploads/...) ให้เติม Base URL
     const cleanPath = userAvatar.startsWith('/') ? userAvatar : `/${userAvatar}`
     return `${API_BASE_URL}${cleanPath}`
   }
-
-  // 4. ถ้าไม่มีรูป ให้ใช้รูป Default
   return '/images/avtar.jpg'
 })
+
+// --- Upload Logic ---
+const fileInputRef = ref(null)
+const isUploading = ref(false)
+
+const triggerFileInput = () => {
+    if (isUploading.value) return
+    fileInputRef.value.click()
+}
+
+const handleImageError = (e) => { e.target.src = '/images/avtar.jpg' }
+
+const handleFileUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+        alert('ไฟล์ใหญ่เกินไป (สูงสุด 5MB)')
+        return
+    }
+
+    isUploading.value = true
+
+    try {
+        const token = localStorage.getItem('token')
+        const formData = new FormData()
+        formData.append('file', file)
+
+        // ✅ ยิงไปที่ /api/... ให้ถูกต้อง
+        const response = await $fetch(`${API_BASE_URL}/api/sellers/upload-avatar`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        })
+
+        if (response.success) {
+            auth.user.avatar = response.data.avatar
+            const userLS = JSON.parse(localStorage.getItem('user') || '{}')
+            userLS.avatar = response.data.avatar
+            localStorage.setItem('user', JSON.stringify(userLS))
+            localStorage.setItem('sellerAvatar', response.data.avatar)
+        }
+    } catch (error) {
+        console.error('Upload Error:', error)
+        alert('อัปโหลดไม่สำเร็จ: ' + (error.data?.message || error.message))
+    } finally {
+        isUploading.value = false
+        if (fileInputRef.value) fileInputRef.value.value = ''
+    }
+}
 
 // --- Notification Logic ---
 const isNotiOpen = ref(false)
@@ -131,29 +195,25 @@ const notifications = ref([
   { id: 2, text: 'สินค้า "ครีมกันแดด" ใกล้หมด', time: '1 ชม. ที่แล้ว', isUnread: true },
   { id: 3, text: 'อนุมัติการถอนเงินแล้ว', time: 'เมื่อวาน', isUnread: false },
 ])
-
 const unreadCount = computed(() => notifications.value.filter(n => n.isUnread).length)
+function toggleNoti() { isNotiOpen.value = !isNotiOpen.value }
+function markAllRead() { notifications.value.forEach(n => n.isUnread = false) }
+function isActive(path) { try { return route.path === path || route.path.startsWith(path + '/') } catch (e) { return false } }
 
-function toggleNoti() {
-  isNotiOpen.value = !isNotiOpen.value
-}
-
-function markAllRead() {
-  notifications.value.forEach(n => n.isUnread = false)
-}
-
-function isActive(path) {
-  try { return route.path === path || route.path.startsWith(path + '/') } catch (e) { return false }
-}
-
+// ✅ Logout: เคลียร์ค่ารูปเก่าทิ้ง
 function logout() {
   if (auth && typeof auth.logout === 'function') auth.logout()
+  if (process.client) {
+      localStorage.removeItem('sellerAvatar')
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
+  }
   router.replace('/page/auth/LoginPage')
 }
 </script>
 
 <style scoped>
-/* CSS Styling เดิม */
+/* CSS เดิมของคุณ */
 .seller-sidebar{ width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: linear-gradient(180deg, #fff, #fffaf0); border-right: 1px solid rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; padding: 18px 14px; box-shadow: 0 4px 18px rgba(14,20,30,0.06); z-index: 1000; transition: width 0.3s ease-in-out, background 0.3s; }
 .seller-sidebar.collapsed { width: 80px; padding: 18px 10px; }
 .seller-sidebar.collapsed .avatar { width: 40px; height: 40px; margin: 0 auto; }
@@ -180,8 +240,6 @@ function logout() {
 .logout-btn{ background:transparent; border:1px solid #f0543b; color:#f0543b; padding:8px 12px; border-radius:6px; cursor:pointer; width: 100%; text-align: left; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .logout-btn:hover{ background:rgba(240,84,59,0.05); }
 .text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; }
-
-/* Notification Styles */
 .noti-wrapper { margin-left: auto; position: relative; }
 .noti-btn { background: transparent; border: none; cursor: pointer; padding: 8px; border-radius: 50%; position: relative; transition: all 0.2s; display: flex; align-items: center; justify-content: center; color: #666; }
 .noti-btn:hover { background: rgba(0,0,0,0.05); color: #333; }
@@ -189,26 +247,6 @@ function logout() {
 .noti-badge { position: relative; z-index: 2; background-color: #ff4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; padding: 0 4px; top: -6px; right: -6px; }
 .badge-ping { position: absolute; width: 100%; height: 100%; border-radius: 50%; background-color: #ff4757; opacity: 0.75; top: -6px; right: -6px; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; z-index: 1; }
 @keyframes ping { 75%, 100% { transform: scale(2.5); opacity: 0; } }
-.noti-dropdown { position: absolute; top: -10px; left: 100%; margin-left: 25px; width: 300px; background: white; border-radius: 12px; box-shadow: 5px 5px 20px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); z-index: 1002; overflow: hidden; transform-origin: top left; }
-.noti-dropdown::before { content: ''; position: absolute; top: 18px; left: -6px; width: 12px; height: 12px; background: white; transform: rotate(45deg); border-left: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); }
-.noti-header { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 14px; position: relative; z-index: 2; background: white;}
-.mark-read-btn { background: none; border: none; color: #ff9900; font-size: 12px; cursor: pointer; }
-.mark-read-btn:hover { text-decoration: underline; }
-.noti-list { max-height: 320px; overflow-y: auto; position: relative; z-index: 2; background: white;}
-.noti-item { padding: 12px 16px; border-bottom: 1px solid #f9f9f9; display: flex; gap: 10px; cursor: pointer; transition: background 0.2s; }
-.noti-item:hover { background: #fffcf5; }
-.noti-item:last-child { border-bottom: none; }
-.noti-item.unread { background: #fff8eb; }
-.noti-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; margin-top: 6px; flex-shrink: 0; }
-.noti-item.unread .noti-dot { background: #ff4757; }
-.noti-content { flex: 1; }
-.noti-text { font-size: 13px; color: #333; margin: 0; line-height: 1.4; }
-.noti-time { font-size: 11px; color: #999; margin-top: 2px; display: block; }
-.noti-empty { padding: 20px; text-align: center; color: #999; font-size: 13px; }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s, transform 0.2s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateX(-10px) scale(0.95); }
-
-/* Dark Mode Overrides */
 :global(body.dark) .seller-sidebar { background: #1e1e2f !important; border-right: 1px solid #333; }
 :global(body.dark) .profile-info .name { color: #fff; }
 :global(body.dark) .menu-item { color: #a6a6a6; }
