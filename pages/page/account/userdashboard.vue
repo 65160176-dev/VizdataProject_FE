@@ -115,7 +115,6 @@
                               </address>
                               <div class="mt-2 text-muted">
                                 <span class="mr-3"><strong>Mobile:</strong> {{ item.phone }}</span>
-                                <!-- <span><strong>Email:</strong> {{ item.email }}</span> -->
                               </div>
                             </div>
                           </div>
@@ -132,14 +131,11 @@
               <div class="tab-pane fade" id="orders">
                 <div class="dashboard-right">
                   <div class="dashboard">
-
                     <div class="page-title mb-3" v-if="!selectedOrder">
                       <h2 class="mb-0">My Orders</h2>
                     </div>
-
                     <template v-if="isAuthenticated">
                       <div v-if="!selectedOrder">
-
                         <div
                           class="d-flex w-100 overflow-auto mb-4 pb-2 border-bottom text-nowrap custom-scrollbar gap-2">
                           <button v-for="tab in tabs" :key="tab.value" class="btn rounded-pill px-3 flex-fill"
@@ -149,12 +145,9 @@
                             <span class="small ms-1 opacity-75">({{ getCount(tab.value) }})</span>
                           </button>
                         </div>
-
                         <div v-if="filteredOrders && filteredOrders.length > 0">
-
                           <div v-for="(order, index) in paginatedOrders" :key="index"
-                            class="card mb-3 border-0 shadow-sm cursor-pointer" @click="selectedOrder = order">
-
+                            class="card mb-3 border-0 shadow-sm">
                             <div
                               class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center py-3">
                               <div>
@@ -165,7 +158,6 @@
                                 {{ order.status }}
                               </span>
                             </div>
-
                             <div class="card-body p-3">
                               <div class="row align-items-center">
                                 <div class="col-md-2 text-center">
@@ -179,10 +171,8 @@
                                     <i v-else class="fa fa-shopping-bag text-secondary" style="font-size: 24px;"></i>
                                   </NuxtLink>
                                 </div>
-
                                 <div class="col-md-6 d-flex flex-column justify-content-center"
                                   style="min-height: 100px;">
-
                                   <div class="mb-1 text-muted" style="font-size: 0.85rem;">
                                     ร้านค้า:
                                     <NuxtLink
@@ -191,21 +181,17 @@
                                       {{ order.shopName || order.items[0].brand || 'Official Store' }}
                                     </NuxtLink>
                                   </div>
-
                                   <NuxtLink
                                     :to="`/product/three-column/thumbnail-left?id=${order.items[0].id || order.items[0].productId || '1'}`"
                                     class="mb-1 text-dark text-truncate text-decoration-none hover-underline"
                                     style="max-width: 100%; font-weight: 600;" @click.stop>
                                     {{ order.items[0]?.name || 'สินค้า' }}
                                   </NuxtLink>
-
                                   <div class="text-muted small" v-if="order.items.length > 1">
                                     และสินค้าอื่นๆ อีก {{ order.items.length - 1 }} รายการ
                                   </div>
-
                                   <div class="text-muted small mt-1">ชำระโดย: {{ order.paymentMethod }}</div>
                                 </div>
-
                                 <div class="col-md-4 text-end">
                                   <div class="mb-2 fw-bold text-primary">฿{{ order.total.toLocaleString() }}</div>
                                   <button class="btn btn-outline-secondary btn-sm" style="min-width: 120px;"
@@ -214,7 +200,6 @@
                               </div>
                             </div>
                           </div>
-
                           <div class="d-flex justify-content-center mt-4 mb-3" v-if="totalPages > 1">
                             <nav aria-label="Page navigation">
                               <ul class="pagination">
@@ -223,12 +208,10 @@
                                     <span aria-hidden="true">&laquo;</span>
                                   </button>
                                 </li>
-
                                 <li class="page-item" v-for="page in totalPages" :key="page"
                                   :class="{ active: currentPage === page }">
                                   <button class="page-link" @click="changePage(page)">{{ page }}</button>
                                 </li>
-
                                 <li class="page-item" :class="{ disabled: currentPage === totalPages }">
                                   <button class="page-link" @click="changePage(currentPage + 1)" aria-label="Next">
                                     <span aria-hidden="true">&raquo;</span>
@@ -237,21 +220,16 @@
                               </ul>
                             </nav>
                           </div>
-
                         </div>
-
                         <div v-else class="text-center py-5">
                           <i class="fa fa-clipboard-list text-muted mb-3" style="font-size: 48px; opacity: 0.3;"></i>
                           <p class="text-muted">ไม่มีรายการคำสั่งซื้อในสถานะนี้</p>
                         </div>
-
                       </div>
-
                       <div v-else>
                         <OrderDetail :order="selectedOrder" @back="selectedOrder = null" @cancel="handleOrderCancel"
                           @update="saveOrderChanges" />
                       </div>
-
                     </template>
                     <div v-else class="welcome-msg">
                       <p class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูประวัติการสั่งซื้อ</p>
@@ -284,6 +262,8 @@
   </div>
 
   <addAddressPop :show="showAddModal" :edit-data="selectedAddress" @close="closeModal" @save="handleSaveAddress" />
+  <delAddrPop v-if="showDeleteModal" @close="showDeleteModal = false" @confirm="confirmDeleteAddress" />
+
   <Footer />
 </template>
 
@@ -295,6 +275,7 @@ import { useAuthStore } from '~/store/auth'
 import addressData from '~/data/address.json'
 import ordersFile from '~/data/order.json'
 import addAddressPop from './Address/addAddressPop.vue'
+import delAddrPop from './Address/delAddrPop.vue'
 import OrderDetail from './orders/orderDetail.vue'
 
 const auth = useAuthStore()
@@ -306,7 +287,12 @@ const selectedAddress = ref(null)
 const selectedOrder = ref(null)
 const orders = ref(ordersFile.data || [])
 
+// [เพิ่ม] ตัวแปรสำหรับ Popup ลบที่อยู่
+const showDeleteModal = ref(false)
+const addressToDelete = ref(null)
+
 // --- ส่วน Pagination ---
+// ... (code pagination เดิม) ...
 const currentPage = ref(1)
 const itemsPerPage = 5
 
@@ -353,7 +339,6 @@ const filteredOrders = computed(() => {
     const s = o.status
 
     if (activeTab.value === 'pending') {
-      // เอา Cancellation Requested ออกจาก pending
       return s === 'Pending Review' || s === 'Pending'
     }
 
@@ -362,9 +347,8 @@ const filteredOrders = computed(() => {
     if (activeTab.value === 'shipping') return s === 'Shipped' || s === 'Arrived'
     if (activeTab.value === 'completed') return s === 'Completed' || s === 'Delivered'
 
-    // ย้ายมารวมที่นี่ (Tab ยกเลิก)
     if (activeTab.value === 'cancelled') {
-      return s === 'Cancelled' || s === 'Cancellation Requested'
+      return s === 'Cancelled' || s === 'Cancel Requested'
     }
 
     return false
@@ -381,7 +365,6 @@ const getCount = (tabValue) => {
     const s = o.status
 
     if (tabValue === 'pending') {
-      // เอา Cancellation Requested ออกจาก pending
       return s === 'Pending Review' || s === 'Pending'
     }
 
@@ -390,9 +373,8 @@ const getCount = (tabValue) => {
     if (tabValue === 'shipping') return s === 'Shipped' || s === 'Arrived'
     if (tabValue === 'completed') return s === 'Completed' || s === 'Delivered'
 
-    // ย้ายมารวมที่นี่ (Tab ยกเลิก)
     if (tabValue === 'cancelled') {
-      return s === 'Cancelled' || s === 'Cancellation Requested'
+      return s === 'Cancelled' || s === 'Cancel Requested'
     }
 
     return false
@@ -402,20 +384,15 @@ const getCount = (tabValue) => {
 const getStatusClass = (status) => {
   switch (status) {
     case 'Accepted': return 'bg-success text-white'
-
     case 'Pending Review':
     case 'Pending':
       return 'bg-warning text-dark'
-
     case 'Shipping': return 'bg-info text-white'
     case 'Shipped': return 'bg-info text-white'
     case 'Arrived': return 'bg-info text-white'
     case 'Completed': return 'bg-secondary text-white'
-
-    // ย้ายมากลุ่มสีแดง
-    case 'Cancellation Requested':
+    case 'Cancel Requested':
     case 'Cancelled': return 'bg-danger text-white'
-
     default: return 'bg-light text-dark border'
   }
 }
@@ -491,11 +468,22 @@ const handleSaveAddress = (formData) => {
   }
   closeModal()
 }
+
+// [แก้ไข] เปลี่ยนจาก confirm() เป็นเปิด Popup
 const deleteAddress = (itemToDelete) => {
-  if (confirm('Are you sure you want to delete this address?')) {
-    addressList.value = addressList.value.filter(item => item.id !== itemToDelete.id)
+  addressToDelete.value = itemToDelete
+  showDeleteModal.value = true
+}
+
+// [เพิ่ม] ฟังก์ชันทำงานเมื่อกดยืนยันใน Popup
+const confirmDeleteAddress = () => {
+  if (addressToDelete.value) {
+    addressList.value = addressList.value.filter(item => item.id !== addressToDelete.value.id)
+    addressToDelete.value = null
+    showDeleteModal.value = false
   }
 }
+
 const sortAddresses = () => {
   addressList.value.sort((a, b) => (a.isDefault === b.isDefault) ? 0 : a.isDefault ? -1 : 1)
 }
@@ -522,6 +510,7 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
+/* CSS เดิมของคุณ ... */
 .custom-radio input[type="radio"] {
   accent-color: #28a745;
 }
@@ -554,7 +543,6 @@ const handleLogout = () => {
   box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
 }
 
-/* Pagination Style */
 .pagination .page-link {
   color: #333;
   border: 1px solid #dee2e6;

@@ -38,7 +38,9 @@
               
               <tbody v-if="products && products.length > 0">
                 <tr v-for="(item, index) in products" :key="item._id">
-                  <td><img class="img-40 me-2" :src="item.image" alt=""></td>
+                  <td>
+                    <img class="img-40 me-2" :src="item.image || 'https://placehold.co/400'" alt="">
+                  </td>
                   <td>{{ item.name }}</td>
                   <td>{{ item.stock }}</td>
                   <td>{{ item.price }}</td>
@@ -52,7 +54,7 @@
                       :class="getBadgeColor(item.shippingCost)"
                       style="font-weight: normal; font-size: 13px;"
                     >
-                      {{ item.shippingCost || 'Free' }}
+                      {{ formatShippingCost(item.shippingCost) }}
                     </span>
                   </td>
 
@@ -88,13 +90,13 @@
                 <form>
                   <div class="row">
                     <div class="col-md-5 d-flex flex-column align-items-center justify-content-center mb-3">
-                      <div class="upload-box" @click="triggerFileInput">
+                      <div class="upload-box" @click="triggerFileInput('add')">
                         <img v-if="newItem.previewImage" :src="newItem.previewImage" class="img-preview" />
                         <div v-else class="text-center text-muted">
                           <Icon name="feather:image" size="48" style="color: #ccc;" />
                           <p class="mb-0 mt-2">Click to Upload</p>
                         </div>
-                        <input type="file" ref="fileInput" class="d-none" @change="onFileChange" accept="image/*">
+                        <input type="file" id="addFileInput" class="d-none" @change="(e) => onFileChange(e, 'add')" accept="image/*">
                       </div>
                     </div>
                     <div class="col-md-7">
@@ -133,14 +135,14 @@
                                   type="button"
                                   class="btn btn-sm badge-btn"
                                   :class="[
-                                    newItem.shippingCost === option.text 
+                                    newItem.shippingCost === option.value 
                                       ? 'btn-' + option.colorName + ' active-badge' 
                                       : 'btn-outline-secondary'
                                   ]"
-                                  @click="newItem.shippingCost = option.text"
+                                  @click="newItem.shippingCost = option.value"
                                >
                                   {{ option.text }}
-                                  <Icon v-if="newItem.shippingCost === option.text" name="feather:check" size="12" />
+                                  <Icon v-if="newItem.shippingCost === option.value" name="feather:check" size="12" />
                                </button>
                              </div>
                           </div>
@@ -175,79 +177,89 @@
 
       <ClientOnly>
         <div class="modal fade" id="editModal" tabindex="-1">
-          <div class="modal-dialog">
-            <div class="modal-content">
+          <div class="modal-dialog modal-lg"> <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title">Edit Product</h5>
                 <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
               </div>
               <div class="modal-body">
                 <form>
-                  <div class="form-group mb-3">
-                    <label>Product Name :</label>
-                    <input class="form-control" v-model="editItem.name">
-                  </div>
-                  
-                  <div class="row">
-                    <div class="col-6 form-group mb-3">
-                      <label>Stock :</label>
-                      <input class="form-control" v-model="editItem.stock" type="number">
-                    </div>
-                    <div class="col-6 form-group mb-3">
-                      <label>Price :</label>
-                      <input class="form-control" v-model="editItem.price" type="number">
-                    </div>
-                  </div>
-
-                  <div class="row">
-                    <div class="col-6 form-group mb-3">
-                      <label>Commission :</label>
-                      <input class="form-control" v-model="editItem.commission" type="number">
-                    </div>
-                    
-                    <div class="col-6 form-group mb-3">
-                      <label class="text-primary fw-bold">Weight (kg) :</label>
-                      <input class="form-control border-primary" v-model="editItem.weight" type="number" step="0.1">
-                      
-                      <div class="mt-2" v-if="editItem.weight >= 0">
-                          <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
-                          <div class="d-flex flex-wrap gap-2">
-                             <button 
-                                v-for="(option, index) in availableOptionsEdit" 
-                                :key="index"
-                                type="button"
-                                class="btn btn-sm badge-btn"
-                                :class="[
-                                  editItem.shippingCost === option.text 
-                                    ? 'btn-' + option.colorName + ' active-badge' 
-                                    : 'btn-outline-secondary'
-                                ]"
-                                @click="editItem.shippingCost = option.text"
-                             >
-                                {{ option.text }}
-                                <Icon v-if="editItem.shippingCost === option.text" name="feather:check" size="12" />
-                             </button>
-                           </div>
+                   <div class="row">
+                    <div class="col-md-5 d-flex flex-column align-items-center justify-content-center mb-3">
+                      <div class="upload-box" @click="triggerFileInput('edit')">
+                        <img v-if="editItem.previewImage" :src="editItem.previewImage" class="img-preview" />
+                        <img v-else-if="editItem.image" :src="editItem.image" class="img-preview" />
+                        <div v-else class="text-center text-muted">
+                          <Icon name="feather:image" size="48" style="color: #ccc;" />
+                        </div>
+                         <input type="file" id="editFileInput" class="d-none" @change="(e) => onFileChange(e, 'edit')" accept="image/*">
                       </div>
+                      <small class="text-muted mt-2">Click image to change</small>
                     </div>
-                  </div>
 
-                  <div class="form-group mb-3">
-                    <label>Category :</label>
-                    <select class="form-select" v-model="editItem.category">
-                      <option v-for="opt in categoryOptions" :key="opt" :value="opt">{{ opt }}</option>
-                    </select>
-                  </div>
+                    <div class="col-md-7">
+                        <div class="form-group mb-3">
+                          <label>Product Name :</label>
+                          <input class="form-control" v-model="editItem.name">
+                        </div>
+                        
+                        <div class="row">
+                          <div class="col-6 form-group mb-3">
+                            <label>Stock :</label>
+                            <input class="form-control" v-model="editItem.stock" type="number">
+                          </div>
+                          <div class="col-6 form-group mb-3">
+                            <label>Price :</label>
+                            <input class="form-control" v-model="editItem.price" type="number">
+                          </div>
+                        </div>
 
-                   <div class="form-group mb-3">
-                      <label>Description :</label>
-                      <textarea class="form-control" rows="3" v-model="editItem.description"></textarea>
+                        <div class="row">
+                          <div class="col-6 form-group mb-3">
+                            <label>Commission :</label>
+                            <input class="form-control" v-model="editItem.commission" type="number">
+                          </div>
+                          
+                          <div class="col-6 form-group mb-3">
+                            <label class="text-primary fw-bold">Weight (kg) :</label>
+                            <input class="form-control border-primary" v-model="editItem.weight" type="number" step="0.1">
+                            
+                            <div class="mt-2" v-if="editItem.weight >= 0">
+                                <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
+                                <div class="d-flex flex-wrap gap-2">
+                                  <button 
+                                      v-for="(option, index) in availableOptionsEdit" 
+                                      :key="index"
+                                      type="button"
+                                      class="btn btn-sm badge-btn"
+                                      :class="[
+                                        editItem.shippingCost === option.value 
+                                          ? 'btn-' + option.colorName + ' active-badge' 
+                                          : 'btn-outline-secondary'
+                                      ]"
+                                      @click="editItem.shippingCost = option.value"
+                                  >
+                                      {{ option.text }}
+                                      <Icon v-if="editItem.shippingCost === option.value" name="feather:check" size="12" />
+                                  </button>
+                                </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                          <label>Category :</label>
+                          <select class="form-select" v-model="editItem.category">
+                            <option v-for="opt in categoryOptions" :key="opt" :value="opt">{{ opt }}</option>
+                          </select>
+                        </div>
+
+                          <div class="form-group mb-3">
+                            <label>Description :</label>
+                            <textarea class="form-control" rows="3" v-model="editItem.description"></textarea>
+                          </div>
+                    </div>
                    </div>
-
-                  <div class="form-group mb-3">
-                    <label>Image URL :</label>
-                    <input class="form-control" v-model="editItem.image">
-                  </div>
                 </form>
               </div>
               <div class="modal-footer">
@@ -279,24 +291,19 @@ import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 definePageMeta({ layout: 'seller' })
 
-// --- 🔗 ดึงเฉพาะสินค้าของ seller ที่ login ---
 const products = ref([])
 
+// --- Fetch Products ---
 const fetchProducts = async () => {
   try {
     const token = localStorage.getItem('token')
-    
     if (!token) {
       products.value = []
       return
     }
-    
     const response = await $fetch('http://localhost:3001/api/product/my-products', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: { 'Authorization': `Bearer ${token}` }
     })
-    
     products.value = response || []
   } catch (error) {
     console.error('Error fetching products:', error)
@@ -305,11 +312,7 @@ const fetchProducts = async () => {
 }
 
 const refresh = fetchProducts
-
-// Load products on mount
-onMounted(() => {
-  fetchProducts()
-})
+onMounted(() => { fetchProducts() })
 
 const categoryOptions = ref(['Electronics', 'Jewellery', 'Fashion', 'Shoes', 'Watch', 'Beauty'])
 
@@ -321,22 +324,29 @@ const getStockStatus = (stock) => {
   else return 'danger'
 }
 
-const getBadgeColor = (costText) => {
-  if (costText === 'Free') return 'bg-success text-white'
-  if (costText === '30 บ.') return 'bg-info text-dark'
-  if (costText === '60 บ.') return 'bg-warning text-dark'
-  if (costText === '120 บ.') return 'bg-danger text-white'
-  return 'bg-light text-dark'
+// 🟢 Logic แสดงสีตามตัวเลข (0 = Free)
+const getBadgeColor = (cost) => {
+  const c = parseInt(cost)
+  if (c === 0) return 'bg-success text-white'
+  if (c <= 40) return 'bg-info text-dark'
+  if (c <= 80) return 'bg-warning text-dark'
+  return 'bg-danger text-white'
 }
 
+// 🟢 Logic แปลงตัวเลขเป็นข้อความ (0 -> 'Free')
+const formatShippingCost = (cost) => {
+  return parseInt(cost) === 0 ? 'Free' : `${cost} บ.`
+}
+
+// 🟢 Logic คำนวณ Option (Return object {value: int, text: string})
 const calculateOptions = (weight) => {
   const w = parseFloat(weight) || 0
   const options = []
   
-  options.push({ text: 'Free', colorName: 'success' })
-  if (w >= 1) options.push({ text: '30 บ.', colorName: 'info' })
-  if (w >= 10) options.push({ text: '60 บ.', colorName: 'warning' })
-  if (w >= 20) options.push({ text: '120 บ.', colorName: 'danger' })
+  options.push({ value: 0, text: 'Free', colorName: 'success' })
+  if (w >= 1) options.push({ value: 30, text: '30 บ.', colorName: 'info' })
+  if (w >= 10) options.push({ value: 60, text: '60 บ.', colorName: 'warning' })
+  if (w >= 20) options.push({ value: 120, text: '120 บ.', colorName: 'danger' })
   
   return options
 }
@@ -344,23 +354,19 @@ const calculateOptions = (weight) => {
 const safeCloseModal = (modalId) => {
   const modalEle = document.getElementById(modalId)
   if (modalEle) {
-    const modalInstance = bootstrap.Modal.getInstance(modalEle)
-    if (modalInstance) {
-      modalInstance.hide()
-    } else {
-      new bootstrap.Modal(modalEle).hide()
-    }
+    const modalInstance = bootstrap.Modal.getInstance(modalEle) || new bootstrap.Modal(modalEle)
+    modalInstance.hide()
   }
   document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
   document.body.classList.remove('modal-open')
   document.body.style = ''
 }
 
-// --- Add Product ---
+// ================= ADD PRODUCT =================
 const newItem = ref({ 
   name: '', stock: 0, price: 0, commission: 0, 
-  weight: 0, shippingCost: 'Free', description: '', category: '', 
-  image: '', previewImage: null 
+  weight: 0, shippingCost: 0, description: '', category: '', 
+  image: '', previewImage: null, rawFile: null // 🟢 เพิ่ม rawFile
 })
 const availableOptionsAdd = ref([]) 
 
@@ -368,98 +374,98 @@ watch(() => newItem.value.weight, (newVal) => {
   const options = calculateOptions(newVal)
   availableOptionsAdd.value = options
   if (options.length > 0) {
-    const lastOption = options[options.length - 1]
-    newItem.value.shippingCost = lastOption.text
+    // Default เลือกตัวแพงสุด หรือ logic ตามต้องการ
+    newItem.value.shippingCost = options[options.length - 1].value
   }
 })
 
-const fileInput = ref(null)
-const triggerFileInput = () => fileInput.value.click()
-const onFileChange = (e) => {
+// 🟢 File handling function (รองรับทั้ง Add และ Edit)
+const triggerFileInput = (mode) => {
+    if(mode === 'add') document.getElementById('addFileInput').click()
+    else document.getElementById('editFileInput').click()
+}
+
+const onFileChange = (e, mode) => {
   const file = e.target.files[0]
   if (file) {
-    newItem.value.previewImage = URL.createObjectURL(file)
-    newItem.value.image = newItem.value.previewImage 
+    const preview = URL.createObjectURL(file)
+    if (mode === 'add') {
+        newItem.value.previewImage = preview
+        newItem.value.rawFile = file // เก็บไฟล์จริง
+    } else {
+        editItem.value.previewImage = preview
+        editItem.value.rawFile = file // เก็บไฟล์จริง
+    }
   }
 }
 
 const resetNewItemForm = () => {
   newItem.value = { 
-    name: '', 
-    stock: 0, 
-    price: 0, 
-    commission: 0, 
-    weight: 0, 
-    shippingCost: 'Free', 
-    description: '', 
-    category: '', 
-    image: '', 
-    previewImage: null 
+    name: '', stock: 0, price: 0, commission: 0, 
+    weight: 0, shippingCost: 0, description: '', category: '', 
+    image: '', previewImage: null, rawFile: null
   }
   availableOptionsAdd.value = []
-  if (fileInput.value) {
-    fileInput.value.value = ''
-  }
+  const input = document.getElementById('addFileInput')
+  if(input) input.value = ''
 }
 
 const saveNewItem = async () => {
   try {
     const token = localStorage.getItem('token')
+    if (!token) { alert('Login required'); return }
     
-    if (!token) {
-      alert('กรุณาเข้าสู่ระบบก่อน')
-      navigateTo('/page/auth/LoginPage')
-      return
+    // 🟢 ใช้ FormData เพื่อส่งไฟล์
+    const formData = new FormData()
+    formData.append('name', newItem.value.name)
+    formData.append('stock', parseInt(newItem.value.stock))
+    formData.append('price', parseFloat(newItem.value.price))
+    formData.append('commission', parseFloat(newItem.value.commission))
+    formData.append('weight', parseFloat(newItem.value.weight))
+    formData.append('shippingCost', parseInt(newItem.value.shippingCost))
+    formData.append('description', newItem.value.description)
+    formData.append('category', newItem.value.category)
+    
+    // แนบไฟล์ถ้ามี
+    if (newItem.value.rawFile) {
+        formData.append('file', newItem.value.rawFile)
     }
-    
-    // 🔗 แก้ URL ตรงนี้
+
     await $fetch('http://localhost:3001/api/product', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: {
-        name: newItem.value.name,
-        stock: parseInt(newItem.value.stock),
-        price: parseFloat(newItem.value.price),
-        commission: parseFloat(newItem.value.commission),
-        weight: parseFloat(newItem.value.weight),
-        shippingCost: newItem.value.shippingCost, 
-        description: newItem.value.description,
-        category: newItem.value.category,
-        image: newItem.value.image || 'https://placehold.co/400'
-      }
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData // Nuxt/Fetch จะจัดการ Content-Type multipart ให้อัตโนมัติ
     })
     
     await refresh()
     resetNewItemForm()
     safeCloseModal('addModal')
-
   } catch (error) {
-    console.error('Error adding product:', error)
-    if (error.statusCode === 401) {
-      alert('เซสชันหมดอายุ กรุณา Login ใหม่อีกครั้ง')
-      localStorage.clear()
-      navigateTo('/page/auth/LoginPage')
-    } else {
-      alert('Error adding product: ' + (error.data?.message || error.message))
-    }
+    console.error(error)
+    alert('Error: ' + (error.data?.message || error.message))
   }
 }
 
-// --- Edit Product ---
+// ================= EDIT PRODUCT =================
 const editItem = ref({ 
-  _id: null, 
-  name: '', stock: 0, price: 0, commission: 0, 
-  weight: 0, shippingCost: '', description: '', category: '', 
-  image: '' 
+  _id: null, name: '', stock: 0, price: 0, commission: 0, 
+  weight: 0, shippingCost: 0, description: '', category: '', 
+  image: '', previewImage: null, rawFile: null
 })
 const availableOptionsEdit = ref([])
 
 function goEdit(id) {
   const found = products.value.find((x) => x._id === id)
   if (!found) return
-  editItem.value = { ...found }
+  
+  // Clone object
+  editItem.value = { 
+      ...found,
+      shippingCost: parseInt(found.shippingCost) || 0, // แปลงให้มั่นใจว่าเป็น int
+      previewImage: null,
+      rawFile: null
+  }
+  
   availableOptionsEdit.value = calculateOptions(editItem.value.weight)
   const modalEle = document.getElementById('editModal')
   const modal = bootstrap.Modal.getInstance(modalEle) || new bootstrap.Modal(modalEle)
@@ -469,62 +475,53 @@ function goEdit(id) {
 watch(() => editItem.value.weight, (newVal) => {
   const options = calculateOptions(newVal)
   availableOptionsEdit.value = options
-  const exists = options.find(o => o.text === editItem.value.shippingCost)
+  const exists = options.find(o => o.value === editItem.value.shippingCost)
   if (!exists && options.length > 0) {
-     editItem.value.shippingCost = options[options.length - 1].text
+     editItem.value.shippingCost = options[options.length - 1].value
   }
 })
 
 async function saveEdit() {
   try {
     const token = localStorage.getItem('token')
-    if (!token) {
-      alert('กรุณาเข้าสู่ระบบก่อน')
-      return
-    }
     
-    // 🔗 แก้ URL ตรงนี้
+    // 🟢 ใช้ FormData เช่นกันในหน้า Edit
+    const formData = new FormData()
+    formData.append('name', editItem.value.name)
+    formData.append('stock', parseInt(editItem.value.stock))
+    formData.append('price', parseFloat(editItem.value.price))
+    formData.append('commission', parseFloat(editItem.value.commission))
+    formData.append('weight', parseFloat(editItem.value.weight))
+    formData.append('shippingCost', parseInt(editItem.value.shippingCost))
+    formData.append('description', editItem.value.description || '')
+    formData.append('category', editItem.value.category)
+    
+    // ถ้ามีรูปใหม่ค่อยส่ง
+    if (editItem.value.rawFile) {
+        formData.append('file', editItem.value.rawFile)
+    }
+
     await $fetch(`http://localhost:3001/api/product/${editItem.value._id}`, {
       method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: {
-        name: editItem.value.name,
-        stock: parseInt(editItem.value.stock),
-        price: parseFloat(editItem.value.price),
-        commission: parseFloat(editItem.value.commission),
-        weight: parseFloat(editItem.value.weight),
-        shippingCost: editItem.value.shippingCost,
-        description: editItem.value.description,
-        category: editItem.value.category,
-        image: editItem.value.image
-      }
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
     })
 
     await refresh()
     safeCloseModal('editModal')
-
   } catch (error) {
     alert('Error updating: ' + error.message)
   }
 }
 
+// ... Delete, Stock, Category เหมือนเดิม ...
 async function deleteItem(id) {
   if (confirm('Are you sure you want to delete this product?')) {
     try {
       const token = localStorage.getItem('token')
-      if (!token) {
-        alert('กรุณาเข้าสู่ระบบก่อน')
-        return
-      }
-      
-      // 🔗 แก้ URL ตรงนี้
       await $fetch(`http://localhost:3001/api/product/${id}`, { 
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       await refresh()
     } catch (error) {
@@ -533,33 +530,23 @@ async function deleteItem(id) {
   }
 }
 
-// --- Add Stock Logic ---
 const stockForm = ref({ id: '', quantity: '' })
-
 const saveAddStock = async () => {
   const targetProduct = products.value.find(p => p._id === stockForm.value.id)
-  
   if (targetProduct && stockForm.value.quantity > 0) {
     try {
       const newStock = parseInt(targetProduct.stock) + parseInt(stockForm.value.quantity)
-      
-      // 🔗 แก้ URL ตรงนี้
       await $fetch(`http://localhost:3001/api/product/${stockForm.value.id}`, {
         method: 'PUT',
-        body: { stock: newStock }
+        body: { stock: newStock } // อันนี้ส่ง JSON ปกติได้ เพราะไม่ได้แก้รูป
       })
-
       await refresh()
       stockForm.value = { id: '', quantity: '' }
       safeCloseModal('addStockModal')
-
-    } catch (error) {
-       alert('Error updating stock: ' + error.message)
-    }
+    } catch (error) { alert('Error updating stock: ' + error.message) }
   }
 }
 
-// --- Category Logic ---
 const newCategoryInput = ref('')
 const addNewCategory = () => { if (newCategoryInput.value.trim() && !categoryOptions.value.includes(newCategoryInput.value.trim())) { categoryOptions.value.push(newCategoryInput.value.trim()); newCategoryInput.value = '' } }
 const removeCategory = (index) => { if (confirm('Delete Category?')) categoryOptions.value.splice(index, 1) }
@@ -575,7 +562,7 @@ const removeCategory = (index) => { if (confirm('Delete Category?')) categoryOpt
 .active-badge { box-shadow: 0 0 0 2px rgba(0,0,0,0.1); font-weight: bold; }
 
 .img-40 { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
-.upload-box { width: 100%; height: 250px; border: 2px dashed #dee2e6; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #f8f9fa; overflow: hidden; }
+.upload-box { width: 100%; height: 250px; border: 2px dashed #dee2e6; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #f8f9fa; overflow: hidden; position: relative; }
 .upload-box:hover { border-color: #0d6efd; background-color: #e9ecef; }
 .img-preview { width: 100%; height: 100%; object-fit: contain; }
 .btn { border-radius: 6px; font-weight: 500; border: none; }

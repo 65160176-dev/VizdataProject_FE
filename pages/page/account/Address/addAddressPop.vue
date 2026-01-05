@@ -22,7 +22,7 @@
                                 <label class="form-label text-muted mb-1">Last Name</label>
                                 <input type="text" class="form-control" v-model="form.lastName" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label text-muted mb-1">Phone</label>
                                 <input type="text" class="form-control" v-model="form.phone" required>
                             </div>

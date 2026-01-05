@@ -187,39 +187,13 @@
             </div>
         </div>
 
-        <div v-if="showCancelModal" class="cancel-modal-backdrop">
-            <div class="card border-0 shadow rounded-lg p-0" style="width: 90%; max-width: 400px; overflow: hidden;">
+        <cancelOrderPop v-if="showDirectCancelModal" @close="showDirectCancelModal = false"
+            @confirm="confirmDirectCancel" />
 
-                <div class="card-header bg-white border-bottom p-3">
-                    <h5 class="mb-0 fw-bold text-dark">ระบุเหตุผลที่ยกเลิก</h5>
-                </div>
+        <cancReqOrderPop v-if="showCancelModal" @close="closeCancelModal" @confirm="submitRequestCancellation" />
 
-                <div class="card-body p-3 bg-light">
-                    <label class="form-label text-muted small mb-2">
-                        กรุณากรอกเหตุผลที่คุณต้องการยกเลิกคำสั่งซื้อ เพื่อให้เรานำไปปรับปรุงการบริการ
-                    </label>
-
-                    <textarea v-model="cancelReasonText" class="form-control border-0 shadow-sm" rows="5"
-                        placeholder="เช่น เปลี่ยนใจ, ใส่ที่อยู่ผิด หรือต้องการแก้ไขรายการสินค้า..."></textarea>
-
-                    <div class="d-flex justify-content-end mt-2">
-                        <small :class="isReasonValid ? 'text-success' : 'text-muted'">
-                            <i v-if="isReasonValid" class="fa fa-check me-1"></i>
-                            {{ cancelReasonText.length }} ตัวอักษร (ขั้นต่ำ 5)
-                        </small>
-                    </div>
-                </div>
-
-                <div class="card-footer bg-white p-3 d-flex justify-content-end gap-2 border-top">
-                    <button class="btn btn-light text-muted px-3" @click="closeCancelModal">
-                        ไม่ยกเลิก
-                    </button>
-                    <button class="btn btn-danger px-4" :disabled="!isReasonValid" @click="submitRequestCancellation">
-                        ยืนยันการส่งคำขอ
-                    </button>
-                </div>
-            </div>
-        </div>
+        <confirmOrder v-if="showConfirmReceivedModal" @close="showConfirmReceivedModal = false"
+            @confirm="submitConfirmReceived" />
 
     </div>
 </template>
@@ -227,15 +201,20 @@
 <script setup>
 import { computed, ref } from 'vue'
 
+// Import 3 Popup ที่เราสร้าง
+import cancelOrderPop from './cancelOrderPop.vue'
+import cancReqOrderPop from './cancReqOrderPop.vue'
+import confirmOrder from './confirmOrder.vue'
+
 const props = defineProps({
     order: { type: Object, required: true }
 })
 
 const emit = defineEmits(['back', 'cancel', 'update'])
 
-// --- ฟังก์ชันสำหรับสร้างการแจ้งเตือน ---
+// --- Create Notification Helper ---
 const createNotification = (title, message) => {
-    if (typeof window === 'undefined') return // เช็คว่ารันบน Browser
+    if (typeof window === 'undefined') return
 
     const currentNotifs = JSON.parse(localStorage.getItem('my_app_notifications') || "[]")
     const now = new Date()
@@ -247,36 +226,37 @@ const createNotification = (title, message) => {
         message: message,
         date: dateString,
         isRead: false,
-        image: props.order.items[0]?.image || '' // เอารูปสินค้าแรกมาโชว์
+        image: props.order.items[0]?.image || ''
     }
 
-    // บันทึกลง LocalStorage (เอาอันใหม่ไว้บนสุด)
     localStorage.setItem('my_app_notifications', JSON.stringify([newNotif, ...currentNotifs]))
     window.dispatchEvent(new Event('notification-updated'))
 }
 
-// ================= 1. Direct Cancel Logic (No Dialog) =================
+// ================= 1. Direct Cancel Logic =================
+const showDirectCancelModal = ref(false)
+
 const handleDirectCancel = () => {
-    if (confirm('ยืนยันที่จะยกเลิกคำสั่งซื้อนี้?')) {
-        props.order.status = 'Cancelled'
-        props.order.cancelReason = 'User cancelled directly'
-
-        // [เพิ่ม] สร้างแจ้งเตือนเมื่อยกเลิกสำเร็จ
-        createNotification(
-            'ยกเลิกคำสั่งซื้อสำเร็จ',
-            `คำสั่งซื้อ #${props.order.orderId} ถูกยกเลิกเรียบร้อยแล้ว`
-        )
-
-        emit('cancel', props.order)
-    }
+    showDirectCancelModal.value = true
 }
 
-// ================= 2. Request Cancel Logic (With Dialog) =================
+const confirmDirectCancel = () => {
+    props.order.status = 'Cancelled'
+    props.order.cancelReason = 'User cancelled directly'
+
+    createNotification(
+        'ยกเลิกคำสั่งซื้อสำเร็จ',
+        `คำสั่งซื้อ #${props.order.orderId} ถูกยกเลิกเรียบร้อยแล้ว`
+    )
+
+    emit('cancel', props.order)
+    showDirectCancelModal.value = false
+}
+
+// ================= 2. Request Cancel Logic =================
 const showCancelModal = ref(false)
-const cancelReasonText = ref('')
 
 const openCancelModal = () => {
-    cancelReasonText.value = ''
     showCancelModal.value = true
 }
 
@@ -284,16 +264,10 @@ const closeCancelModal = () => {
     showCancelModal.value = false
 }
 
-const isReasonValid = computed(() => {
-    return cancelReasonText.value && cancelReasonText.value.trim().length >= 5
-})
-
-const submitRequestCancellation = () => {
-    // ใช้สถานะ Cancel Requested
+const submitRequestCancellation = (reason) => {
     props.order.status = 'Cancel Requested'
-    props.order.cancelReason = cancelReasonText.value.trim()
+    props.order.cancelReason = reason
 
-    // [เพิ่ม] สร้างแจ้งเตือนเมื่อส่งคำขอ
     createNotification(
         'ส่งคำขอยกเลิกแล้ว',
         `คำขอยกเลิกคำสั่งซื้อ #${props.order.orderId} ได้ถูกส่งให้ร้านค้าตรวจสอบแล้ว`
@@ -303,23 +277,26 @@ const submitRequestCancellation = () => {
     closeCancelModal()
 }
 
-// ======================================================================
+// ================= 3. Confirm Received Logic =================
+const showConfirmReceivedModal = ref(false)
 
 const handleConfirmReceived = () => {
-    if (confirm('คุณได้รับสินค้าและตรวจสอบความถูกต้องเรียบร้อยแล้วใช่หรือไม่?')) {
-        props.order.status = 'Completed'
-
-        // [เพิ่ม] ส่งแจ้งเตือนเมื่อกดยอมรับสินค้า
-        createNotification(
-            'คำสั่งซื้อเสร็จสมบูรณ์',
-            `คุณได้ยืนยันการรับสินค้าสำหรับคำสั่งซื้อ #${props.order.orderId} เรียบร้อยแล้ว`
-        )
-
-        emit('update', props.order)
-    }
+    showConfirmReceivedModal.value = true
 }
 
-// กำหนด Step
+const submitConfirmReceived = () => {
+    props.order.status = 'Completed'
+
+    createNotification(
+        'คำสั่งซื้อเสร็จสมบูรณ์',
+        `คุณได้ยืนยันการรับสินค้าสำหรับคำสั่งซื้อ #${props.order.orderId} เรียบร้อยแล้ว`
+    )
+
+    emit('update', props.order)
+    showConfirmReceivedModal.value = false
+}
+
+// ================= Helpers =================
 const step = computed(() => {
     const s = props.order.status
     if (['Pending Review', 'Pending'].includes(s)) return 1
@@ -335,43 +312,20 @@ const statusBadgeClass = computed(() => {
         case 'Accepted': return 'bg-success text-white'
         case 'Pending Review':
         case 'Pending': return 'bg-warning text-dark'
-
         case 'Cancel Requested':
-        case 'Cancellation Requested': // เผื่อไว้รองรับทั้งสองแบบ
+        case 'Cancellation Requested':
         case 'Cancelled': return 'bg-danger text-white'
-
         case 'Shipping':
         case 'Shipped':
         case 'Arrived': return 'bg-info text-white'
         case 'Completed': return 'bg-secondary text-white'
-
         default: return 'bg-light text-dark border'
     }
 })
 </script>
 
 <style scoped>
-.cancel-modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    z-index: 1050;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 1rem;
-    backdrop-filter: blur(2px);
-}
-
-textarea.form-control:focus {
-    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
-    border-color: #dc3545;
-}
-
-/* Stepper CSS เดิม */
+/* Stepper CSS */
 .stepper-wrapper {
     display: flex;
     justify-content: space-between;
@@ -453,7 +407,6 @@ textarea.form-control:focus {
     color: #28a745;
 }
 
-/* Hover Link Style */
 .hover-underline:hover {
     text-decoration: underline !important;
 }
