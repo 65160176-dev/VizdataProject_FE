@@ -15,7 +15,7 @@ import { useProductStore } from './store/products'
 const cartStore = useCartStore()
 const productStore = useProductStore()
 
-onMounted(() => {
+onMounted(async () => {
   // ----------------------------------------
   // 1. ส่วนจัดการ Dark Mode (เพิ่มใหม่)
   // ----------------------------------------
@@ -27,31 +27,38 @@ onMounted(() => {
   }
 
   // ----------------------------------------
-  // 2. ส่วนจัดการ Cart / Product (โค้ดเดิมของคุณ)
+  // 2. โหลดข้อมูลจาก Backend API
   // ----------------------------------------
   
-  // Load Compare
+  // Load Products from API
+  await productStore.fetchProducts()
+  
+  // Load Cart from API (ถ้า login แล้ว)
+  const token = localStorage.getItem('token')
+  if (token) {
+    await cartStore.fetchCart()
+    await productStore.fetchWishlist()
+  } else {
+    // ถ้ายังไม่ได้ login ให้โหลดจาก localStorage แบบเดิม
+    const localStorageProducts = JSON.parse(localStorage.getItem('product'))
+    if (localStorageProducts?.length) {
+      cartStore.setInitialCart(localStorageProducts)
+    }
+    
+    const localstorageWhishlist = JSON.parse(localStorage.getItem('whish'))
+    if (localstorageWhishlist?.length) {
+      productStore.setInitialWhishlist(localstorageWhishlist)
+    }
+  }
+
+  // Load Compare (ยังใช้ localStorage)
   const localstorageCompare = JSON.parse(localStorage.getItem('compare'))
   if (localstorageCompare?.length) {
     productStore.setInitialCompare(localstorageCompare)
   }
 
-  // Load Wishlist
-  const localstorageWhishlist = JSON.parse(localStorage.getItem('whish'))
-  if (localstorageWhishlist?.length) {
-    productStore.setInitialWhishlist(localstorageWhishlist)
-  }
-
-  // Load Cart
-  const localStorageProducts = JSON.parse(localStorage.getItem('product'))
-  if (localStorageProducts?.length) {
-    cartStore.setInitialCart(localStorageProducts)
-  }
-
-  // Save on Close/Refresh
+  // Save Compare on Close/Refresh (เฉพาะ Compare ที่ยังใช้ localStorage)
   window.addEventListener('beforeunload', () => {
-    localStorage.setItem('product', JSON.stringify(cartStore.cart))
-    localStorage.setItem('whish', JSON.stringify(productStore.wishlist))
     localStorage.setItem('compare', JSON.stringify(productStore.compare))
   })
 })

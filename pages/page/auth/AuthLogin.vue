@@ -159,17 +159,9 @@ async function doLogin() {
           // otherwise fall through to userType defaults
         }
 
-        // Otherwise, if cart has items, go to checkout (only for regular users)
-        const cartStore = useCartStore()
-        const cartLength = (cartStore.cart && cartStore.cart.length) || (cartStore.cartItems && cartStore.cartItems.length) || 0
-
+        // Redirect based on user type
         if (currentUserType === 0) {
           router.replace('/SellerPage/dashboard')
-          return
-        }
-
-        if (cartLength > 0) {
-          router.replace('/page/account/checkout')
         } else {
           router.replace('/')
         }

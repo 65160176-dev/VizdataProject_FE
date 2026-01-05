@@ -1,6 +1,11 @@
 <template>
   <section class="section-b-space">
     <div class="container">
+      <div class="mb-3">
+        <button @click="$router.back()" class="btn btn-sm btn-outline-secondary">
+          <i class="ti-arrow-left"></i> Back
+        </button>
+      </div>
       <div class="checkout-page">
         <div class="checkout-form">
           <form>
@@ -138,21 +143,29 @@
                         <div class="d-flex align-items-center w-100">
                           <span class="text-muted text-uppercase small"
                             style="width: 100px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
-                            {{ item.brand || '-' }}
+                            {{ getSellerName(item) }}
                           </span>
                           <span class="flex-grow-1 pe-2">
-                            {{ item.title }} X {{ item.quantity }}
+                            {{ item.name || item.title }} X {{ item.quantity }}
                           </span>
                           <span class="text-end" style="width: 100px;">
-                            {{ (calcPrice(item) * curr.curr * item.quantity).toFixed(2) }}
+                            {{ curr.symbol }}{{ (calcPrice(item) * curr.curr * item.quantity).toFixed(2) }}
                           </span>
-                          <span class="ms-3" style="width: 80px;"></span>
+                          <span class="ms-3 text-end" style="width: 80px;">
+                            <template v-if="item.shippingCost && String(item.shippingCost).toLowerCase() !== 'free'">
+                              {{ curr.symbol }}{{ (Number(item.shippingCost) * curr.curr).toFixed(2) }}
+                            </template>
+                            <template v-else>
+                              Free
+                            </template>
+                          </span>
                         </div>
                       </li>
                     </ul>
                     <ul class="sub-total">
                       <li>Subtotal <span class="count">{{ (cartTotal * curr.curr).toFixed(2) }}</span></li>
-                      <li>Total <span class="count">{{ (grandTotal * curr.curr).toFixed(2) }}</span></li>
+                      <li>Shipping <span class="count">{{ (shippingTotal * curr.curr).toFixed(2) }}</span></li>
+                      <li class="fw-bold">Total <span class="count">{{ (grandTotal * curr.curr).toFixed(2) }}</span></li>
                     </ul>
 
                   </div>
@@ -293,29 +306,62 @@ export default {
   computed: {
     curr() { return useProductStore().changeCurrency },
     cart() {
+      console.log('Cart computed called, checkoutItems:', this.checkoutItems);
       // เรียงลำดับตาม brand (Shop)
-      return [...this.checkoutItems].sort((a, b) => {
+      const sorted = [...this.checkoutItems].sort((a, b) => {
         const brandA = (a.brand || '').toLowerCase();
         const brandB = (b.brand || '').toLowerCase();
         if (brandA < brandB) return -1;
         if (brandA > brandB) return 1;
         return 0;
       });
+      console.log('Sorted cart:', sorted);
+      return sorted;
     },
     // [แก้ไข] คำนวณราคารวมโดยใช้ราคาที่ลดแล้ว (calcPrice)
     cartTotal() {
-      return this.checkoutItems.reduce((total, item) => total + (this.calcPrice(item) * item.quantity), 0);
+      return this.checkoutItems.reduce((total, item) => {
+        const itemPrice = this.calcPrice(item) * item.quantity
+        return total + itemPrice
+      }, 0);
     },
-    grandTotal() { return this.cartTotal; }
+    shippingTotal() {
+      return this.checkoutItems.reduce((total, item) => {
+        let shipping = 0
+        if (item.shippingCost) {
+          // ถ้าเป็น string และไม่ใช่ 'Free' ให้แปลงเป็นตัวเลข
+          const cost = String(item.shippingCost).toLowerCase()
+          if (cost === 'free' || cost === '0') {
+            shipping = 0
+          } else {
+            shipping = Number(item.shippingCost) || 0
+          }
+        }
+        return total + shipping
+      }, 0);
+    },
+    grandTotal() { 
+      return this.cartTotal + this.shippingTotal
+    }
   },
   methods: {
-    // [เพิ่มใหม่] ฟังก์ชันคำนวณราคา (คิดส่วนลดถ้ามี)
+    // ฟังก์ชันคำนวณราคา
     calcPrice(item) {
-      if (item.sale && item.discount) {
-        // สูตร: ราคาเต็ม - (ราคาเต็ม * %ส่วนลด / 100)
-        return item.price - (item.price * (parseFloat(item.discount) / 100));
+      if (!item || !item.price) return 0
+      return Number(item.price) || 0
+    },
+    getSellerName(item) {
+      console.log('getSellerName called for item:', item);
+      // ถ้ามีข้อมูล seller ใช้ display_name หรือ name
+      if (item.seller) {
+        const sellerName = item.seller.display_name || item.seller.name || '-';
+        console.log('  -> Using seller name:', sellerName);
+        return sellerName;
       }
-      return item.price;
+      // fallback ใช้ brand จาก mock data
+      const brandName = item.brand || '-';
+      console.log('  -> Using brand name:', brandName);
+      return brandName;
     },
 
     loadAddressToUser(addr) {
@@ -493,18 +539,70 @@ export default {
     }
   },
   mounted() {
+    console.log('===== PaymentPage mounted() started =====');
     let items = localStorage.getItem('checkout_items');
+    console.log('Raw checkout_items from localStorage:', items);
+    
     if (!items || items === '[]') {
+      console.log('No checkout items found, checking cartStore...');
       const cartStore = useCartStore();
+      console.log('Cart store items:', cartStore.cartItems);
       if (cartStore.cartItems && cartStore.cartItems.length > 0) {
         items = JSON.stringify(cartStore.cartItems);
         localStorage.setItem('checkout_items', items);
+        console.log('Saved cart items to checkout_items');
       }
     }
 
     if (items && items !== '[]') {
-      this.checkoutItems = JSON.parse(items);
+      try {
+        const parsedItems = JSON.parse(items);
+        console.log('Parsed checkout items:', parsedItems);
+        
+        // Ensure all items have required fields
+        this.checkoutItems = parsedItems.map(item => {
+          console.log('===== Processing item =====');
+          console.log('Original item:', item);
+          console.log('  - name:', item.name);
+          console.log('  - title:', item.title);
+          console.log('  - price:', item.price);
+          console.log('  - brand:', item.brand);
+          console.log('  - seller:', item.seller);
+          console.log('  - quantity:', item.quantity);
+          
+          const normalizedItem = {
+            ...item,
+            id: item.id || item._id,
+            _id: item._id || item.id,
+            title: item.title || item.name || 'Product',
+            name: item.name || item.title || 'Product',
+            price: Number(item.price) || 0,
+            quantity: Number(item.quantity) || 1,
+            brand: item.brand || (item.seller && item.seller.name) || 'Shop',
+            images: item.images || (item.image ? [{ src: item.image }] : []),
+            image: item.image || (item.images && item.images[0] ? item.images[0].src : ''),
+            shippingCost: item.shippingCost || 'Free',
+            seller: item.seller || null
+          };
+          console.log('Normalized item:', normalizedItem);
+          console.log('  - Final name:', normalizedItem.name);
+          console.log('  - Final price:', normalizedItem.price);
+          console.log('  - Final brand:', normalizedItem.brand);
+          console.log('===========================');
+          return normalizedItem;
+        });
+        console.log('Final checkoutItems array:', this.checkoutItems);
+        console.log('Total items loaded:', this.checkoutItems.length);
+      } catch (e) {
+        console.error('Error parsing checkout items:', e);
+        this.checkoutItems = [];
+      }
     } else {
+      console.log('No items to process, checkoutItems remains empty');
+    }
+    
+    if (this.checkoutItems.length === 0) {
+      console.warn('WARNING: No checkout items loaded! Redirecting to cart...');
       try { useNuxtApp().$showToast({ msg: "No items selected.", type: "error" }); } catch (e) { }
       this.$router.replace('/page/account/cart');
       return;
@@ -525,6 +623,12 @@ export default {
     this.selectedShipping = this.shippingOptions[1];
     this.isLogin = useCookie('userlogin').value;
     if (!this.isLogin) { this.$router.replace('/page/auth/LoginPage?redirect=/page/account/checkout'); }
+    
+    console.log('===== PaymentPage mounted() completed =====');
+    console.log('Final state:');
+    console.log('  - checkoutItems length:', this.checkoutItems.length);
+    console.log('  - isLogin:', this.isLogin);
+    console.log('=========================================');
   }
 }
 </script>

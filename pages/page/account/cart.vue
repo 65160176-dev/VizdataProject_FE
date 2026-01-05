@@ -4,10 +4,15 @@
     <WidgetsBreadcrumbs title="Cart" />
     <section class="cart-section section-b-space">
       <div class="container">
+        <div class="mb-3">
+          <button @click="$router.back()" class="btn btn-sm btn-outline-secondary">
+            <i class="ti-arrow-left"></i> Back
+          </button>
+        </div>
         <div class="row">
           <div class="col-sm-12">
             <div class="cart-table-wrapper" v-if="cart.length">
-              <table class="table cart-table">
+              <table class="table cart-table" :key="cartKey">
 
                 <thead>
                   <tr class="table-head">
@@ -29,13 +34,13 @@
                       <input type="checkbox" :value="item" v-model="selectedItems" />
                     </td>
                     <td>
-                      <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
-                        <img :src="getImgUrl(item.images[0].src)" alt style="height: 60px; object-fit: contain;" />
+                      <nuxt-link :to="{ path: '/product/sidebar/' + (item._id || item.id) }">
+                        <img :src="getProductImage(item)" alt style="height: 60px; object-fit: contain;" />
                       </nuxt-link>
                     </td>
                     <td>
-                      <nuxt-link :to="{ path: '/product/sidebar/' + item.id }" style="font-size: 14px;">
-                        {{ item.title }}
+                      <nuxt-link :to="{ path: '/product/sidebar/' + (item._id || item.id) }" style="font-size: 14px;">
+                        {{ item.name || item.title || 'No Name' }}
                       </nuxt-link>
 
                       <div class="mobile-cart-content row">
@@ -43,7 +48,7 @@
                           <div class="qty-box">
                             <div class="input-group">
                               <input type="text" name="quantity" class="form-control input-number"
-                                v-model="item.quantity" />
+                                :value="item.quantity" readonly />
                             </div>
                           </div>
                         </div>
@@ -69,7 +74,7 @@
                             </button>
                           </span>
                           <input type="text" name="quantity" class="form-control input-number text-center p-1"
-                            :disabled="item.quantity > item.stock" v-model="item.quantity" style="height: 30px;" />
+                            :disabled="item.quantity > item.stock" :value="item.quantity" readonly style="height: 30px;" />
                           <span class="input-group-prepend">
                             <button type="button" class="btn quantity-right-plus p-1" @click="increment(item)">
                               <i class="ti-angle-right"></i>
@@ -140,7 +145,8 @@ import { useProductStore } from '~~/store/products'
 export default {
   data() {
     return {
-      selectedItems: []
+      selectedItems: [],
+      cartKey: 0
     }
   },
   computed: {
@@ -171,48 +177,98 @@ export default {
   },
   watch: {
     cart: {
-      handler(newVal) {
+      handler(newVal, oldVal) {
+        console.log('===== CART CHANGED =====');
+        console.log('Old cart length:', oldVal ? oldVal.length : 0);
+        console.log('New cart length:', newVal.length);
+        console.log('New cart:', newVal);
+        
         this.selectedItems = this.selectedItems.filter(selected =>
           newVal.some(cartItem => cartItem.id === selected.id)
         );
+        
+        // Force re-render
+        this.cartKey++;
+        console.log('Cart key updated to:', this.cartKey);
+        console.log('========================');
       },
-      deep: true
+      deep: true,
+      immediate: false
     }
   },
   methods: {
     getImgUrl(path) {
       return ('/images/' + path)
     },
+    getProductImage(product) {
+      if (!product) return 'https://placehold.co/400'
+      if (product.image) {
+        if (product.image.startsWith('http')) return product.image
+        return `/images/${product.image}`
+      }
+      if (product.images && product.images[0]) {
+        const img = product.images[0].src || product.images[0]
+        return `/images/${img}`
+      }
+      return 'https://placehold.co/400'
+    },
     // [เพิ่มใหม่] ฟังก์ชันคำนวณราคา (ถ้าราคาเต็มให้คืนค่าเดิม ถ้าลดให้คำนวณ % ส่วนลด)
     calcPrice(item) {
+      if (!item || !item.price) return 0
+      const price = Number(item.price) || 0
       if (item.sale && item.discount) {
         // สูตร: ราคาเต็ม - (ราคาเต็ม * เปอร์เซ็นต์ส่วนลด / 100)
-        return item.price - (item.price * (parseFloat(item.discount) / 100));
+        return price - (price * (parseFloat(item.discount) / 100));
       }
-      return item.price;
+      return price;
     },
     removeCartItem(product) {
       useCartStore().removeCartItem(product)
     },
-    increment(product, qty = 1) {
-      useCartStore().updateCartQuantity({ product: product, qty: qty })
+    async increment(product, qty = 1) {
+      await useCartStore().updateCartQuantity({ product: product, qty: qty })
+      this.cartKey++;
     },
-    decrement(product, qty = -1) {
-      useCartStore().updateCartQuantity({ product: product, qty: qty })
+    async decrement(product, qty = -1) {
+      await useCartStore().updateCartQuantity({ product: product, qty: qty })
+      this.cartKey++;
     },
     goToCheckout() {
       if (this.selectedItems.length === 0) {
         useNuxtApp().$showToast({ msg: "Please select items to checkout.", type: "error" })
         return;
       }
-      // บันทึกข้อมูลสินค้าที่เลือก (พร้อมราคาที่คำนวณแล้ว ถ้าจำเป็น แต่ปกติหน้า Checkout จะคำนวณใหม่)
-      // ในที่นี้เราส่ง object เดิมไป แต่หน้า Checkout ควรมี logic คำนวณราคาแบบเดียวกัน
-      localStorage.setItem('checkout_items', JSON.stringify(this.selectedItems));
+      
+      console.log('Selected items for checkout:', this.selectedItems);
+      
+      // Ensure all data is properly formatted before saving
+      const checkoutData = this.selectedItems.map(item => ({
+        ...item,
+        id: item.id || item._id,
+        _id: item._id || item.id,
+        name: item.name || item.title || '',
+        title: item.title || item.name || '',
+        price: Number(item.price) || 0,
+        quantity: Number(item.quantity) || 1,
+        brand: item.brand || 'Shop',
+        image: item.image || '',
+        images: item.images || (item.image ? [{ src: item.image }] : []),
+        shippingCost: item.shippingCost || 'Free',
+        seller: item.seller || null
+      }));
+      
+      console.log('Formatted checkout data:', checkoutData);
+      localStorage.setItem('checkout_items', JSON.stringify(checkoutData));
       this.$router.push('/page/account/checkout');
     }
   },
   mounted() {
     this.selectedItems = [];
+    // Fetch cart data from backend
+    const cartStore = useCartStore();
+    cartStore.fetchCart().then(() => {
+      console.log('Cart loaded:', cartStore.cartItems);
+    });
   }
 }
 </script>

@@ -1,63 +1,89 @@
 <template>
 <Header/> 
   <div>
-    <WidgetsBreadcrumbs :title="getDetail.title" />
+    <ClientOnly>
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">กำลังโหลดข้อมูลสินค้า...</p>
+    </div>
+    <div v-else-if="!product" class="text-center py-5">
+      <p class="text-muted">ไม่พบข้อมูลสินค้า</p>
+    </div>
+    <div v-else>
+    <WidgetsBreadcrumbs :title="product.name" />
     <section>
       <div class="collection-wrapper">
         <div class="container">
+          <div class="mb-3">
+            <button @click="$router.back()" class="btn btn-sm btn-outline-secondary">
+              <i class="ti-arrow-left"></i> Back
+            </button>
+          </div>
           <div class="row">
             <div class="col-lg-1 col-sm-2 col-xs-12">
               <div class="row">
                 <div class="col-12 slider-nav-images">
-                  <swiper :breakpoints="swiperOption.breakpoints" :slidesPerView="3" :spaceBetween="20"
-                    class="swiper-wrapper slider-right-nav">
-                    <swiper-slide class="swiper-slide" v-for="(product, index) in getDetail.images" :key="index"
-                      :class="slideId == index ? 'product-slider-active' : ''">
-                      <img :src="getImgUrl(product.src)" :id="product.image_id" class="img-fluid bg-img"
-                        alt="product.alt" v-on:click="slideTo(index)" />
-                    </swiper-slide>
-                  </swiper>
+                  <div class="swiper-wrapper slider-right-nav">
+                    <div class="swiper-slide">
+                      <img :src="getProductImage(product.image)" class="img-fluid bg-img" alt="" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
             <div class="col-lg-3 col-sm-10 col-xs-12 order-up">
-              <swiper @swiper="onSwiper" :slidesPerView="1" :spaceBetween="20" class="swiper-wrapper">
-                <swiper-slide class="swiper-slide" v-for="(product, index) in getDetail.images" :key="index">
-                  <img :src="getImgUrl(product.src)" :id="product.image_id" class="img-fluid bg-img"
-                    :alt="product.alt" />
-                </swiper-slide>
-              </swiper>
+              <div class="swiper-wrapper">
+                <div class="swiper-slide">
+                  <img :src="getProductImage(product.image)" class="img-fluid bg-img" alt="" style="max-height: 400px; object-fit: contain;" />
+                </div>
+              </div>
             </div>
             <div class="col-lg-4">
               <div class="product-right product-description-box">
-                <h2>{{ getDetail.title }}</h2>
-                <div class="seller-block mt-2">
-                  <nuxt-link :to="{ path: '/seller/' + encodeURIComponent(getDetail.brand) }" class="btn btn-link p-0 seller-name">
-                    <i class="ti-user"></i> ร้านค้า: {{ getDetail.brand }}
-                  </nuxt-link>
+                <h2>{{ product.name }}</h2>
+                <div class="seller-block mt-3 p-3 border rounded bg-light" v-if="seller">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <label class="text-muted small mb-1">ร้านค้า</label>
+                      <h5 class="mb-0">{{ seller.display_name || seller.name }}</h5>
+                      <p class="text-muted small mb-0" v-if="seller.description">{{ seller.description }}</p>
+                    </div>
+                    <nuxt-link :to="{ path: '/seller/' + seller._id }" class="btn btn-sm btn-outline-primary">
+                      <i class="ti-eye"></i> ดูร้าน
+                    </nuxt-link>
+                  </div>
                 </div>
                 <div class="border-product">
-                  <h6 class="product-title">product details</h6>
-                  <p>{{ getDetail.description.substring(0, 200) + "...." }}</p>
+                  <h6 class="product-title">รายละเอียดสินค้า</h6>
+                  <p>{{ product.description || 'ไม่มีรายละเอียด' }}</p>
                 </div>
-                <div class="pro_inventory" v-if="getDetail.stock < 8">
-                  <p class="active"> Hurry! We have only {{ getDetail.stock }} product in stock. </p>
+                <div class="pro_inventory" v-if="product.stock < 8 && product.stock > 0">
+                  <p class="active"> เหลือเพียง {{ product.stock }} ชิ้น! </p>
                   <div class="inventory-scroll">
-                    <span style="width: 95%;"></span>
+                    <span :style="{ width: (product.stock / 8 * 100) + '%' }"></span>
                   </div>
                 </div>
                 <div class="single-product-tables border-product detail-section">
                   <table>
                     <tbody>
                       <tr>
-                        <td>Product Type:</td>
-                        <td>{{ getDetail.type }}</td>
+                        <td>หมวดหมู่:</td>
+                        <td>{{ product.category || '-' }}</td>
                       </tr>
                       <tr>
-                        <td>Brand:</td>
-                        <td>{{ getDetail.brand }}</td>
+                        <td>น้ำหนัก:</td>
+                        <td>{{ product.weight || '-' }} กิโลกรัม</td>
                       </tr>
-
+                      <tr>
+                        <td>ค่าจัดส่ง:</td>
+                        <td>฿{{ product.shippingCost || 0 }}</td>
+                      </tr>
+                      <tr v-if="seller">
+                        <td>ร้านค้า:</td>
+                        <td>{{ seller.display_name || seller.name }}</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -82,12 +108,8 @@
             </div>
             <div class="col-lg-4">
               <div class="product-right product-form-box">
-                <!-- <h4 v-if="getDetail.sale">
-                  <del>{curr.symbol}}{{ (getDetail.price * curr.curr).toFixed(2) }}</del>
-                  <span>{{ getDetail.discount }}% off</span>
-                </h4> -->
-                <h3 v-if="getDetail.sale">{{ curr.symbol }}{{ discountedPrice(getDetail) }}</h3>
-                <h3 v-else>{{ curr.symbol }}{{ (getDetail.price * curr.curr).toFixed(2) }}</h3>
+                <h3 class="text-danger">฿{{ product.price?.toFixed(2) }}</h3>
+                <div class="text-muted small mb-3">คอมมิชชั่น: {{ product.commission }}%</div>
                 <!-- <ul class="color-variant">
                   <li v-bind:class="{ active: activeColor == variant }"
                     v-for="(variant, variantIndex) in Color(getDetail.variants)" :key="variantIndex">
@@ -96,27 +118,11 @@
                   </li>
                 </ul> -->
                 <div class="product-description border-product">
-                  <!-- <h6 class="product-title">Time Reminder</h6>
-                  <WidgetsTimer date="December 20, 2020" /> -->
-                  <h6 class="product-title three-col-text">
-                    select size
-                    <span>
-                      <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modal-1">size chart</a>
-                    </span>
-                  </h6>
-                  <div class="size-box">
-                    <ul>
-                      <li class="product-title" v-bind:class="{ active: selectedSize == size }"
-                        v-for="(size, index) in size" :key="index">
-                        <a href="javascript:void(0)" v-on:click="changeSizeVariant(size)">{{ size }}</a>
-                      </li>
-                    </ul>
-                  </div>
-                  <h5 class="avalibility" v-if="counter <= getDetail.stock">
-                    <span>In Stock</span>
+                  <h5 class="avalibility" v-if="product.stock > 0 && counter <= product.stock">
+                    <span>มีสินค้า (เหลือ {{ product.stock }} ชิ้น)</span>
                   </h5>
-                  <h5 class="avalibility" v-if="counter > getDetail.stock">
-                    <span>Out of Stock</span>
+                  <h5 class="avalibility text-danger" v-else>
+                    <span>สินค้าหมด</span>
                   </h5>
                   <h6 class="product-title">quantity</h6>
                   <div class="qty-box">
@@ -128,10 +134,10 @@
                         </button>
                       </span>
                       <input type="text" name="quantity" class="form-control input-number"
-                        :disabled="counter > getDetail.stock" v-model="counter" />
+                        :disabled="counter > product.stock" v-model="counter" />
                       <span class="input-group-prepend">
                         <button type="button" class="btn quantity-right-plus" data-type="plus" data-field
-                          @click="increment()">
+                          @click="increment()" :disabled="counter >= product.stock">
                           <i class="ti-angle-right"></i>
                         </button>
                       </span>
@@ -139,12 +145,10 @@
                   </div>
                 </div>
                 <div class="product-buttons">
-                  <nuxt-link :to="{ path: '/page/account/cart' }">
-                    <button class="btn btn-solid" title="Add to cart" @click="addToCart(getDetail, counter)"
-                      :disabled="counter > getDetail.stock">Add To Cart</button>
-                  </nuxt-link>
-                  <button class="btn btn-solid" title="buy now" @click="buyNow(getDetail, counter)"
-                    :disabled="counter > getDetail.stock">Buy Now</button>
+                  <button class="btn btn-solid" title="Add to cart" @click="addToCart(product, counter)"
+                    :disabled="counter > product.stock || product.stock === 0">เพิ่มลงรถเข็น</button>
+                  <button class="btn btn-solid" title="buy now" @click="buyNow(product, counter)"
+                    :disabled="counter > product.stock || product.stock === 0">ซื้อเลย</button>
                 </div>
               </div>
             </div>
@@ -276,60 +280,8 @@
         </div>
       </section>
     </section>
-    <WidgetsRelatedProducts :brand="getDetail.brand" :productId="getDetail.id" />
-    <div class="modal fade " id="modal-1" aria-hidden="true" tabindex="-1" role="dialog"
-      aria-labelledby="modal-cartLabel">
-      <div class="modal-dialog modal-md modal-dialog-centered">
-        <div class="modal-content">
-          <div class="row">
-            <div class="col-lg-12">
-              <div class="modal-header"><h5 class="modal-title">{{ getDetail.title }}</h5><button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button></div>
-            </div>
-            <div>
-              <img src="/images/size-chart.jpg" alt="size-chart" class="img-fluid size-chart" />
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-   <div class="modal fade" id="seller-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <div>
-            <h5 class="modal-title">ร้านค้า: {{ brand }}</h5>
-          </div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row mb-3">
-            <div class="col-md-8">
-              <p>สวัสดีจากร้าน <strong>{{ brand }}</strong> — นี่เป็น mockup หน้าร้านภายในหน้าสินค้า คุณสามารถดูตัวอย่างสินค้าที่ร้านนี้ขายได้ด้านล่าง</p>
-            </div>
-          </div>
-
-          <div class="row">
-            <div v-if="sellerProducts.length === 0" class="col-12">
-              <div class="alert alert-secondary">ไม่มีสินค้าอื่นในร้านนี้</div>
-            </div>
-            <div v-for="p in sellerProducts" :key="p.id" class="col-xl-3 col-lg-4 col-md-4 col-sm-6 mb-3">
-              <div class="card h-100">
-                <nuxt-link :to="{ path: '/product/sidebar/'+p.id }">
-                  <img :src="getImgUrl(p.images[0].src)" class="card-img-top" alt="" />
-                </nuxt-link>
-                <div class="card-body p-2">
-                  <h6 class="mb-1" style="font-size:14px">{{ p.title }}</h6>
-                  <div class="text-muted small">{{ p.category || p.type }}</div>
-                  <div class="mt-1">{{ curr.symbol }}{{ (p.price * curr.curr).toFixed(2) }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
+    </ClientOnly>
   </div>
   <Footer />
 </template>
@@ -348,118 +300,102 @@ export default {
   },
   data() {
     return {
-      swiperOption: {
-
-        breakpoints: {
-          575: {
-           
-            spaceBetween: 10,
-            direction: 'vertical'
-          },
-
-        }
-      },
+      product: null,
+      seller: null,
+      loading: true,
       slideId: 0,
       counter: 1,
-      activeColor: '',
-      selectedSize: '',
-      qty: '',
-      size: [],
-      productTYpe: '',
-      productId: '',
-
     }
   },
+  async mounted() {
+    await this.fetchProductDetail()
+  },
   computed: {
-    ...mapState(useProductStore, {
-      currency: 'currency'
-    }),
     curr() {
       return useProductStore().changeCurrency
     },
-    getDetail: function () {
-      const id = this.$route.params.id || this.$route.query.id
-      return useProductStore().getProductById(id || 1)
-    },brand() {
-      return (this.getDetail && this.getDetail.brand) ? this.getDetail.brand : ''
-    },
-    sellerProducts() {
-      const b = (this.brand || '').toLowerCase()
-      return useProductStore().products.filter(p => p.brand && p.brand.toLowerCase() === b && p.id !== this.getDetail.id)
-    },
-
   },
   
   methods: {
-    onSwiper(swiper) {
-      this.swiper = swiper;
-    },
-    priceCurrency: function () {
-      useProductStore().changeCurrency()
-    },
-    addToWishlist: function (product) {
-      useProductStore().addToWishlist(product)
-    },
-    discountedPrice(product) {
-      const price = (product.price - (product.price * product.discount / 100)) * this.curr.curr
-      return price
-    },
-   
-    Color(variants) {
-      const uniqColor = []
-      for (let i = 0; i < Object.keys(variants).length; i++) {
-        if (uniqColor.indexOf(variants[i].color) === -1) {
-          uniqColor.push(variants[i].color)
+    async fetchProductDetail() {
+      try {
+        this.loading = true
+        const productId = this.$route.params.id || this.$route.query.id
+        
+        // Fetch product detail
+        const response = await $fetch(`http://localhost:3001/api/product/${productId}`)
+        this.product = response
+        
+        // Fetch seller info
+        if (this.product.userId) {
+          try {
+            const sellerResponse = await $fetch(`http://localhost:3001/api/sellers/by-user/${this.product.userId}`)
+            this.seller = sellerResponse
+          } catch (error) {
+            console.error('Failed to fetch seller:', error)
+          }
         }
+      } catch (error) {
+        console.error('Failed to fetch product:', error)
+      } finally {
+        this.loading = false
       }
-      return uniqColor
     },
- 
-    addToCart: function (product, qty) {
-      product.quantity = qty || 1
-      useCartStore().addToCart(product)
+    getProductImage(image) {
+      if (!image) return '/images/placeholder.jpg'
+      if (image.startsWith('http')) return image
+      return `/images/${image}`
+    },
+    addToCart: async function (product, qty) {
+      console.log('Adding to cart - Product:', product)
+      console.log('Seller info:', this.seller)
+      
+      const cartProduct = {
+        ...product,
+        quantity: qty || 1,
+        // Map fields for cart compatibility
+        title: product.name,
+        name: product.name,
+        id: product._id,
+        _id: product._id,
+        price: Number(product.price) || 0,
+        shippingCost: product.shippingCost || 'Free',
+        image: product.image,
+        stock: product.stock || 0,
+        commission: product.commission || 0,
+        weight: product.weight || 0,
+        description: product.description || '',
+        category: product.category || '',
+        // เพิ่มข้อมูล seller
+        seller: this.seller
+      }
+      
+      console.log('Cart product to add:', cartProduct)
+      
+      await useCartStore().addToCart(cartProduct)
+      
+      // แสดง notification
+      if (useNuxtApp().$showToast) {
+        useNuxtApp().$showToast({ 
+          msg: `เพิ่ม ${product.name} ลงตะกร้าเรียบร้อย`, 
+          type: "success" 
+        })
+      } else {
+        alert(`เพิ่ม ${product.name} ลงตะกร้าเรียบร้อย`)
+      }
     },
     buyNow: function (product, qty) {
-      product.quantity = qty || 1
-      useCartStore().addToCart(product)
+      this.addToCart(product, qty)
       this.$router.push('/page/account/checkout')
     },
-   
     increment() {
-      this.counter++
+      if (this.counter < this.product.stock) {
+        this.counter++
+      }
     },
     decrement() {
       if (this.counter > 1) this.counter--
     },
-  
-    changeSizeVariant(variant) {
-      this.selectedSize = variant
-    },
-    getImgUrl(path) {
-      return ('/images/' + path)
-    },
-    slideTo(id) {
-      this.swiper.slideTo(id)
-      this.slideId = id
-    },
-    sizeVariant(id, slideId, color) {
-      this.swiper.slideTo(slideId)
-      this.size = []
-      this.activeColor = color
-      this.getDetail.variants.filter((item) => {
-        if (id === item.image_id) {
-          this.size.push(item.size)
-        }
-      })
-    }
-  },
-  mounted() {
- 
-    this.uniqColor = this.getDetail.variants[0].color
-    this.sizeVariant(this.getDetail.variants[0].image_id)
-
-    this.activeColor = this.uniqColor
-    this.changeSizeVariant(this.getDetail.variants[0].size)
   },
 }
 </script>

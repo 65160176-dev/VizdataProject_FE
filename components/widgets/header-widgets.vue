@@ -25,11 +25,11 @@
                       <ul class="search-results" v-if="searchItems.length">
                         <li v-for="(product, index) in searchItems" :key="index" class="product-box">
                           <div class="img-wrapper">
-                            <img :src='getImgUrl(product.images[0].src)' class="img-fluid bg-img" :key="index" />
+                            <img :src='getProductImage(product)' class="img-fluid bg-img" :key="index" />
                           </div>
                           <div class="product-detail">
-                            <nuxt-link :to="{ path: '/product/sidebar/' + product.id }">
-                              <h6>{{ product.title }}</h6>
+                            <nuxt-link :to="{ path: '/product/sidebar/' + (product._id || product.id) }">
+                              <h6>{{ product.name || product.title }}</h6>
                             </nuxt-link>
                             <h4>{{ curr.symbol }}{{ (product.price * curr.curr).toFixed(2) }}</h4>
                           </div>
@@ -79,7 +79,7 @@
           <div>
             <img alt src="/images/icon/layout4/cart.png" class="img-fluid">
             <i class="ti-shopping-cart"></i>
-            <span class="cart_qty_cls">{{ cart.length }}</span>
+            <span class="cart_qty_cls">{{ cartTotalQuantity }}</span>
           </div>
           <ul class="show-div shopping-cart" v-if="!cart.length">
             <li>Your cart is currently empty.</li>
@@ -87,20 +87,20 @@
           <ul class="show-div shopping-cart" v-if="cart.length">
             <li v-for="(item, index) in cart" :key="index">
               <div class="media">
-                <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
-                  <img alt class="mr-3" :src='getImgUrl(item.images[0].src)'>
+                <nuxt-link :to="{ path: '/product/sidebar/' + (item._id || item.id) }">
+                  <img alt class="mr-3" :src='getProductImage(item)'>
                 </nuxt-link>
                 <div class="media-body">
-                  <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
-                    <h4>{{ item.title }}</h4>
+                  <nuxt-link :to="{ path: '/product/sidebar/' + (item._id || item.id) }">
+                    <h4>{{ item.name || item.title }}</h4>
                   </nuxt-link>
                   <h4>
-                    <span>{{ item.quantity }} x {{ item.price || currency }}</span>
+                    <span>{{ item.quantity }} x {{ curr.symbol }}{{ (item.price * curr.curr).toFixed(2) }}</span>
                   </h4>
                 </div>
               </div>
               <div class="close-circle">
-                <a href="#" @click='removeCartItem(item)'>
+                <a href="#" @click.prevent='removeCartItem(item)'>
                   <i class="fa fa-times" aria-hidden="true"></i>
                 </a>
               </div>
@@ -164,15 +164,30 @@ export default {
     },
     ...mapState(useCartStore, {
       cartTotal: (store) => store.cartTotalAmount,
+      cart: (store) => store.cart,
+      cartTotalQuantity: (store) => store.cartTotalQuantity,
     }),
-    cart() {
-      return useCartStore().cartItems
-    },
     curr() {
       return useProductStore().changeCurrency
     },
     totalItems() {
-      return this.cart.reduce((total, item) => total + item.quantity, 0);
+      console.log('===== COMPUTING TOTAL ITEMS =====');
+      console.log('Cart:', this.cart);
+      console.log('Cart length:', this.cart.length);
+      
+      if (!this.cart || this.cart.length === 0) {
+        console.log('Cart is empty, returning 0');
+        return 0;
+      }
+      
+      const total = this.cart.reduce((sum, item) => {
+        console.log(`Item: ${item.name}, quantity: ${item.quantity}`);
+        return sum + (item.quantity || 0);
+      }, 0);
+      
+      console.log('Total items calculated:', total);
+      console.log('=================================');
+      return total;
     }
   },
   watch: {
@@ -187,6 +202,17 @@ export default {
     getImgUrl(path) {
       return ('/images/' + path)
     },
+    getProductImage(product) {
+      // รองรับทั้ง image field จาก API (string) และ images array จาก mock data
+      if (product.image) {
+        if (product.image.startsWith('http')) {
+          return product.image
+        }
+        return `/images/${product.image}`
+      }
+      const img = (product.images && product.images[0] && product.images[0].src) ? product.images[0].src : null
+      return img ? `/images/${img}` : 'https://placehold.co/400'
+    },
     openSearch() {
       this.search = true
     },
@@ -195,8 +221,9 @@ export default {
     },
     searchProduct() {
     },
-    removeCartItem: function (product) {
-      useCartStore().removeCartItem(product)
+    removeCartItem: async function (product) {
+      console.log('Removing from header cart:', product)
+      await useCartStore().removeCartItem(product)
       if (this.cart.length == 0 && this.$route.name === 'page-account-checkout') {
         this.$router.replace('/page/account/cart')
       }

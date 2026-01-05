@@ -1,16 +1,26 @@
-import products from '../data/products.json'
 import { defineStore } from "pinia";
+import { useProductStore } from './products'
+
 export const useFilterStore = defineStore({
     id: 'filter-store',
     state:()=>{
         return{
-            productslist: products.data,
-            products: products.data,
+            productslist: [],
+            products: [],
             tagItems: [],
             filteredProduct: [],
             paginate: 12,
             pages: [],
             priceArray: []
+        }
+    },
+    actions: {
+        async initProducts() {
+            const productStore = useProductStore()
+            await productStore.fetchProducts()
+            this.products = productStore.products
+            this.productslist = productStore.products
+            this.filteredProduct = productStore.products
         }
     },
     getters:{

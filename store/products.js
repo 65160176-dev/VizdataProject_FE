@@ -1,26 +1,39 @@
-import products from '../data/products.json'
-
 import { defineStore } from 'pinia'
+
 export const useProductStore = defineStore({
     id: 'product-store',
     state: () => {
       return {
-        
-        productslist: products.data,
-  products: products.data,
-  wishlist: [],
-  compare: [],
-  currency: {
-    value:'usd',
-    curr: 1,
-    symbol: '$'
-  },
-  order: [],
-  locale: 'en',
-  searchProducts: []
+        productslist: [],
+        products: [],
+        wishlist: [],
+        compare: [],
+        currency: {
+          value:'usd',
+          curr: 1,
+          symbol: '$'
+        },
+        order: [],
+        locale: 'en',
+        searchProducts: [],
+        loading: false
       }
     },
-    actions: { 
+    actions: {
+      async fetchProducts() {
+        this.loading = true
+        try {
+          const response = await $fetch('http://localhost:3001/api/product')
+          this.products = response || []
+          this.productslist = response || []
+        } catch (error) {
+          console.error('Error fetching products:', error)
+          this.products = []
+          this.productslist = []
+        } finally {
+          this.loading = false
+        }
+      }, 
       changeCurrency2(payload) {
       this.currency = payload
       if (this.currency.value === 'eur') {
@@ -36,22 +49,64 @@ export const useProductStore = defineStore({
       
       }
     },
-    addToWishlist(payload) {
-      const product = this.products.find(item => item.id === payload.id)
-      const wishlistItems = this.wishlist.find(item => item.id === payload.id)
-      if (wishlistItems) {
-      } else {
-        this.wishlist.push({
-          ...product
+    async fetchWishlist() {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          this.wishlist = []
+          return
+        }
+        const response = await $fetch('http://localhost:3001/api/wishlist', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         })
+        this.wishlist = response.products || []
+      } catch (error) {
+        console.error('Error fetching wishlist:', error)
+        this.wishlist = []
+      }
+    },
+    async addToWishlist(payload) {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          console.warn('Please login to add to wishlist')
+          return
+        }
+        const productId = payload._id || payload.id
+        await $fetch(`http://localhost:3001/api/wishlist/${productId}`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        // Refresh wishlist
+        await this.fetchWishlist()
+      } catch (error) {
+        console.error('Error adding to wishlist:', error)
       }
     },
     setInitialWhishlist(payload){
       this.wishlist = payload
     },
-    removeWishlistItem(payload) {
-      const index = this.wishlist.indexOf(payload)
-      this.wishlist.splice(index, 1)
+    async removeWishlistItem(payload) {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
+        
+        const productId = payload._id || payload.id
+        await $fetch(`http://localhost:3001/api/wishlist/${productId}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        // Refresh wishlist
+        await this.fetchWishlist()
+      } catch (error) {
+        console.error('Error removing from wishlist:', error)
+      }
     },
     addToCompare( payload) {
 

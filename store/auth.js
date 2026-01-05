@@ -66,6 +66,40 @@ export const useAuthStore = defineStore('auth', {
             } catch (e) {
               // ignore if cookies unavailable
             }
+            
+            // โหลด Cart และ Wishlist หลัง Login
+            const { useCartStore } = await import('~/store/cart')
+            const { useProductStore } = await import('~/store/products')
+            const cartStore = useCartStore()
+            const productStore = useProductStore()
+            
+            // Sync localStorage cart กับ backend
+            const localCart = JSON.parse(localStorage.getItem('product') || '[]')
+            if (localCart.length > 0) {
+              console.log('Syncing local cart to backend:', localCart)
+              for (const item of localCart) {
+                try {
+                  await $fetch('http://localhost:3001/api/cart', {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      productId: item._id || item.id,
+                      quantity: item.quantity || 1
+                    })
+                  })
+                } catch (e) {
+                  console.error('Failed to sync cart item:', e)
+                }
+              }
+              // ลบ localStorage cart หลัง sync
+              localStorage.removeItem('product')
+            }
+            
+            await cartStore.fetchCart()
+            await productStore.fetchWishlist()
           }
 
           return { 

@@ -107,7 +107,7 @@
                         <div>
                           <img src="/images/jewellery/icon/cart.png" class="img-fluid" alt="cart" />
                           <i class="ti-shopping-cart"></i>
-                          <span class="cart_qty_cls">{{ cart.length }}</span>
+                          <span class="cart_qty_cls">{{ cartTotalQuantity }}</span>
                         </div>
                         <ul class="show-div shopping-cart" v-if="!cart.length">
                           <li>Your cart is currently empty.</li>
@@ -183,6 +183,9 @@ export default {
     }),
     cart() {
       return useCartStore().cartItems
+    },
+    cartTotalQuantity() {
+      return useCartStore().cartTotalQuantity
     },
     cartTotal() {
       return useCartStore().cartTotalAmount

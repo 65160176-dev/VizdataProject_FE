@@ -6,34 +6,49 @@
       <div class="container">
         <div class="hero position-relative mb-3">
           <img src="/assets/images/Banner.png" alt="banner" />
-          <div class="hero-text">
+          <!-- <div class="hero-text">
             <div class="title">ช็อปสินค้า Marketplace — ร้านค้าหลากหลาย</div>
             <div class="cta"><button class="btn btn-danger">ช้อปเลย</button></div>
-          </div>
+          </div> -->
         </div>
-        <div ref="searchSection" class="row mb-3">
+        <div class="row mb-3">
           <div class="col-12">
             <input v-model="q" class="form-control" placeholder="ค้นหาสินค้า หรือ ร้านค้า" />
           </div>
         </div>
 
-        <div class="product-grid">
-          <div v-for="product in paginatedProducts" :key="product.id" class="product-card">
+        <ClientOnly>
+          <!-- Loading State -->
+          <div v-if="productStore.loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">กำลังโหลดสินค้า...</p>
+          </div>
+
+          <!-- No Products -->
+          <div v-else-if="!productStore.loading && allProducts.length === 0" class="text-center py-5">
+            <p class="text-muted">ยังไม่มีสินค้าในระบบ</p>
+          </div>
+
+          <!-- Products Grid -->
+          <div v-else class="product-grid">
+            <div v-for="product in paginatedProducts" :key="product._id || product.id" class="product-card">
             <div class="card h-100 shadow-sm">
-              <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: product.id } }">
+              <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: product._id || product.id } }">
                 <img :src="getImgUrl(product)" class="card-img-top" />
               </nuxt-link>
               <div class="card-body d-flex flex-column">
-                <h6 class="card-title mb-1 text-truncate">{{ product.title }}</h6>
-                <div class="text-muted small mb-2">{{ product.brand || '' }}</div>
+                <h6 class="card-title mb-1 text-truncate">{{ product?.name || product?.title || 'ไม่มีชื่อ' }}</h6>
+                <div class="text-muted small mb-2">{{ product?.brand || '' }}</div>
 
                 <div class="mt-auto d-flex justify-content-between align-items-center">
                   <div>
-                    <div v-if="product.sale">
+                    <div v-if="product?.sale">
                       <div class="text-muted small"><del>฿{{ product.price }}</del></div>
                       <div class="fw-bold">฿{{ discountedPrice(product) }}</div>
                     </div>
-                    <div v-else class="fw-bold">฿{{ product.price }}</div>
+                    <div v-else class="fw-bold">฿{{ product?.price || 0 }}</div>
                   </div>
                   <div>
                     <button class="btn btn-sm btn-primary" @click="addToCart(product)">เพิ่มลงรถเข็น</button>
@@ -83,6 +98,7 @@
             </ul>
           </nav>
         </div>
+        </ClientOnly>
       </div>
     </section>
 
@@ -91,13 +107,21 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import productsJson from '~/data/products.json'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useCartStore } from '~/store/cart'
+import { useProductStore } from '~/store/products'
 
 const q = ref('')
-const allProducts = productsJson.data || []
 const cart = useCartStore()
+const productStore = useProductStore()
+const searchSection = ref(null)
+
+// Fetch products on mount
+onMounted(async () => {
+  await productStore.fetchProducts()
+})
+
+const allProducts = computed(() => productStore.products || [])
 
 // Pagination
 const currentPage = ref(1)
@@ -105,8 +129,8 @@ const itemsPerPage = 40 // 8 แถว x 5 คอลัมน์
 
 const filteredProducts = computed(() => {
   const term = (q.value || '').toLowerCase().trim()
-  if (!term) return allProducts
-  return allProducts.filter(p => (p.title || '').toLowerCase().includes(term) || (p.brand || '').toLowerCase().includes(term))
+  if (!term) return allProducts.value
+  return allProducts.value.filter(p => (p.name || p.title || '').toLowerCase().includes(term) || (p.brand || '').toLowerCase().includes(term))
 })
 
 // เมื่อค้นหาใหม่ ให้กลับไปหน้า 1
@@ -152,8 +176,6 @@ const visiblePages = computed(() => {
   return pages
 })
 
-const searchSection = ref(null)
-
 function goToPage(page) {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
@@ -164,8 +186,18 @@ function goToPage(page) {
 }
 
 function getImgUrl(product) {
+  // รองรับทั้ง image field จาก API (string) และ images array จาก mock data
+  if (product.image) {
+    // ถ้า image เป็น URL เต็มหรือขึ้นต้นด้วย http ให้ใช้เลย
+    if (product.image.startsWith('http')) {
+      return product.image
+    }
+    // ไม่งั้นเติม /images/ ข้างหน้า
+    return `/images/${product.image}`
+  }
+  // Fallback สำหรับ mock data เก่า
   const img = (product.images && product.images[0] && product.images[0].src) ? product.images[0].src : null
-  return img ? `/images/${img}` : '/images/placeholder.png'
+  return img ? `/images/${img}` : 'https://placehold.co/400'
 }
 
 function discountedPrice(p) {
@@ -175,7 +207,20 @@ function discountedPrice(p) {
 }
 
 function addToCart(product) {
-  cart.addToCart({ id: product.id, quantity: 1 })
+  console.log('===== ADD TO CART FROM INDEX =====');
+  console.log('Product:', product);
+  console.log('Product ID:', product._id || product.id);
+  
+  // ส่งข้อมูล product ทั้งหมดแทนที่จะส่งแค่ id
+  cart.addToCart({
+    ...product,
+    _id: product._id || product.id,
+    id: product._id || product.id,
+    quantity: 1
+  })
+  
+  console.log('Add to cart called');
+  console.log('==================================');
 }
 </script>
 
