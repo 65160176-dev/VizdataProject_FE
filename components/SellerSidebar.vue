@@ -1,6 +1,8 @@
 <template>
   <aside class="seller-sidebar" :class="{ 'collapsed': isCollapsed }">
     
+    <div v-if="isNotiOpen" class="fixed-overlay" @click="isNotiOpen = false"></div>
+
     <button class="toggle-btn" @click="$emit('toggle')">
       <Icon :name="isCollapsed ? 'feather:chevron-right' : 'feather:chevron-left'" size="18" />
     </button>
@@ -8,14 +10,48 @@
     <div class="sidebar-top">
       <div class="profile">
         <img :src="avatar" alt="avatar" class="avatar" />
+        
         <div class="profile-info" v-show="!isCollapsed">
           <div class="name text-truncate">{{ displayName }}</div>
           <div class="role">Seller</div>
         </div>
-        <button class="noti-btn" v-show="!isCollapsed">
-           <Icon name="feather:bell" size="20" />
-           <span class="noti-badge" v-if="notificationCount > 0">{{ notificationCount }}</span>
-        </button>
+        
+        <div class="noti-wrapper" v-show="!isCollapsed">
+          <button class="noti-btn" @click="toggleNoti">
+             <Icon name="feather:bell" size="20" class="bell-icon"/>
+             <div class="badge-wrapper" v-if="unreadCount > 0">
+                <span class="badge-ping"></span>
+                <span class="noti-badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+             </div>
+          </button>
+
+          <transition name="fade">
+            <div class="noti-dropdown" v-if="isNotiOpen">
+              <div class="noti-header">
+                <span>การแจ้งเตือน</span>
+                <button class="mark-read-btn" @click="markAllRead">อ่านทั้งหมด</button>
+              </div>
+              
+              <div class="noti-list">
+                <div 
+                  v-for="item in notifications" 
+                  :key="item.id" 
+                  class="noti-item"
+                  :class="{ 'unread': item.isUnread }"
+                >
+                  <div class="noti-dot"></div>
+                  <div class="noti-content">
+                    <p class="noti-text">{{ item.text }}</p>
+                    <span class="noti-time">{{ item.time }}</span>
+                  </div>
+                </div>
+                <div v-if="notifications.length === 0" class="noti-empty">
+                  ไม่มีการแจ้งเตือน
+                </div>
+              </div>
+            </div>
+          </transition>
+        </div>
       </div>
 
       <div class="profile-actions" v-if="!isCollapsed">
@@ -50,9 +86,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '~/store/auth'
+import { useRuntimeConfig } from '#app'
 
 const props = defineProps({ isCollapsed: { type: Boolean, default: false } })
 const emit = defineEmits(['toggle'])
@@ -60,21 +97,50 @@ const emit = defineEmits(['toggle'])
 const router = useRouter()
 const auth = useAuthStore()
 const route = useRoute()
+const config = useRuntimeConfig()
 
-const notificationCount = ref(3)
+// --- 🔥 ตั้งค่า URL ของ Backend (Port 3001) ---
+const API_BASE_URL = config.public.apiBase || 'http://localhost:3001' 
+
 const displayName = computed(() => auth.userName || 'ร้านของฉัน')
-const avatar = ref('/images/avtar.jpg')
 
-onMounted(() => {
-  const savedAvatar = localStorage.getItem('sellerAvatar')
-  if (savedAvatar) avatar.value = savedAvatar
-  
-  const handler = () => { const a = localStorage.getItem('sellerAvatar'); if (a) avatar.value = a }
-  window.addEventListener('sellerProfileUpdated', handler)
-  window.addEventListener('storage', (e) => { if (e.key === 'sellerAvatar') avatar.value = e.newValue })
-  
-  onUnmounted(() => { window.removeEventListener('sellerProfileUpdated', handler) })
+// --- 🔥 Logic การแสดงรูปภาพ ---
+const avatar = computed(() => {
+  // 1. ลองดึงจาก Store หรือ LocalStorage
+  const userAvatar = auth.user?.avatar || (process.client ? localStorage.getItem('sellerAvatar') : null)
+
+  if (userAvatar) {
+    // 2. ถ้าเป็น URL เต็มอยู่แล้ว (เช่น รูปจาก Google Login) ให้ใช้เลย
+    if (userAvatar.startsWith('http')) {
+      return userAvatar
+    }
+    // 3. ถ้าเป็น Path จาก Backend (เช่น /uploads/avatars/...) 
+    // ให้เติม http://localhost:3001 เข้าไปข้างหน้า
+    const cleanPath = userAvatar.startsWith('/') ? userAvatar : `/${userAvatar}`
+    return `${API_BASE_URL}${cleanPath}`
+  }
+
+  // 4. ถ้าไม่มีรูป ให้ใช้รูป Default
+  return '/images/avtar.jpg'
 })
+
+// --- Notification Logic ---
+const isNotiOpen = ref(false)
+const notifications = ref([
+  { id: 1, text: 'มีคำสั่งซื้อใหม่ #ORD-001', time: '5 นาทีที่แล้ว', isUnread: true },
+  { id: 2, text: 'สินค้า "ครีมกันแดด" ใกล้หมด', time: '1 ชม. ที่แล้ว', isUnread: true },
+  { id: 3, text: 'อนุมัติการถอนเงินแล้ว', time: 'เมื่อวาน', isUnread: false },
+])
+
+const unreadCount = computed(() => notifications.value.filter(n => n.isUnread).length)
+
+function toggleNoti() {
+  isNotiOpen.value = !isNotiOpen.value
+}
+
+function markAllRead() {
+  notifications.value.forEach(n => n.isUnread = false)
+}
 
 function isActive(path) {
   try { return route.path === path || route.path.startsWith(path + '/') } catch (e) { return false }
@@ -87,7 +153,7 @@ function logout() {
 </script>
 
 <style scoped>
-/* CSS เดิม (Light Mode) */
+/* CSS Styling เดิม */
 .seller-sidebar{ width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: linear-gradient(180deg, #fff, #fffaf0); border-right: 1px solid rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; padding: 18px 14px; box-shadow: 0 4px 18px rgba(14,20,30,0.06); z-index: 1000; transition: width 0.3s ease-in-out, background 0.3s; }
 .seller-sidebar.collapsed { width: 80px; padding: 18px 10px; }
 .seller-sidebar.collapsed .avatar { width: 40px; height: 40px; margin: 0 auto; }
@@ -97,14 +163,12 @@ function logout() {
 .toggle-btn { position: absolute; top: 15px; right: -12px; background: #fff; border: 1px solid #eee; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1001; }
 .toggle-btn:hover { background: #f8f9fa; }
 .sidebar-divider { margin: 15px 0; border: 0; border-top: 1px solid rgba(0, 0, 0, 0.1); width: 100%; }
-.sidebar-top .profile{ display:flex; gap:12px; align-items:center; padding:8px 4px; overflow: hidden; position: relative; }
+.fixed-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1001; background: transparent; }
+.sidebar-top .profile{ display:flex; gap:12px; align-items:center; padding:8px 4px; position: relative; overflow: visible; }
 .avatar{ width:56px; height:56px; border-radius:12px; object-fit:cover; background:#eee; box-shadow:0 2px 6px rgba(0,0,0,0.06); transition: all 0.3s; }
 .profile-info { flex: 1; min-width: 0; }
 .profile-info .name{ font-weight:700; font-size:14px; white-space: nowrap; }
 .profile-info .role{ font-size:12px; color:#9a7b4f; white-space: nowrap; }
-.noti-btn { background: transparent; border: none; cursor: pointer; color: #666; padding: 6px; border-radius: 50%; position: relative; transition: all 0.2s; display: flex; align-items: center; justify-content: center; margin-left: auto; }
-.noti-btn:hover { background: rgba(0,0,0,0.05); color: #333; transform: scale(1.05); }
-.noti-badge { position: absolute; top: 2px; right: 2px; background-color: #ff4757; color: white; font-size: 10px; font-weight: bold; min-width: 16px; height: 16px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; padding: 0 2px; }
 .sidebar-menu{ flex:1; overflow:hidden; }
 .sidebar-menu ul{ list-style:none; padding:0; margin:0; }
 .sidebar-menu ul li{ display:block; margin-bottom: 4px;}
@@ -117,13 +181,35 @@ function logout() {
 .logout-btn:hover{ background:rgba(240,84,59,0.05); }
 .text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; }
 
-/* --- 🔥 DARK MODE OVERRIDES 🔥 --- */
-/* ทำงานเมื่อ body มี class="dark" (จาก Store) */
+/* Notification Styles */
+.noti-wrapper { margin-left: auto; position: relative; }
+.noti-btn { background: transparent; border: none; cursor: pointer; padding: 8px; border-radius: 50%; position: relative; transition: all 0.2s; display: flex; align-items: center; justify-content: center; color: #666; }
+.noti-btn:hover { background: rgba(0,0,0,0.05); color: #333; }
+.badge-wrapper { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; display: flex; align-items: center; justify-content: center; }
+.noti-badge { position: relative; z-index: 2; background-color: #ff4757; color: white; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; padding: 0 4px; top: -6px; right: -6px; }
+.badge-ping { position: absolute; width: 100%; height: 100%; border-radius: 50%; background-color: #ff4757; opacity: 0.75; top: -6px; right: -6px; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; z-index: 1; }
+@keyframes ping { 75%, 100% { transform: scale(2.5); opacity: 0; } }
+.noti-dropdown { position: absolute; top: -10px; left: 100%; margin-left: 25px; width: 300px; background: white; border-radius: 12px; box-shadow: 5px 5px 20px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); z-index: 1002; overflow: hidden; transform-origin: top left; }
+.noti-dropdown::before { content: ''; position: absolute; top: 18px; left: -6px; width: 12px; height: 12px; background: white; transform: rotate(45deg); border-left: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); }
+.noti-header { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 14px; position: relative; z-index: 2; background: white;}
+.mark-read-btn { background: none; border: none; color: #ff9900; font-size: 12px; cursor: pointer; }
+.mark-read-btn:hover { text-decoration: underline; }
+.noti-list { max-height: 320px; overflow-y: auto; position: relative; z-index: 2; background: white;}
+.noti-item { padding: 12px 16px; border-bottom: 1px solid #f9f9f9; display: flex; gap: 10px; cursor: pointer; transition: background 0.2s; }
+.noti-item:hover { background: #fffcf5; }
+.noti-item:last-child { border-bottom: none; }
+.noti-item.unread { background: #fff8eb; }
+.noti-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; margin-top: 6px; flex-shrink: 0; }
+.noti-item.unread .noti-dot { background: #ff4757; }
+.noti-content { flex: 1; }
+.noti-text { font-size: 13px; color: #333; margin: 0; line-height: 1.4; }
+.noti-time { font-size: 11px; color: #999; margin-top: 2px; display: block; }
+.noti-empty { padding: 20px; text-align: center; color: #999; font-size: 13px; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateX(-10px) scale(0.95); }
 
-:global(body.dark) .seller-sidebar {
-  background: #1e1e2f !important;
-  border-right: 1px solid #333;
-}
+/* Dark Mode Overrides */
+:global(body.dark) .seller-sidebar { background: #1e1e2f !important; border-right: 1px solid #333; }
 :global(body.dark) .profile-info .name { color: #fff; }
 :global(body.dark) .menu-item { color: #a6a6a6; }
 :global(body.dark) .menu-item:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
@@ -133,4 +219,12 @@ function logout() {
 :global(body.dark) .noti-btn { color: #ccc; }
 :global(body.dark) .noti-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 :global(body.dark) .noti-badge { border-color: #1e1e2f; }
+:global(body.dark) .noti-dropdown { background: #2b2b40; border-color: #444; box-shadow: 5px 5px 20px rgba(0,0,0,0.3); }
+:global(body.dark) .noti-dropdown::before { background: #2b2b40; border-color: #444; }
+:global(body.dark) .noti-header { border-bottom-color: #444; color: #fff; background: #2b2b40; }
+:global(body.dark) .noti-list { background: #2b2b40; }
+:global(body.dark) .noti-text { color: #eee; }
+:global(body.dark) .noti-item { border-bottom-color: #333; }
+:global(body.dark) .noti-item:hover { background: #35354a; }
+:global(body.dark) .noti-item.unread { background: rgba(255, 71, 87, 0.1); }
 </style>
