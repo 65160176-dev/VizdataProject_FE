@@ -46,14 +46,6 @@
           <span v-if="loading">Logging in...</span>
           <span v-else>Login</span>
         </button>
-        <button
-          class="btn btn-outline-secondary mt-2"
-          type="button"
-          @click="demoSellerLogin"
-          :disabled="loading"
-        >
-          Login as Seller (Demo)
-        </button>
       </div>
       <div class="form-footer">
         <span>Or Login with social platforms</span>
@@ -94,21 +86,13 @@ onMounted(() => {
   redirectUrl.value = route.query.redirect || ''
   
   // Pre-fill demo credentials for convenience
-  email.value = 'Test1@gmail.com'
-  password.value = '123456789'
+  email.value = 'TestUser3@gmail.com'
+  password.value = '123456'
 })
 
 // Toggle password visibility
 function togglePassword() {
   passwordType.value = passwordType.value === 'password' ? 'text' : 'password'
-}
-
-// Prefill demo seller credentials and submit
-async function demoSellerLogin() {
-  email.value = 'TestSeller@gmail.com'
-  password.value = '111111'
-  rememberMe.value = true
-  await doLogin()
 }
 
 // Login function

@@ -2,9 +2,9 @@
   <section class="section-b-space">
     <div class="container">
       <div class="mb-3">
-        <button @click="$router.back()" class="btn btn-sm btn-outline-secondary">
+        <!-- <button @click="$router.back()" class="btn btn-sm btn-outline-secondary">
           <i class="ti-arrow-left"></i> Back
-        </button>
+        </button> -->
       </div>
       <div class="checkout-page">
         <div class="checkout-form">

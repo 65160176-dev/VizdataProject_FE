@@ -4,9 +4,10 @@
       <div class="container">
         <div class="row">
           <div class="col-sm-6">
-            <div class="page-title">
-              <h2>{{ title }}</h2>
-            </div>
+            
+            <button @click="$router.back()" class="btn btn-sm btn-outline-secondary">
+              <i class="ti-arrow-left"></i> Back
+            </button>
           </div>
           <div class="col-sm-6">
             <nav aria-label="breadcrumb" class="theme-breadcrumb">
