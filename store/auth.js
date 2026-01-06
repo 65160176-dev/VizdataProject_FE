@@ -27,8 +27,17 @@ export const useAuthStore = defineStore('auth', {
         const savedUserType = localStorage.getItem('userType')
         const savedToken = localStorage.getItem('token')
         
+        // ✅ 1. กู้คืนรูปภาพตอน Refresh หน้า
+        const savedAvatar = localStorage.getItem('sellerAvatar')
+        
         if (savedUser && savedToken) {
           this.user = JSON.parse(savedUser)
+          
+          // ยัดรูปกลับใส่ User Object (ถ้ามี)
+          if (savedAvatar && this.user) {
+             this.user.avatar = savedAvatar
+          }
+
           this.userName = savedUserName
           this.token = savedToken
           this.isLoggedIn = true
@@ -42,6 +51,16 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await authService.login({ email, password })
         
+        // 🔥🔥 [โซนจับโจร] เริ่มทำงาน 🔥🔥
+        console.log("🕵️‍♂️ [1] Login Response ทั้งก้อน:", response);
+        if (response.success) {
+            console.log("🕵️‍♂️ [2] User Data ที่ Backend ส่งมา:", response.data.user);
+            console.log("🕵️‍♂️ [3] ค่า Avatar คือ:", response.data.user.avatar);
+        } else {
+            console.log("❌ Login ไม่สำเร็จ:", response.message);
+        }
+        // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+
         if (response.success) {
           const { user, token } = response.data
           
@@ -58,25 +77,29 @@ export const useAuthStore = defineStore('auth', {
             localStorage.setItem('userType', String(user.userType))
             localStorage.setItem('token', token)
             
-            // Set cookie for backward compatibility
+            // ✅ 2. บันทึกรูปลงเครื่อง (ถ้ามี)
+            if (user.avatar) {
+                console.log("✅ [4] กำลังบันทึกรูปลง LocalStorage: sellerAvatar =", user.avatar);
+                localStorage.setItem('sellerAvatar', user.avatar)
+            } else {
+                console.warn("⚠️ [4] ไม่พบรูปภาพ (avatar เป็น null หรือ undefined) จึงไม่ได้บันทึก");
+            }
+            
+            // Set cookie logic (เหมือนเดิม)
             try {
               const expires = new Date()
               expires.setDate(expires.getDate() + 7)
               document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`
-            } catch (e) {
-              // ignore if cookies unavailable
-            }
+            } catch (e) {}
             
-            // โหลด Cart และ Wishlist หลัง Login
+            // Sync Cart logic (เหมือนเดิม)
             const { useCartStore } = await import('~/store/cart')
             const { useProductStore } = await import('~/store/products')
             const cartStore = useCartStore()
             const productStore = useProductStore()
             
-            // Sync localStorage cart กับ backend
             const localCart = JSON.parse(localStorage.getItem('product') || '[]')
             if (localCart.length > 0) {
-              console.log('Syncing local cart to backend:', localCart)
               for (const item of localCart) {
                 try {
                   await $fetch('http://localhost:3001/api/cart', {
@@ -90,11 +113,8 @@ export const useAuthStore = defineStore('auth', {
                       quantity: item.quantity || 1
                     })
                   })
-                } catch (e) {
-                  console.error('Failed to sync cart item:', e)
-                }
+                } catch (e) {}
               }
-              // ลบ localStorage cart หลัง sync
               localStorage.removeItem('product')
             }
             
@@ -119,30 +139,11 @@ export const useAuthStore = defineStore('auth', {
     
     // Real API Register
     async register(username, email, password, confirmPassword, userType = 1) {
-      // Validation
-      if (!username || !email || !password || !confirmPassword) {
-        return { success: false, message: 'Please fill in all fields' }
-      }
-      
-      if (password !== confirmPassword) {
-        return { success: false, message: 'Passwords do not match' }
-      }
-      
-      if (password.length < 6) {
-        return { success: false, message: 'Password must be at least 6 characters' }
-      }
-
-      if (username.length < 3) {
-        return { success: false, message: 'Username must be at least 3 characters' }
-      }
+      if (!username || !email || !password || !confirmPassword) return { success: false, message: 'Please fill in all fields' }
+      if (password !== confirmPassword) return { success: false, message: 'Passwords do not match' }
       
       try {
-        const response = await authService.register({
-          username,
-          email,
-          password,
-          userType,
-        })
+        const response = await authService.register({ username, email, password, userType })
         
         if (response.success) {
           const { user, token } = response.data
@@ -153,12 +154,16 @@ export const useAuthStore = defineStore('auth', {
           this.token = token
           this.isLoggedIn = true
 
-          // Save to localStorage
           if (import.meta.client) {
             localStorage.setItem('user', JSON.stringify(user))
             localStorage.setItem('userName', user.username)
             localStorage.setItem('userType', String(user.userType))
             localStorage.setItem('token', token)
+            
+            // ✅ 3. บันทึกรูปตอนสมัคร (ถ้ามี)
+            if (user.avatar) {
+                localStorage.setItem('sellerAvatar', user.avatar)
+            }
             
             try {
               const expires = new Date()
@@ -169,17 +174,9 @@ export const useAuthStore = defineStore('auth', {
 
           return { success: true, message: response.message }
         }
-        
         return { success: false, message: response.message }
       } catch (error) {
-        console.error('Register error:', error)
-        console.error('Error details:', {
-          message: error?.message,
-          data: error?.data,
-          statusCode: error?.statusCode,
-          response: error?.response
-        })
-        const message = error?.data?.message || error?.message || 'Registration failed. Please try again.'
+        const message = error?.data?.message || error?.message || 'Registration failed.'
         return { success: false, message }
       }
     },
@@ -198,14 +195,14 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('userType')
         localStorage.removeItem('token')
         
-        // remove cookie
+        // ✅ 4. ลบรูปออกตอน Logout
+        console.log("👋 Logout: ลบ sellerAvatar ออกจากเครื่อง");
+        localStorage.removeItem('sellerAvatar')
+        
         try {
           document.cookie = 'userlogin=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-        } catch (e) {
-          // ignore
-        }
+        } catch (e) {}
       }
     }
   }
 })
-
