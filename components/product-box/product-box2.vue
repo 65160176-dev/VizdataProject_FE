@@ -101,6 +101,8 @@ export default {
       useCartStore().addToCart(product)
     },
     addToWishlist: function (product) {
+      console.log('Adding to wishlist, product:', product)
+      console.log('Product ID:', product._id || product.id)
       this.dismissCountDown = this.dismissSecs
       useNuxtApp().$showToast({ msg: "Product Is successfully added to your wishlist.", type: "info" })
 

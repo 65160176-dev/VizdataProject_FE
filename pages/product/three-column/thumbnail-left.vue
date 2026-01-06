@@ -86,8 +86,8 @@
                       <li><a href="javascript:void(0)"><i class="fa fa-facebook"></i></a></li>
                       <li><a href="javascript:void(0)"><i class="fa fa-google-plus"></i></a></li>
                     </ul>
-                    <form class="d-inline-block">
-                      <button class="wishlist-btn" @click="addToWishlist(product)">
+                    <form class="d-inline-block" @submit.prevent>
+                      <button type="button" class="wishlist-btn" @click="addToWishlist(product)">
                         <i class="fa fa-heart"></i><span class="title-font">Add To WishList</span></button>
                     </form>
                   </div>
@@ -275,6 +275,13 @@ export default {
       } else {
         alert(`เพิ่ม ${product.name} ลงตะกร้าเรียบร้อย`)
       }
+    },
+    addToWishlist: function (product) {
+      console.log('Adding to wishlist - Product:', product)
+      if (useNuxtApp().$showToast) {
+        useNuxtApp().$showToast({ msg: `เพิ่ม ${product.name || product.title} ในรายการที่ชอบ`, type: 'info' })
+      }
+      useProductStore().addToWishlist(product)
     },
     buyNow: function (product, qty) {
       this.addToCart(product, qty)

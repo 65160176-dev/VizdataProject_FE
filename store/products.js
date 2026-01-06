@@ -24,6 +24,10 @@ export const useProductStore = defineStore({
         this.loading = true
         try {
           const response = await $fetch('http://localhost:3001/api/product')
+          console.log('Fetched products:', response)
+          if (response && response.length > 0) {
+            console.log('First product sample:', response[0])
+          }
           this.products = response || []
           this.productslist = response || []
         } catch (error) {
@@ -72,19 +76,33 @@ export const useProductStore = defineStore({
         const token = localStorage.getItem('token')
         if (!token) {
           console.warn('Please login to add to wishlist')
+          useNuxtApp().$showToast({ msg: "Please login to add to wishlist", type: "error" })
           return
         }
-        const productId = payload._id || payload.id
+        
+        console.log('addToWishlist payload:', payload)
+        const productId = payload.id || payload._id
+        console.log('Extracted productId:', productId)
+        
+        // Validate productId
+        if (!productId || productId === 'undefined' || productId === undefined) {
+          console.error('Invalid product ID. Product object:', payload)
+          useNuxtApp().$showToast({ msg: "Invalid product - missing ID", type: "error" })
+          return
+        }
+        
         await $fetch(`http://localhost:3001/api/wishlist/${productId}`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`
           }
         })
+        useNuxtApp().$showToast({ msg: "Product added to wishlist", type: "success" })
         // Refresh wishlist
         await this.fetchWishlist()
       } catch (error) {
         console.error('Error adding to wishlist:', error)
+        useNuxtApp().$showToast({ msg: error.data?.message || "Failed to add to wishlist", type: "error" })
       }
     },
     setInitialWhishlist(payload){
@@ -95,17 +113,26 @@ export const useProductStore = defineStore({
         const token = localStorage.getItem('token')
         if (!token) return
         
-        const productId = payload._id || payload.id
+        const productId = payload.id || payload._id
+        
+        // Validate productId
+        if (!productId || productId === 'undefined') {
+          console.error('Invalid product ID:', payload)
+          return
+        }
+        
         await $fetch(`http://localhost:3001/api/wishlist/${productId}`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`
           }
         })
+        useNuxtApp().$showToast({ msg: "Product removed from wishlist", type: "success" })
         // Refresh wishlist
         await this.fetchWishlist()
       } catch (error) {
         console.error('Error removing from wishlist:', error)
+        useNuxtApp().$showToast({ msg: "Failed to remove from wishlist", type: "error" })
       }
     },
     addToCompare( payload) {

@@ -119,6 +119,28 @@ export const useAuthStore = defineStore('auth', {
             }
             
             await cartStore.fetchCart()
+            // Merge guest wishlist (localStorage key 'whish') into user's wishlist on login
+            try {
+              const localWish = JSON.parse(localStorage.getItem('whish') || '[]')
+              if (localWish.length > 0) {
+                for (const item of localWish) {
+                  try {
+                    const prodId = item._id || item.id
+                    if (!prodId) continue
+                    await $fetch(`http://localhost:3001/api/wishlist/${prodId}`, {
+                      method: 'POST',
+                      headers: {
+                        Authorization: `Bearer ${token}`
+                      }
+                    })
+                  } catch (e) {}
+                }
+                localStorage.removeItem('whish')
+              }
+            } catch (e) {
+              console.warn('Failed to merge local wishlist:', e)
+            }
+
             await productStore.fetchWishlist()
           }
 
@@ -170,6 +192,31 @@ export const useAuthStore = defineStore('auth', {
               expires.setDate(expires.getDate() + 7)
               document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`
             } catch (e) {}
+            
+            // Merge guest wishlist (localStorage key 'whish') into user's wishlist on register
+            try {
+              const { useProductStore } = await import('~/store/products')
+              const productStore = useProductStore()
+              const localWish = JSON.parse(localStorage.getItem('whish') || '[]')
+              if (localWish.length > 0) {
+                for (const item of localWish) {
+                  try {
+                    const prodId = item._id || item.id
+                    if (!prodId) continue
+                    await $fetch(`http://localhost:3001/api/wishlist/${prodId}`, {
+                      method: 'POST',
+                      headers: {
+                        Authorization: `Bearer ${token}`
+                      }
+                    })
+                  } catch (e) {}
+                }
+                localStorage.removeItem('whish')
+              }
+              await productStore.fetchWishlist()
+            } catch (e) {
+              console.warn('Failed to merge local wishlist on register:', e)
+            }
           }
 
           return { success: true, message: response.message }
