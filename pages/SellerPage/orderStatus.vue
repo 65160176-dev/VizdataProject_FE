@@ -12,13 +12,16 @@
       <div class="card-body p-2">
         <ul class="nav nav-pills nav-fill custom-tabs">
           <li class="nav-item" v-for="s in statuses" :key="s.key">
-            <a class="nav-link d-flex align-items-center justify-content-center gap-2"
-               :class="{ active: currentStatus === s.key }"
+            <a class="nav-link d-flex align-items-center justify-content-center gap-2 transition-all"
+               :class="[ currentStatus === s.key ? 'active-tab-' + s.key : '' ]"
                href="#" @click.prevent="currentStatus = s.key">
               <Icon :name="s.icon" size="18" />
               <span>{{ s.label }}</span>
-              <span class="badge rounded-pill ms-2" 
-                    :class="currentStatus === s.key ? 'bg-white ' + getTextClass(s.key) : 'bg-light text-dark'">
+              
+              <span class="badge rounded-pill ms-2 transition-all shadow-sm" 
+                    :class="[
+                      currentStatus === s.key ? 'bg-white ' + getTextClass(s.key) : 'bg-light text-muted'
+                    ]">
                 {{ countByStatus(s.key) }}
               </span>
             </a>
@@ -74,7 +77,6 @@
     <Transition name="fade">
       <div v-if="showDetail" class="modal-backdrop-custom" @click.self="closeDetail">
         <div class="modal-content-custom p-0 overflow-hidden shadow-lg">
-          
           <div :class="['px-4 py-3 d-flex justify-content-between align-items-center text-white', 'header-' + selectedOrder.status]">
             <div>
               <h5 class="fw-bold mb-0">Order Detail</h5>
@@ -131,10 +133,10 @@
                 </div>
                 
                 <div>
-                  <button v-if="selectedOrder.status === 'preparing'" class="btn btn-primary rounded-pill px-4" @click="handleUpdate(selectedOrder._id, 'shipped')">
+                  <button v-if="selectedOrder.status === 'preparing'" class="btn btn-primary rounded-pill px-4 shadow-sm" @click="handleUpdate(selectedOrder._id, 'shipped')">
                     ส่งสินค้าแล้ว <Icon name="feather:truck" class="ms-1"/>
                   </button>
-                  <button v-if="selectedOrder.status === 'shipped'" class="btn btn-success rounded-pill px-4" @click="handleUpdate(selectedOrder._id, 'completed')">
+                  <button v-if="selectedOrder.status === 'shipped'" class="btn btn-success rounded-pill px-4 shadow-sm text-white" @click="handleUpdate(selectedOrder._id, 'completed')">
                     เสร็จสมบูรณ์ <Icon name="feather:check" class="ms-1"/>
                   </button>
                   <button v-else class="btn btn-secondary rounded-pill px-4" @click="closeDetail">ปิดหน้าต่าง</button>
@@ -167,25 +169,18 @@ onMounted(async () => {
     await orderStore.fetchOrders()
 })
 
-// ดึงข้อมูลตามสถานะจาก Getter ใน Store
 const filteredOrders = computed(() => orderStore.ordersByStatus(currentStatus.value))
-
 function countByStatus(s) { return orderStore.countByStatus(s) }
 function getStatusLabel(key) { return statuses.find(s => s.key === key)?.label || key }
 
-// ฟังก์ชันดึงรายการสินค้า
 function getItems(o) {
     if (!o) return []
     return o.item || o.items || []
 }
 
-// คำนวณราคาสุทธิ
 function calculateTotal(o) {
     const items = getItems(o)
-    if (items.length > 0) {
-        return items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0)
-    }
-    return o.total || 0
+    return items.length > 0 ? items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0) : (o.total || 0)
 }
 
 function getItemName(o) {
@@ -210,7 +205,6 @@ function formatCurrency(v) {
 
 function getTextClass(s) { return 'text-status-' + (s || '').toLowerCase() }
 
-// Modal Logic
 const showDetail = ref(false)
 const selectedOrder = ref({ item: [] })
 
@@ -227,7 +221,7 @@ async function handleUpdate(id, newStatus) {
 </script>
 
 <style scoped>
-/* พื้นหลังไล่เฉดตามสถานะ */
+/* --- พื้นหลัง Card/Modal Header --- */
 .header-preparing { background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%); }
 .text-status-preparing { color: #0277BD; }
 
@@ -240,17 +234,26 @@ async function handleUpdate(id, newStatus) {
 .header-cancelled { background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%); }
 .text-status-cancelled { color: #C62828; }
 
-/* การตกแต่ง Tabs */
-.custom-tabs .nav-link { color: #64748b; border-radius: 8px; font-weight: 600; padding: 12px; transition: 0.2s; border: 1px solid transparent; }
-.custom-tabs .nav-link.active { background: #fff !important; color: #0f172a !important; border-color: #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+/* --- สี Active Tab เมื่อถูกกด --- */
+.active-tab-preparing { background-color: #0288D1 !important; color: white !important; }
+.active-tab-shipped { background-color: #5E35B1 !important; color: white !important; }
+.active-tab-completed { background-color: #00897B !important; color: white !important; }
+.active-tab-cancelled { background-color: #D32F2F !important; color: white !important; }
 
-/* การตกแต่ง Card */
+.custom-tabs .nav-link { 
+  color: #64748b; 
+  border-radius: 12px; 
+  font-weight: 600; 
+  padding: 12px; 
+  border: 1px solid transparent; 
+}
+.custom-tabs .nav-link:hover { background-color: #f8fafc; }
+
+.transition-all { transition: all 0.3s ease; }
 .order-card { cursor: pointer; transition: 0.2s; }
-.order-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px rgba(0,0,0,0.08) !important; }
-.bg-white-glass { background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
+.order-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important; }
 
-/* Modal */
-.modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1050; padding: 20px; }
+.modal-backdrop-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1050; padding: 20px; }
 .modal-content-custom { background: #fff; width: 100%; max-width: 700px; border-radius: 20px; }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
