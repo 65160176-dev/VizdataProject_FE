@@ -7,31 +7,23 @@ export const useOrderStore = defineStore('orders', {
   }),
 
   getters: {
-    // แก้: เปรียบเทียบแบบตัวพิมพ์เล็ก (toLowerCase) เพื่อให้เจอแน่นอน
-    pendingOrders: (state) => state.allOrders.filter(o => o.status && o.status.toLowerCase() === 'pending'),
-    
-    ordersByStatus: (state) => (status) => state.allOrders.filter(o => o.status && o.status.toLowerCase() === status.toLowerCase()),
-    
-    countByStatus: (state) => (status) => state.allOrders.filter(o => o.status && o.status.toLowerCase() === status.toLowerCase()).length
+    pendingOrders: (state) => state.allOrders.filter(o => o.status === 'pending'),
   },
 
   actions: {
     async fetchOrders() {
       this.isLoading = true
       try {
-        const { data, error } = await useFetch('http://localhost:3001/api/order')
-        
-        if (data.value) {
-          // แปลงข้อมูลให้ format ตรงกันเป๊ะๆ
-          this.allOrders = data.value.map(o => ({
+        const data = await $fetch('http://localhost:3001/api/order')
+        if (data) {
+          this.allOrders = data.map(o => ({
              ...o,
-             // แปลง status เป็นตัวพิมพ์เล็กทั้งหมด กันพลาด
              status: o.status ? o.status.toLowerCase() : 'pending',
-             item: o.item || o.items || []
+             item: o.item || o.items || [] // ดักไว้ทั้งสองชื่อ
           }))
         }
       } catch (e) {
-        console.error('Error fetching orders:', e)
+        console.error('Fetch error:', e)
       } finally {
         this.isLoading = false
       }
@@ -39,20 +31,13 @@ export const useOrderStore = defineStore('orders', {
 
     async updateStatus(id, newStatus) {
       try {
-        // ส่งค่าไป update (ส่งแบบตัวพิมพ์เล็ก หรือใหญ่ก็ได้ Backend ส่วนใหญ่อ่านได้)
         await $fetch(`http://localhost:3001/api/order/${id}`, {
             method: 'PUT',
             body: { status: newStatus }
         })
-
-        const index = this.allOrders.findIndex(o => o._id === id)
-        if (index !== -1) {
-          // อัปเดตใน Store เป็นตัวพิมพ์เล็กเพื่อให้ UI ทำงานต่อได้
-          this.allOrders[index].status = newStatus.toLowerCase()
-        }
-        
+        await this.fetchOrders() // รีโหลดข้อมูลใหม่
       } catch (e) {
-        alert('Error updating status: ' + e.message)
+        console.error('Update error:', e)
       }
     }
   }
