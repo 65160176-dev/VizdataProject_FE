@@ -7,7 +7,26 @@ export const useOrderStore = defineStore('orders', {
   }),
 
   getters: {
-    pendingOrders: (state) => state.allOrders.filter(o => o.status === 'pending'),
+    // กรองออเดอร์ตามสถานะ (รองรับตัวพิมพ์เล็ก-ใหญ่)
+    ordersByStatus: (state) => (status) => {
+      return state.allOrders.filter(o => 
+        o.status && o.status.toLowerCase() === status.toLowerCase()
+      )
+    },
+    
+    // นับจำนวนออเดอร์ในแต่ละสถานะ
+    countByStatus: (state) => (status) => {
+      return state.allOrders.filter(o => 
+        o.status && o.status.toLowerCase() === status.toLowerCase()
+      ).length
+    },
+
+    // เฉพาะ Pending สำหรับหน้าแรก
+    pendingOrders: (state) => {
+      return state.allOrders.filter(o => 
+        o.status && o.status.toLowerCase() === 'pending'
+      )
+    }
   },
 
   actions: {
@@ -18,8 +37,9 @@ export const useOrderStore = defineStore('orders', {
         if (data) {
           this.allOrders = data.map(o => ({
              ...o,
+             // เก็บ status เป็นตัวพิมพ์เล็กเพื่อให้ Getter ทำงานง่าย
              status: o.status ? o.status.toLowerCase() : 'pending',
-             item: o.item || o.items || [] // ดักไว้ทั้งสองชื่อ
+             item: o.item || o.items || []
           }))
         }
       } catch (e) {
@@ -31,13 +51,16 @@ export const useOrderStore = defineStore('orders', {
 
     async updateStatus(id, newStatus) {
       try {
+        // ส่ง PUT ไปที่ Backend
         await $fetch(`http://localhost:3001/api/order/${id}`, {
             method: 'PUT',
-            body: { status: newStatus }
+            body: { status: newStatus } // Backend จะได้รับ { status: 'shipped' } เป็นต้น
         })
-        await this.fetchOrders() // รีโหลดข้อมูลใหม่
+        // เมื่อสำเร็จ ให้โหลดข้อมูลใหม่ทั้งหมดเพื่อให้ UI อัปเดตตัวเลข Badge
+        await this.fetchOrders() 
       } catch (e) {
         console.error('Update error:', e)
+        throw e
       }
     }
   }
