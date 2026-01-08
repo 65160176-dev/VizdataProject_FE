@@ -50,9 +50,13 @@
                       <h5 class="mb-0">{{ seller.display_name || seller.name }}</h5>
                       <p class="text-muted small mb-0" v-if="seller.description">{{ seller.description }}</p>
                     </div>
-                    <nuxt-link :to="{ path: '/seller/' + seller._id }" class="btn btn-sm btn-outline-primary">
-                      <i class="ti-eye"></i> ดูร้าน
-                    </nuxt-link>
+                    <nuxt-link 
+  v-if="seller"
+  :to="{ path: '/seller/' + product.userId }" 
+  class="btn btn-sm btn-outline-primary"
+>
+  <i class="ti-eye"></i> ดูร้าน
+</nuxt-link>
                   </div>
                 </div>
                 <div class="pro_inventory" v-if="product.stock < 8 && product.stock > 0">
