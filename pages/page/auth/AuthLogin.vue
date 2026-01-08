@@ -86,7 +86,7 @@ onMounted(() => {
   redirectUrl.value = route.query.redirect || ''
   
   // Pre-fill demo credentials for convenience
-  email.value = 'TestUser3@gmail.com'
+  email.value = 'user@gmail.com'
   password.value = '123456'
 })
 
