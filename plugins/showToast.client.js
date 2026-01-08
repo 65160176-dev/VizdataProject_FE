@@ -11,7 +11,7 @@ const toast = useToast();
 export default defineNuxtPlugin(nuxtApp => {
     nuxtApp.vueApp.use(Toast);
 
-    nuxtApp.provide('showToast', (params) => toast[params.type||'sucsess'](params.msg||'default', {timeout: params.time||2000, position:params.position||'top-right'}))
+    nuxtApp.provide('showToast', (params) => toast[params.type||'success'](params.msg||'default', {timeout: params.time||2000, position:params.position||'top-right'}))
 
     nuxtApp.vueApp.use(VueScrollTo)
       

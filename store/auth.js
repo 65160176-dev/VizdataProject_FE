@@ -19,31 +19,54 @@ export const useAuthStore = defineStore('auth', {
   },
   
   actions: {
-    // Initialize from localStorage
-    initAuth() {
-      if (import.meta.client) {
-        const savedUser = localStorage.getItem('user')
-        const savedUserName = localStorage.getItem('userName')
-        const savedUserType = localStorage.getItem('userType')
-        const savedToken = localStorage.getItem('token')
-        
-        // ✅ 1. กู้คืนรูปภาพตอน Refresh หน้า
-        const savedAvatar = localStorage.getItem('sellerAvatar')
-        
-        if (savedUser && savedToken) {
-          this.user = JSON.parse(savedUser)
-          
-          // ยัดรูปกลับใส่ User Object (ถ้ามี)
-          if (savedAvatar && this.user) {
-             this.user.avatar = savedAvatar
-          }
+    // Initialize from localStorage (verify token with backend)
+    async initAuth() {
+      if (!import.meta.client) return
 
-          this.userName = savedUserName
-          this.token = savedToken
-          this.isLoggedIn = true
-          if (savedUserType !== null) this.userType = Number(savedUserType)
+      const savedUser = localStorage.getItem('user')
+      const savedUserName = localStorage.getItem('userName')
+      const savedUserType = localStorage.getItem('userType')
+      const savedToken = localStorage.getItem('token')
+      // do not rely on localStorage for avatar; server is authoritative
+      const savedAvatar = null
+
+      if (savedUser && savedToken) {
+        try {
+          const verify = await $fetch('http://localhost:3001/api/auth/me', {
+            headers: { Authorization: `Bearer ${savedToken}` }
+          })
+          if (verify && verify.success) {
+            // use server user as authoritative (includes avatar)
+            const serverUser = verify.data
+            this.user = serverUser
+            this.userName = serverUser.username || savedUserName
+            this.token = savedToken
+            this.isLoggedIn = true
+            if (serverUser.userType !== undefined && serverUser.userType !== null) this.userType = Number(serverUser.userType)
+
+            // sync localStorage with server
+            try {
+              localStorage.setItem('user', JSON.stringify(serverUser))
+              localStorage.setItem('userName', this.userName)
+              localStorage.setItem('userType', String(this.userType))
+              // serverUser.avatar will be stored in `this.user.avatar`; do not mirror to localStorage
+            } catch (e) {}
+
+            return
+          }
+        } catch (e) {
+          // token invalid or network error -> fallthrough to clear saved
         }
       }
+
+      // If here, no valid saved session -> clear any saved auth data
+      try {
+        localStorage.removeItem('user')
+        localStorage.removeItem('userName')
+        localStorage.removeItem('userType')
+        localStorage.removeItem('token')
+      } catch (e) {}
+      try { document.cookie = 'userlogin=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' } catch (e) {}
     },
     
     // Real API Login
@@ -78,12 +101,7 @@ export const useAuthStore = defineStore('auth', {
             localStorage.setItem('token', token)
             
             // ✅ 2. บันทึกรูปลงเครื่อง (ถ้ามี)
-            if (user.avatar) {
-                console.log("✅ [4] กำลังบันทึกรูปลง LocalStorage: sellerAvatar =", user.avatar);
-                localStorage.setItem('sellerAvatar', user.avatar)
-            } else {
-                console.warn("⚠️ [4] ไม่พบรูปภาพ (avatar เป็น null หรือ undefined) จึงไม่ได้บันทึก");
-            }
+            // Avatar comes from server; no localStorage copy needed
             
             // Set cookie logic (เหมือนเดิม)
             try {
@@ -182,10 +200,7 @@ export const useAuthStore = defineStore('auth', {
             localStorage.setItem('userType', String(user.userType))
             localStorage.setItem('token', token)
             
-            // ✅ 3. บันทึกรูปตอนสมัคร (ถ้ามี)
-            if (user.avatar) {
-                localStorage.setItem('sellerAvatar', user.avatar)
-            }
+            // Avatar comes from server; no localStorage copy needed
             
             try {
               const expires = new Date()
@@ -242,9 +257,7 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('userType')
         localStorage.removeItem('token')
         
-        // ✅ 4. ลบรูปออกตอน Logout
-        console.log("👋 Logout: ลบ sellerAvatar ออกจากเครื่อง");
-        localStorage.removeItem('sellerAvatar')
+        try { console.log("👋 Logout: cleared auth data"); } catch (e) {}
         
         try {
           document.cookie = 'userlogin=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'

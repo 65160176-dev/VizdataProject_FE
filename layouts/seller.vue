@@ -16,14 +16,27 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import SellerSidebar from '~/components/SellerSidebar.vue'
+import { useAuthStore } from '~/store/auth'
 
 const isCollapsed = ref(false)
+const auth = useAuthStore()
 
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
 }
+
+onMounted(async () => {
+  // Ensure auth state (including avatar) is initialized on client mount
+  try {
+    if (auth && typeof auth.initAuth === 'function') {
+      await auth.initAuth()
+    }
+  } catch (e) {
+    // silent
+  }
+})
 </script>
 
 <style scoped>

@@ -38,7 +38,37 @@
                       <h2>Account INFO</h2>
                     </div>
                     <div class="welcome-msg">
-                      <p v-if="isAuthenticated">Hello, {{ userName || userEmail }} !</p>
+                      <div v-if="isAuthenticated" class="d-flex align-items-center gap-3">
+                        <img :src="avatarSrc" alt="avatar" class="rounded-circle" style="width:72px;height:72px;object-fit:cover;border:1px solid #e9ecef;">
+                        <div>
+                          <p class="mb-1">Hello,</p>
+                          <div class="d-flex align-items-center gap-2">
+                            <div v-if="!editingName">
+                              <strong>{{ editableName || userName || userEmail }}</strong>
+                              <button class="btn btn-link btn-sm" @click="editingName = true">Edit</button>
+                            </div>
+                            <div v-else class="d-flex gap-2">
+                              <input v-model="editableName" type="text" class="form-control form-control-sm" style="min-width:180px;" />
+                              <button class="btn btn-sm btn-primary" @click="saveName">Save</button>
+                              <button class="btn btn-sm btn-secondary" @click="cancelEditName">Cancel</button>
+                            </div>
+                          </div>
+                          <div class="mt-2">
+                            <label class="btn btn-outline-secondary btn-sm mb-0" style="padding:6px 10px;">
+                              Change Photo
+                              <input type="file" accept="image/*" @change="onAvatarSelected" style="display:none" />
+                            </label>
+
+                            <div v-if="pendingAvatarPreview" class="mt-2 d-flex gap-2 align-items-center">
+                              <img :src="pendingAvatarPreview" alt="preview" style="width:56px;height:56px;object-fit:cover;border-radius:50%;border:1px solid #e9ecef;" />
+                              <div>
+                                <button class="btn btn-sm btn-primary me-1" @click="saveAvatar">Save</button>
+                                <button class="btn btn-sm btn-secondary" @click="cancelAvatar">Cancel</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                       <p v-else class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
                     </div>
                     <div class="box-account box-info" v-if="isAuthenticated">
@@ -271,6 +301,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '~/store/auth'
+import { useRuntimeConfig } from '#imports'
 
 import addressData from '~/data/address.json'
 import ordersFile from '~/data/order.json'
@@ -280,6 +311,10 @@ import OrderDetail from './orders/orderDetail.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+
+const config = useRuntimeConfig()
+const API_BASE = config.public?.apiBase || 'http://localhost:3001/api'
+const BACKEND_URL = 'http://localhost:3001'
 
 const addressList = ref([])
 const showAddModal = ref(false)
@@ -413,6 +448,107 @@ const isAuthenticated = computed(() => !!auth.isLoggedIn)
 const userEmail = computed(() => auth.user || '')
 const userName = computed(() => auth.userName || '')
 
+// Avatar & editable name
+const editableName = ref('')
+const editingName = ref(false)
+const avatarSrc = ref('/images/default-avatar.png')
+
+// pending avatar before save
+const pendingAvatarFile = ref(null)
+const pendingAvatarPreview = ref(null)
+
+const updateLocalAuth = (updatedUser) => {
+  if (!updatedUser) return
+  // update auth store and localStorage
+  auth.user = updatedUser
+  auth.userName = updatedUser.username || auth.userName
+  if (import.meta.client) {
+    try {
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+      localStorage.setItem('userName', auth.userName)
+    } catch (e) {}
+  }
+}
+
+const initAvatarAndName = () => {
+  // prefer server-provided avatar (auth.user.avatar) -> default
+  if (auth.user && auth.user.avatar) {
+    avatarSrc.value = auth.user.avatar.startsWith('http') ? auth.user.avatar : (`${BACKEND_URL}${auth.user.avatar}`)
+  }
+
+  editableName.value = auth.userName || (auth.user?.username || '')
+}
+
+const cancelEditName = () => { editingName.value = false; editableName.value = auth.userName || (auth.user?.username || '') }
+
+const saveName = async () => {
+  if (!editableName.value || !isAuthenticated.value) return
+  const userId = auth.user?.id || auth.user?._id
+  if (!userId) return
+  try {
+    const res = await $fetch(`${API_BASE}/users/${userId}`, {
+      method: 'PATCH',
+      body: { username: editableName.value },
+      headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : {}
+    })
+    if (res) {
+      updateLocalAuth(res)
+      editingName.value = false
+    }
+  } catch (e) {
+    console.error('Failed to update username', e)
+    alert('ไม่สามารถเปลี่ยนชื่อได้ โปรดลองอีกครั้ง')
+  }
+}
+
+const onAvatarSelected = (e) => {
+  const file = e.target.files && e.target.files[0]
+  if (!file) return
+  if (!isAuthenticated.value) { alert('กรุณาเข้าสู่ระบบก่อนอัพโหลด'); return }
+
+  // set pending file + preview; do not upload until user clicks Save
+  pendingAvatarFile.value = file
+  const reader = new FileReader()
+  reader.onload = () => { pendingAvatarPreview.value = reader.result }
+  reader.readAsDataURL(file)
+}
+
+const cancelAvatar = () => {
+  pendingAvatarFile.value = null
+  pendingAvatarPreview.value = null
+}
+
+const saveAvatar = async () => {
+  const file = pendingAvatarFile.value
+  if (!file) return
+  const form = new FormData()
+  form.append('file', file)
+
+  const isSeller = Number(auth.userType) === 0
+  const endpoint = isSeller ? `${API_BASE}/sellers/upload-avatar` : `${API_BASE}/users/upload-avatar`
+
+  try {
+    const uploadRes = await fetch(endpoint, {
+      method: 'POST',
+      headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : {},
+      body: form
+    })
+    if (!uploadRes.ok) throw new Error('Upload failed')
+    const data = await uploadRes.json()
+    if (data && data.success && data.data && data.data.fullUrl) {
+      avatarSrc.value = data.data.fullUrl
+      if (auth.user) auth.user.avatar = data.data.avatar || data.data.fullUrl
+      updateLocalAuth(auth.user)
+      cancelAvatar()
+    } else {
+      alert('ไม่สามารถอัปโหลดรูปได้')
+    }
+  } catch (err) {
+    console.error('Avatar upload error', err)
+    alert('ไม่สามารถอัปโหลดรูปได้')
+  }
+}
+
 onMounted(() => {
   if (import.meta.client) {
     if (typeof auth.initAuth === 'function') auth.initAuth()
@@ -441,8 +577,17 @@ onMounted(() => {
     } else {
       orders.value = jsonOrders
     }
+    // init avatar/name display (will also be called when auth.user changes via watch)
+    initAvatarAndName()
   }
 })
+
+// Watch auth.user to update avatar when it changes (e.g., after initAuth completes)
+watch(() => auth.user, (newUser) => {
+  if (newUser) {
+    initAvatarAndName()
+  }
+}, { immediate: true })
 
 watch(addressList, (newVal) => {
   if (import.meta.client) localStorage.setItem('my_app_addresses', JSON.stringify(newVal))

@@ -17,6 +17,8 @@
 
 </template>
 <script>
+import { useAuthStore } from '~/store/auth'
+
 export default {
   head() {
     return {
@@ -41,8 +43,17 @@ export default {
   }
     }
   },
-    mounted(){
+    async mounted(){
        window.addEventListener('scroll', this.handelscroll)
+       // Ensure auth state (including avatar) is initialized on client mount
+       try {
+         const auth = useAuthStore()
+         if (auth && typeof auth.initAuth === 'function') {
+           await auth.initAuth()
+         }
+       } catch (e) {
+         // silent
+       }
     },
 
 }

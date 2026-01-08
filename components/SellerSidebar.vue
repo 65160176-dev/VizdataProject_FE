@@ -101,6 +101,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useNuxtApp } from '#app'
 import { useAuthStore } from '~/store/auth'
 import { useRuntimeConfig } from '#app'
 
@@ -117,7 +118,7 @@ const displayName = computed(() => auth.userName || 'ร้านของฉั
 
 // ✅ Logic แสดงรูปภาพ: ป้องกัน URL พัง (Connection Reset)
 const avatar = computed(() => {
-  const userAvatar = auth.user?.avatar || (process.client ? localStorage.getItem('sellerAvatar') : null)
+  const userAvatar = auth.user?.avatar || null
 
   if (userAvatar) {
     // 2. ถ้าเป็น Base64 หรือ http (รูปภายนอก) ใช้ได้เลย
@@ -158,11 +159,13 @@ const handleFileUpload = async (event) => {
 
         if (response.success) {
             auth.user.avatar = response.data.avatar
-            // อัปเดต LocalStorage ด้วย เพื่อความชัวร์
-            const userLS = JSON.parse(localStorage.getItem('user') || '{}')
-            userLS.avatar = response.data.avatar
-            localStorage.setItem('user', JSON.stringify(userLS))
-            localStorage.setItem('sellerAvatar', response.data.avatar)
+            // update local user storage with new avatar (no separate sellerAvatar key)
+            try {
+              const userLS = JSON.parse(localStorage.getItem('user') || '{}')
+              userLS.avatar = response.data.avatar
+              localStorage.setItem('user', JSON.stringify(userLS))
+            } catch (e) {}
+            try { useNuxtApp().$showToast({ msg: 'อัปโหลดรูปโปรไฟล์เรียบร้อย', type: 'success' }) } catch (e) {}
         }
     } catch (error) {
         console.error('Upload Error:', error)
@@ -188,7 +191,6 @@ function isActive(path) { try { return route.path === path || route.path.startsW
 function logout() {
   if (auth && typeof auth.logout === 'function') auth.logout()
   if (process.client) {
-      localStorage.removeItem('sellerAvatar')
       localStorage.removeItem('user')
       localStorage.removeItem('token')
   }
