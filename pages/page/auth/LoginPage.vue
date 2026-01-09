@@ -75,7 +75,7 @@ definePageMeta({
 }
 
 /* Back Button */
-.authentication-box .back-btn {
+  .authentication-box .back-btn {
   float: right;
   margin: 20px 0 0 0;
   font-size: 14px;

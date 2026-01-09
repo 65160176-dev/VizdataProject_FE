@@ -38,7 +38,7 @@
         <div class="form-check mesm-2">
           <input type="checkbox" class="form-check-input" id="rememberMe" v-model="rememberMe">
           <label class="form-check-label ps-2" for="rememberMe">Remember me</label>
-          <a href="#" class="btn btn-default forgot-pass">Lost your password?</a>
+          <nuxt-link to="/forgot-password" class="btn btn-default forgot-pass">Lost your password?</nuxt-link>
         </div>
       </div>
       <div class="form-button">

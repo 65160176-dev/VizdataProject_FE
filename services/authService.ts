@@ -60,6 +60,21 @@ export const authService = {
     }
   },
 
+  async resetPassword(data: { email: string; password: string; confirmPassword: string; }) {
+    console.log('authService.resetPassword called with:', data);
+    try {
+      const response = await $fetch(`${API_BASE_URL}/auth/reset-password`, {
+        method: 'POST',
+        body: data,
+      });
+      console.log('authService.resetPassword response:', response);
+      return response;
+    } catch (error) {
+      console.error('authService.resetPassword error:', error);
+      throw error;
+    }
+  },
+
   setToken(token: string) {
     if (import.meta.client) {
       localStorage.setItem('token', token);

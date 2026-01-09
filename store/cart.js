@@ -19,7 +19,10 @@ export const useCartStore = defineStore({
       try {
         const token = localStorage.getItem('token')
         if (!token) {
-          this.cart = []
+          // โหลดตะกร้าจาก localStorage สำหรับ guest user
+          const localCart = localStorage.getItem('product')
+          this.cart = localCart ? JSON.parse(localCart) : []
+          this.loading = false
           return
         }
         const response = await $fetch('http://localhost:3001/api/cart', {
