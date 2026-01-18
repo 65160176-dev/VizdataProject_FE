@@ -10665,48 +10665,149 @@ footer {
 }
 
 /* shopping cart */
-.qty-box {
-  .input-group {
-    justify-content: center;
+/* ===========================
+   1. Table Alignment & Layout
+   =========================== */
+.cart-table-wrapper {
+  display: flex;
+  justify-content: center;
+}
 
-    span {
-      button {
-        background: $white !important;
-        border: 1px solid #ced4da;
-        height: 100%;
-        padding: 2px 8px; // [แก้ไข] ลด padding ปุ่ม
-      }
-    }
+/* จัดกึ่งกลางคอลัมน์ */
+.col-center {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
 
-    .form-control {
-      text-align: center;
-      width: 50px; // [แก้ไข] ลดความกว้างช่องใส่เลข (จาก 80px)
-      flex: unset;
-      height: 30px; // [แก้ไข] กำหนดความสูงให้เล็กลง
-      padding: 0.25rem 0.5rem;
-      font-size: 13px;
-    }
+/* จัดชิดซ้าย (สำหรับชื่อสินค้า) */
+.col-left {
+  text-align: left !important;
+  vertical-align: middle !important;
+}
 
-    button {
-      background-color: transparent;
-      border: 0;
-      color: $grey;
-      cursor: pointer;
-      padding-left: 8px; // [แก้ไข] ลด padding
-      font-size: 10px; // [แก้ไข] ลดขนาดไอคอน
-      font-weight: 900;
-      line-height: 1;
+/* จัดชิดขวา (สำหรับราคาและยอดรวม) */
+.col-right {
+  text-align: right !important;
+  vertical-align: middle !important;
+}
 
-      i {
-        font-weight: 900;
-        color: $dark-font;
-      }
-    }
+/* Checkbox */
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #ff5722;
+}
 
-    .icon {
-      padding-right: 0;
-    }
-  }
+/* ===========================
+   2. Product & Shop Styling
+   =========================== */
+.product-img {
+  height: 60px;
+  object-fit: contain;
+}
+
+/* ชื่อสินค้า */
+.product-name-link {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  text-decoration: none;
+}
+
+/* ป้ายชื่อร้าน */
+.shop-badge-container {
+  display: flex;
+  justify-content: center;
+  /* จัดให้อยู่ตรงกลางของช่อง */
+}
+
+.shop-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #f1f3f5;
+  color: #495057;
+  border: 1px solid #ced4da;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.shop-badge:hover {
+  background-color: #e9ecef;
+  color: #000;
+}
+
+.shop-badge i {
+  font-size: 11px;
+}
+
+/* ===========================
+   3. Price & Action
+   =========================== */
+.price-text {
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.total-text {
+  font-size: 18px;
+  color: #ff5722;
+  white-space: nowrap;
+}
+
+.total-label {
+  padding-right: 20px;
+  font-weight: bold;
+}
+
+.remove-icon i {
+  font-size: 18px;
+  color: #ff4c3b;
+  cursor: pointer;
+}
+
+/* ===========================
+   4. Quantity Box
+   =========================== */
+.qty-box .input-group {
+  justify-content: center;
+  width: 110px;
+  flex-wrap: nowrap;
+}
+
+.qty-input-group span button {
+  background: #fff !important;
+  border: 1px solid #ced4da;
+  height: 100%;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+}
+
+.qty-input {
+  text-align: center;
+  width: 50px !important;
+  flex: unset;
+  height: 35px;
+  padding: 0;
+  font-size: 14px;
+  border-left: 0;
+  border-right: 0;
+  border-top: 1px solid #ced4da;
+  border-bottom: 1px solid #ced4da;
+}
+
+.qty-input-group button i {
+  font-size: 10px;
+  font-weight: bold;
+  color: #333;
 }
 
 .order-history {

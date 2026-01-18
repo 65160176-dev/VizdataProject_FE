@@ -7,23 +7,18 @@ export const useOrderStore = defineStore('orders', {
   }),
 
   getters: {
-    // กรองออเดอร์ตามสถานะ (รองรับตัวพิมพ์เล็ก-ใหญ่)
     ordersByStatus: (state) => (status) => {
-      return state.allOrders.filter(o => 
+      return state.allOrders.filter(o =>
         o.status && o.status.toLowerCase() === status.toLowerCase()
       )
     },
-    
-    // นับจำนวนออเดอร์ในแต่ละสถานะ
     countByStatus: (state) => (status) => {
-      return state.allOrders.filter(o => 
+      return state.allOrders.filter(o =>
         o.status && o.status.toLowerCase() === status.toLowerCase()
       ).length
     },
-
-    // เฉพาะ Pending สำหรับหน้าแรก
     pendingOrders: (state) => {
-      return state.allOrders.filter(o => 
+      return state.allOrders.filter(o =>
         o.status && o.status.toLowerCase() === 'pending'
       )
     }
@@ -36,10 +31,9 @@ export const useOrderStore = defineStore('orders', {
         const data = await $fetch('http://localhost:3001/api/order')
         if (data) {
           this.allOrders = data.map(o => ({
-             ...o,
-             // เก็บ status เป็นตัวพิมพ์เล็กเพื่อให้ Getter ทำงานง่าย
-             status: o.status ? o.status.toLowerCase() : 'pending',
-             item: o.item || o.items || []
+            ...o,
+            status: o.status ? o.status.toLowerCase() : 'pending',
+            item: o.item || o.items || []
           }))
         }
       } catch (e) {
@@ -49,15 +43,29 @@ export const useOrderStore = defineStore('orders', {
       }
     },
 
+    // ✅✅ เพิ่มส่วนนี้เข้าไปครับ (สำคัญมาก)
+    async placeOrder(payload) {
+      this.isLoading = true;
+      try {
+        const data = await $fetch('http://localhost:3001/api/order', {
+          method: 'POST',
+          body: payload
+        });
+        return data;
+      } catch (error) {
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async updateStatus(id, newStatus) {
       try {
-        // ส่ง PUT ไปที่ Backend
         await $fetch(`http://localhost:3001/api/order/${id}`, {
-            method: 'PUT',
-            body: { status: newStatus } // Backend จะได้รับ { status: 'shipped' } เป็นต้น
+          method: 'PUT',
+          body: { status: newStatus }
         })
-        // เมื่อสำเร็จ ให้โหลดข้อมูลใหม่ทั้งหมดเพื่อให้ UI อัปเดตตัวเลข Badge
-        await this.fetchOrders() 
+        await this.fetchOrders()
       } catch (e) {
         console.error('Update error:', e)
         throw e

@@ -18,7 +18,7 @@
 
                 <div class="d-flex gap-2 flex-column">
                     <button @click="$emit('confirm')" class="btn-theme-primary bg-success text-white">
-                        ยืนยัน, ได้รับสินค้าแล้ว
+                        ยืนยัน
                     </button>
                     <button @click="$emit('close')" class="btn-theme-secondary">
                         ยกเลิก
