@@ -327,7 +327,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '~/store/auth'
 import { useAddressStore } from '~/store/address'
@@ -361,27 +361,32 @@ const isLoadingOrders = ref(false)
 // --- Lifecycle ---
 onMounted(async () => {
   if (import.meta.client) {
-    if (typeof auth.initAuth === 'function') auth.initAuth()
-
-    if (auth.isLoggedIn) {
-      await addressStore.fetchAddresses()
-      fetchOrders()
+    // ตรวจสอบ auth ก่อน
+    if (typeof auth.initAuth === 'function') {
+      await auth.initAuth()
     }
 
-    initAvatarAndName()
+    // รอให้ auth พร้อม
+    await nextTick()
+
+    if (auth.isLoggedIn) {
+      initAvatarAndName()
+      await addressStore.fetchAddresses()
+      await fetchOrders()
+    }
   }
 })
 
-// Watch Auth
-watch(() => auth.user, (newUser) => {
-  if (newUser) {
+// Watch Auth - ดึงข้อมูลเมื่อ user เปลี่ยน (login/logout)
+watch(() => auth.user, async (newUser, oldUser) => {
+  if (newUser && newUser !== oldUser) {
     initAvatarAndName()
-    addressStore.fetchAddresses()
-    fetchOrders()
-  } else {
+    await addressStore.fetchAddresses()
+    await fetchOrders()
+  } else if (!newUser) {
     orders.value = []
   }
-}, { immediate: true })
+})
 
 
 // --- ✅ Function Fetch Orders (แก้ไขแล้ว) ---
