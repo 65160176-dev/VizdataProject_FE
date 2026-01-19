@@ -3,102 +3,111 @@
     <Header />
 
     <section class="marketplace py-4">
-      <div class="container">
-        <div class="hero position-relative mb-3">
+      <div class="container-fluid px-4"> <div class="hero position-relative mb-4">
           <img src="/assets/images/Banner.png" alt="banner" />
-          <!-- <div class="hero-text">
-            <div class="title">ช็อปสินค้า Marketplace — ร้านค้าหลากหลาย</div>
-            <div class="cta"><button class="btn btn-danger">ช้อปเลย</button></div>
-          </div> -->
-        </div>
-        <div class="row mb-3">
-          <div class="col-12">
-            <input v-model="q" class="form-control" placeholder="ค้นหาสินค้า หรือ ร้านค้า" />
-          </div>
         </div>
 
-        <ClientOnly>
-          <!-- Loading State -->
-          <div v-if="productStore.loading" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">กำลังโหลดสินค้า...</p>
-          </div>
+        <div class="row">
+          <div class="col-lg-2 d-none d-lg-block">
+            <div class="category-sidebar p-3 bg-white rounded shadow-sm border mb-4">
+              <h6 class="fw-bold mb-3 pb-2 border-bottom">หมวดหมู่สินค้า</h6>
+              
+              <div v-if="selectedCategories.length > 0" class="mb-3">
+                <button class="btn btn-outline-danger btn-sm w-100" @click="selectedCategories = []">
+                  <i class="fa fa-times"></i> ล้าง
+                </button>
+              </div>
 
-          <!-- No Products -->
-          <div v-else-if="!productStore.loading && allProducts.length === 0" class="text-center py-5">
-            <p class="text-muted">ยังไม่มีสินค้าในระบบ</p>
-          </div>
-
-          <!-- Products Grid -->
-          <div v-else class="product-grid">
-            <div v-for="product in paginatedProducts" :key="product._id || product.id" class="product-card">
-            <div class="card h-100 shadow-sm">
-              <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: product._id || product.id } }">
-                <img :src="getImgUrl(product)" class="card-img-top" />
-              </nuxt-link>
-              <div class="card-body d-flex flex-column">
-                <h6 class="card-title mb-1 text-truncate">{{ product?.name || product?.title || 'ไม่มีชื่อ' }}</h6>
-                <div class="text-muted small mb-2">{{ product?.brand || '' }}</div>
-
-                <div class="mt-auto d-flex justify-content-between align-items-center">
-                  <div>
-                    <div v-if="product?.sale">
-                      <div class="text-muted small"><del>฿{{ product.price }}</del></div>
-                      <div class="fw-bold">฿{{ discountedPrice(product) }}</div>
-                    </div>
-                    <div v-else class="fw-bold">฿{{ product?.price || 0 }}</div>
-                  </div>
-                  <div>
-                    <button class="btn btn-sm btn-primary" @click="addToCart(product)">เพิ่มลงรถเข็น</button>
-                  </div>
+              <div class="category-list">
+                <div v-for="cat in uniqueCategories" :key="cat" class="form-check mb-2">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    :value="cat" 
+                    :id="'cat-' + cat" 
+                    v-model="selectedCategories"
+                  >
+                  <label class="form-check-label w-100" :for="'cat-' + cat" style="cursor: pointer; font-size: 14px;">
+                    {{ cat }}
+                    <span class="text-muted small float-end" style="font-size: 11px;">({{ getCategoryCount(cat) }})</span>
+                  </label>
                 </div>
+                <div v-if="uniqueCategories.length === 0" class="text-muted small">ไม่มีหมวดหมู่</div>
               </div>
             </div>
           </div>
+
+          <div class="col-lg-10 col-12">
+            
+            <div class="mb-3">
+              <input v-model="q" class="form-control" placeholder="ค้นหาสินค้า หรือ ร้านค้า" />
+            </div>
+
+            <ClientOnly>
+              <div v-if="productStore.loading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">กำลังโหลดสินค้า...</p>
+              </div>
+
+              <div v-else-if="!productStore.loading && filteredProducts.length === 0" class="text-center py-5">
+                <p class="text-muted">ไม่พบสินค้าในหมวดหมู่นี้</p>
+                <button v-if="selectedCategories.length > 0" class="btn btn-primary btn-sm" @click="selectedCategories = []">ดูสินค้าทั้งหมด</button>
+              </div>
+
+              <div v-else class="product-grid">
+                <div v-for="product in paginatedProducts" :key="product._id || product.id" class="product-card">
+                  <div class="card h-100 shadow-sm">
+                    <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: product._id || product.id } }">
+                      <img :src="getImgUrl(product)" class="card-img-top" />
+                    </nuxt-link>
+                    <div class="card-body d-flex flex-column">
+                      <h6 class="card-title mb-1 text-truncate">{{ product?.name || product?.title || 'ไม่มีชื่อ' }}</h6>
+                      <div class="text-muted small mb-2">{{ product?.brand || '' }}</div>
+
+                      <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <div>
+                          <div v-if="product?.sale">
+                            <div class="text-muted small"><del>฿{{ product.price }}</del></div>
+                            <div class="fw-bold">฿{{ discountedPrice(product) }}</div>
+                          </div>
+                          <div v-else class="fw-bold">฿{{ product?.price || 0 }}</div>
+                        </div>
+                        <div>
+                          <button class="btn btn-sm btn-primary" @click="addToCart(product)">เพิ่ม</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="totalPages > 1" class="pagination-wrapper mt-4">
+                <nav>
+                  <ul class="pagination justify-content-end">
+                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                      <a class="page-link" @click="goToPage(1)" href="javascript:void(0)"><i class="fa fa-angle-double-left"></i></a>
+                    </li>
+                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                      <a class="page-link" @click="goToPage(currentPage - 1)" href="javascript:void(0)"><i class="fa fa-angle-left"></i></a>
+                    </li>
+                    <li v-for="page in visiblePages" :key="page" class="page-item" :class="{ active: currentPage === page }">
+                      <a class="page-link" @click="goToPage(page)" href="javascript:void(0)">{{ page }}</a>
+                    </li>
+                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                      <a class="page-link" @click="goToPage(currentPage + 1)" href="javascript:void(0)"><i class="fa fa-angle-right"></i></a>
+                    </li>
+                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                      <a class="page-link" @click="goToPage(totalPages)" href="javascript:void(0)"><i class="fa fa-angle-double-right"></i></a>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </ClientOnly>
+          </div>
         </div>
 
-        <!-- Pagination -->
-        <div v-if="totalPages > 1" class="pagination-wrapper mt-4">
-          <nav>
-            <ul class="pagination justify-content-end">
-              <!-- หน้าแรกสุด -->
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <a class="page-link" @click="goToPage(1)" href="javascript:void(0)">
-                  <i class="fa fa-angle-double-left"></i>
-                </a>
-              </li>
-
-              <!-- หน้าก่อนหน้า -->
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <a class="page-link" @click="goToPage(currentPage - 1)" href="javascript:void(0)">
-                  <i class="fa fa-angle-left"></i>
-                </a>
-              </li>
-
-              <!-- เลขหน้า -->
-              <li v-for="page in visiblePages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-                <a class="page-link" @click="goToPage(page)" href="javascript:void(0)">{{ page }}</a>
-              </li>
-
-              <!-- หน้าถัดไป -->
-              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <a class="page-link" @click="goToPage(currentPage + 1)" href="javascript:void(0)">
-                  <i class="fa fa-angle-right"></i>
-                </a>
-              </li>
-
-              <!-- หน้าท้ายสุด -->
-              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <a class="page-link" @click="goToPage(totalPages)" href="javascript:void(0)">
-                  <i class="fa fa-angle-double-right"></i>
-                </a>
-              </li>
-            </ul>
-          </nav>
-        </div>
-        </ClientOnly>
       </div>
     </section>
 
@@ -112,29 +121,50 @@ import { useCartStore } from '~/store/cart'
 import { useProductStore } from '~/store/products'
 
 const q = ref('')
+const selectedCategories = ref([])
 const cart = useCartStore()
 const productStore = useProductStore()
-const searchSection = ref(null)
 
-// Fetch products on mount
 onMounted(async () => {
   await productStore.fetchProducts()
 })
 
 const allProducts = computed(() => productStore.products || [])
 
-// Pagination
-const currentPage = ref(1)
-const itemsPerPage = 40 // 8 แถว x 5 คอลัมน์
-
-const filteredProducts = computed(() => {
-  const term = (q.value || '').toLowerCase().trim()
-  if (!term) return allProducts.value
-  return allProducts.value.filter(p => (p.name || p.title || '').toLowerCase().includes(term) || (p.brand || '').toLowerCase().includes(term))
+// Logic Category
+const uniqueCategories = computed(() => {
+  const cats = allProducts.value.map(p => p.category).filter(c => c && c.trim() !== '')
+  return [...new Set(cats)].sort()
 })
 
-// เมื่อค้นหาใหม่ ให้กลับไปหน้า 1
-watch(q, () => {
+const getCategoryCount = (catName) => {
+  return allProducts.value.filter(p => p.category === catName).length
+}
+
+// Logic Filter
+const filteredProducts = computed(() => {
+  let result = allProducts.value
+  const term = (q.value || '').toLowerCase().trim()
+
+  if (term) {
+    result = result.filter(p => 
+      (p.name || p.title || '').toLowerCase().includes(term) || 
+      (p.brand || '').toLowerCase().includes(term)
+    )
+  }
+
+  if (selectedCategories.value.length > 0) {
+    result = result.filter(p => selectedCategories.value.includes(p.category))
+  }
+
+  return result
+})
+
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = 40 // 5 columns * 8 rows = 40
+
+watch([q, selectedCategories], () => {
   currentPage.value = 1
 })
 
@@ -148,54 +178,31 @@ const paginatedProducts = computed(() => {
   return filteredProducts.value.slice(start, end)
 })
 
-// แสดงเฉพาะเลขหน้าที่เกี่ยวข้อง (แสดงสูงสุด 5 หน้า)
 const visiblePages = computed(() => {
   const total = totalPages.value
   const current = currentPage.value
   const pages = []
-  
   if (total <= 5) {
-    // ถ้ามีไม่เกิน 5 หน้า แสดงทั้งหมด
-    for (let i = 1; i <= total; i++) {
-      pages.push(i)
-    }
+    for (let i = 1; i <= total; i++) pages.push(i)
   } else {
-    // ถ้ามีมากกว่า 5 หน้า แสดงหน้าปัจจุบันและข้างเคียง
-    if (current <= 3) {
-      // อยู่ต้นๆ
-      pages.push(1, 2, 3, 4, 5)
-    } else if (current >= total - 2) {
-      // อยู่ท้ายๆ
-      pages.push(total - 4, total - 3, total - 2, total - 1, total)
-    } else {
-      // อยู่กลางๆ
-      pages.push(current - 2, current - 1, current, current + 1, current + 2)
-    }
+    if (current <= 3) pages.push(1, 2, 3, 4, 5)
+    else if (current >= total - 2) pages.push(total - 4, total - 3, total - 2, total - 1, total)
+    else pages.push(current - 2, current - 1, current, current + 1, current + 2)
   }
-  
   return pages
 })
 
 function goToPage(page) {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
-  // เลื่อนไปที่ช่องค้นหา
-  if (searchSection.value) {
-    searchSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function getImgUrl(product) {
-  // รองรับทั้ง image field จาก API (string) และ images array จาก mock data
   if (product.image) {
-    // ถ้า image เป็น URL เต็มหรือขึ้นต้นด้วย http ให้ใช้เลย
-    if (product.image.startsWith('http')) {
-      return product.image
-    }
-    // ไม่งั้นเติม /images/ ข้างหน้า
+    if (product.image.startsWith('http')) return product.image
     return `/images/${product.image}`
   }
-  // Fallback สำหรับ mock data เก่า
   const img = (product.images && product.images[0] && product.images[0].src) ? product.images[0].src : null
   return img ? `/images/${img}` : 'https://placehold.co/400'
 }
@@ -207,104 +214,73 @@ function discountedPrice(p) {
 }
 
 function addToCart(product) {
-  console.log('===== ADD TO CART FROM INDEX =====');
-  console.log('Product:', product);
-  console.log('Product ID:', product._id || product.id);
-  
-  // ส่งข้อมูล product ทั้งหมดแทนที่จะส่งแค่ id
   cart.addToCart({
     ...product,
     _id: product._id || product.id,
     id: product._id || product.id,
     quantity: 1
   })
-  
-  console.log('Add to cart called');
-  console.log('==================================');
 }
 </script>
 
 <style scoped>
-/* Banner */
+/* CSS เดิม */
 .marketplace { background:#fafafa; }
 .marketplace .hero { display:flex; align-items:center; justify-content:center; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.06); margin-bottom:22px; position:relative }
 .marketplace .hero img { width:100%; height:480px; object-fit:cover; display:block; }
-.marketplace .hero .hero-text { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#fff; padding:0 18px }
-.marketplace .hero .title { font-size:44px; font-weight:700; text-shadow:0 2px 12px rgba(0,0,0,0.45); }
-.marketplace .hero .cta { margin-top:12px; }
 
-/* Search */
 .marketplace input.form-control { height:48px; border-radius:6px; padding:0 16px; border:1px solid #e6e6e6; }
 
-/* Product card */
 .marketplace .card { border:1px solid #eee; border-radius:8px; transition:transform .18s ease, box-shadow .18s ease; overflow:hidden }
 .marketplace .card:hover { transform:translateY(-6px); box-shadow:0 12px 30px rgba(17,24,39,0.08); }
-.marketplace .card .card-img-top { background:#f5f5f5; height:260px; object-fit:cover }
-.marketplace .card .card-body { padding:12px; }
+/* ปรับความสูงรูปเล็กน้อย เพื่อให้สมดุลกับความกว้างที่ลดลง */
+.marketplace .card .card-img-top { background:#f5f5f5; height:200px; object-fit:cover }
+.marketplace .card .card-body { padding:10px; }
 .marketplace .card .card-title { font-size:14px; line-height:1.2; }
 .marketplace .card .fw-bold { color:#111827; font-size:16px }
 .marketplace .card .text-muted { color:#6b7280 }
 .marketplace .btn-sm { padding:6px 10px; border-radius:6px }
 
-/* 5-column grid */
-.product-grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:18px; }
+/* --- FORCE 5 COLUMNS --- */
+/* บังคับ 5 คอลัมน์สำหรับหน้าจอใหญ่ */
+.product-grid { 
+  display:grid; 
+  grid-template-columns: repeat(5, 1fr); 
+  gap:12px; 
+}
 .product-card { display:block }
 
+/* Responsive Grid Adjustments */
 @media (max-width: 1400px) {
+  /* ถ้าจอเริ่มเล็ก อาจจะต้องยอมลดเหลือ 4 เพื่อไม่ให้การ์ดเบี้ยว (แต่ถ้าอยากบังคับ 5 ตลอด ลบบรรทัดนี้ได้เลย) */
   .product-grid { grid-template-columns: repeat(4, 1fr); }
 }
 @media (max-width: 1100px) {
   .product-grid { grid-template-columns: repeat(3, 1fr); }
-  .marketplace .card .card-img-top { height:220px }
 }
 @media (max-width: 767px) {
   .product-grid { grid-template-columns: repeat(2, 1fr); }
   .marketplace .hero img { height:260px }
-  .marketplace .card .card-img-top { height:160px }
 }
 @media (max-width: 480px) {
   .product-grid { grid-template-columns: repeat(1, 1fr); }
-  .marketplace .hero img { height:180px }
 }
 
-/* Responsive tweaks */
-@media (max-width: 767px) {
-  .marketplace .hero img { height:180px }
-  .marketplace .card .card-img-top { height:160px }
+/* Sidebar Styles */
+.category-sidebar {
+  /* เอา Sticky ออกตามที่ขอ */
+  /* position: sticky; top: 20px; */ 
 }
+.category-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+.category-list::-webkit-scrollbar { width: 4px; }
+.category-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
 
-/* Pagination styles */
+/* Pagination */
 .pagination-wrapper { margin-top:30px; margin-bottom:30px; }
-.pagination { margin:0; }
-.pagination .page-item { margin:0 3px; }
-.pagination .page-link { 
-  border:1px solid #dee2e6; 
-  border-radius:6px; 
-  padding:8px 14px; 
-  color:#495057; 
-  cursor:pointer; 
-  transition:all .2s ease;
-}
-.pagination .page-link:hover { 
-  background:#f8f9fa; 
-  border-color:#dee2e6; 
-  color:#111; 
-}
-.pagination .page-item.active .page-link { 
-  background:#0d6efd; 
-  border-color:#0d6efd; 
-  color:#fff; 
-  font-weight:600;
-}
-.pagination .page-item.disabled .page-link { 
-  opacity:0.5; 
-  cursor:not-allowed; 
-  pointer-events:none; 
-}
-.pagination .page-link i { font-size:14px; }
-
-@media (max-width: 767px) {
-  .pagination .page-link { padding:6px 10px; font-size:14px; }
-  .pagination .page-item { margin:0 2px; }
-}
+.pagination .page-link { border:1px solid #dee2e6; border-radius:6px; padding:8px 14px; color:#495057; cursor:pointer; }
+.pagination .page-item.active .page-link { background:#0d6efd; border-color:#0d6efd; color:#fff; }
+.pagination .page-item.disabled .page-link { opacity:0.5; pointer-events:none; }
 </style>

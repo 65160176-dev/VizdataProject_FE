@@ -246,8 +246,19 @@ definePageMeta({ layout: 'seller' })
 
 const products = ref([])
 const newCategoryInput = ref('')
-const allCategories = ref(['Electronics', 'Jewellery', 'Fashion', 'Shoes', 'Watch', 'Beauty'])
-const selectedCategories = ref(['Electronics', 'Jewellery', 'Fashion', 'Shoes', 'Watch', 'Beauty'])
+
+// รายการหมวดหมู่เริ่มต้นแบบครอบคลุม
+const defaultCats = [
+  'Fashion (Women)', 'Fashion (Men)', 'Electronics', 'Mobile & Gadgets',
+  'Beauty & Personal Care', 'Health & Wellness', 'Home & Living', 
+  'Home Appliances', 'Shoes', 'Watches & Accessories', 'Jewellery', 
+  'Bags & Luggage', 'Sports & Outdoors', 'Automotive', 'Toys & Games', 
+  'Mom & Baby', 'Pets', 'Food & Beverages', 'Books & Stationery', 
+  'Computers & Laptops', 'Gaming', 'Furniture'
+]
+
+const allCategories = ref([...defaultCats])
+const selectedCategories = ref([...defaultCats])
 const categoryToDelete = ref({ index: null, name: '' })
 
 // --- Category Logic ---

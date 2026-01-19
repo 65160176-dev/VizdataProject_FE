@@ -10,14 +10,14 @@
     </div>
 
     <div v-else class="row g-3">
-        <div class="col-12 text-center py-5" v-if="pendingOrders.length === 0">
+        <div class="col-12 text-center py-5" v-if="myStoreOrders.length === 0">
             <div class="opacity-50">
                 <Icon name="feather:inbox" size="64" class="text-muted mb-3" />
-                <h5 class="text-muted">ไม่พบคำสั่งซื้อใหม่</h5>
+                <h5 class="text-muted">ไม่พบคำสั่งซื้อใหม่สำหรับร้านคุณ</h5>
             </div>
         </div>
 
-        <div class="col-xl-4 col-md-6" v-for="order in pendingOrders" :key="order._id">
+        <div class="col-xl-4 col-md-6" v-for="order in myStoreOrders" :key="order._id">
             <div class="card h-100 order-card border-0 shadow-sm rounded-4 overflow-hidden" @click="openDetail(order)">
                 <div class="card-header border-0 py-3 d-flex justify-content-between align-items-center text-white header-pending">
                     <span class="fw-bold">Order #{{ order.orderId || order._id.substr(-6) }}</span>
@@ -67,25 +67,25 @@
           <div class="p-4 bg-white">
               <div class="row mb-4 g-3">
                   <div class="col-md-6">
-                     <div class="p-3 bg-light rounded-3 h-100 border border-light">
-                       <h6 class="text-muted small mb-2 text-uppercase fw-bold">Customer Info</h6>
-                       <div class="fw-bold mb-1 text-dark"><Icon name="feather:user" size="14"/> {{ selectedOrder.customer }}</div>
-                       <div class="small text-secondary mb-1"><Icon name="feather:mail" size="14"/> {{ selectedOrder.email }}</div>
-                       <div class="small text-secondary"><Icon name="feather:map-pin" size="14"/> {{ selectedOrder.address }}</div>
-                     </div>
+                      <div class="p-3 bg-light rounded-3 h-100 border border-light">
+                        <h6 class="text-muted small mb-2 text-uppercase fw-bold">Customer Info</h6>
+                        <div class="fw-bold mb-1 text-dark"><Icon name="feather:user" size="14"/> {{ selectedOrder.customer }}</div>
+                        <div class="small text-secondary mb-1"><Icon name="feather:mail" size="14"/> {{ selectedOrder.email }}</div>
+                        <div class="small text-secondary"><Icon name="feather:map-pin" size="14"/> {{ selectedOrder.address }}</div>
+                      </div>
                   </div>
                   <div class="col-md-6">
-                     <div class="p-3 bg-light rounded-3 h-100 border border-light">
-                       <h6 class="text-muted small mb-2 text-uppercase fw-bold">Order Info</h6>
-                       <div class="d-flex justify-content-between mb-1">
-                           <span class="small text-secondary">Order ID:</span>
-                           <span class="fw-bold text-dark">{{ selectedOrder.orderId }}</span>
-                       </div>
-                       <div class="d-flex justify-content-between mb-1">
-                           <span class="small text-secondary">Date:</span>
-                           <span class="small text-dark">{{ formatDate(selectedOrder) }}</span>
-                       </div>
-                     </div>
+                      <div class="p-3 bg-light rounded-3 h-100 border border-light">
+                        <h6 class="text-muted small mb-2 text-uppercase fw-bold">Order Info</h6>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small text-secondary">Order ID:</span>
+                            <span class="fw-bold text-dark">{{ selectedOrder.orderId }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small text-secondary">Date:</span>
+                            <span class="small text-dark">{{ formatDate(selectedOrder) }}</span>
+                        </div>
+                      </div>
                   </div>
               </div>
 
@@ -137,17 +137,40 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrderStore } from '~/store/orders'
+import { useAuthStore } from '~/store/auth' // ✅ Import Auth Store
 
 definePageMeta({ layout: 'seller' })
 
 const router = useRouter()
 const orderStore = useOrderStore()
+const authStore = useAuthStore() // ✅ เรียกใช้ Auth Store
 
 onMounted(async () => {
+    // โหลดออเดอร์ทั้งหมดมาก่อน (จริงๆ Backend ควรมี Endpoint filter ให้ แต่ใช้ Frontend Filter ก่อนได้)
     await orderStore.fetchOrders()
 })
 
-const pendingOrders = computed(() => orderStore.pendingOrders)
+// ✅ Logic สำคัญ: กรองออเดอร์เฉพาะที่เป็นของร้านนี้ (User นี้)
+const myStoreOrders = computed(() => {
+    const allPending = orderStore.pendingOrders || []
+    const myId = authStore.user?._id || authStore.user?.id
+
+    if (!myId) return [] // ถ้าไม่มี User ID ไม่โชว์อะไรเลย
+
+    return allPending.filter(order => {
+        const items = order.item || order.items || []
+        if (items.length === 0) return false
+        
+        // เช็คว่าสินค้าชิ้นแรกในออเดอร์ เป็นของ User นี้หรือไม่
+        // โครงสร้าง Backend Populate: item.productId.userId._id
+        const productOwner = items[0]?.productId?.userId
+        
+        // รองรับทั้งแบบ owner เป็น Object (Populated) หรือ String ID
+        const ownerId = (typeof productOwner === 'object') ? productOwner?._id : productOwner
+
+        return ownerId === myId
+    })
+})
 
 function getItems(order) {
     if (!order) return []
@@ -156,6 +179,7 @@ function getItems(order) {
 
 function calculateTotal(order) {
     const items = getItems(order)
+    // คำนวณยอดรวมใหม่จากรายการสินค้าจริงในออเดอร์นี้
     return items.length > 0 ? items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0) : (order.total || 0)
 }
 
@@ -191,12 +215,15 @@ function closeDetail() { showDetail.value = false }
 async function handleAccept(id) {
     await orderStore.updateStatus(id, 'preparing')
     closeDetail()
+    // รีเฟรชข้อมูลหลังอัปเดต
+    await orderStore.fetchOrders() 
     router.push('/SellerPage/orderStatus')
 }
 
 async function handleReject(id) {
     await orderStore.updateStatus(id, 'cancelled')
     closeDetail()
+    await orderStore.fetchOrders()
 }
 </script>
 
@@ -207,4 +234,8 @@ async function handleReject(id) {
 .order-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
 .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1050; }
 .modal-content-custom { background: #fff; width: 100%; max-width: 700px; border-radius: 16px; }
+
+/* เพิ่ม CSS ให้ปุ่มปิด Modal สวยขึ้น */
+.btn-white-glass { background: rgba(255,255,255,0.2); border: none; transition: 0.2s; }
+.btn-white-glass:hover { background: rgba(255,255,255,0.4); transform: rotate(90deg); }
 </style>

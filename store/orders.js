@@ -7,27 +7,15 @@ export const useOrderStore = defineStore('orders', {
   }),
 
   getters: {
-    ordersByStatus: (state) => (status) => {
-      return state.allOrders.filter(o =>
-        o.status && o.status.toLowerCase() === status.toLowerCase()
-      )
-    },
-    countByStatus: (state) => (status) => {
-      return state.allOrders.filter(o =>
-        o.status && o.status.toLowerCase() === status.toLowerCase()
-      ).length
-    },
-    pendingOrders: (state) => {
-      return state.allOrders.filter(o =>
-        o.status && o.status.toLowerCase() === 'pending'
-      )
-    }
+    // กรองเฉพาะออเดอร์สถานะ Pending
+    pendingOrders: (state) => state.allOrders.filter(o => o.status?.toLowerCase() === 'pending')
   },
 
   actions: {
     async fetchOrders() {
       this.isLoading = true
       try {
+        // ✅ เช็ค Port ให้ตรงกับ Backend (3001)
         const data = await $fetch('http://localhost:3001/api/order')
         if (data) {
           this.allOrders = data.map(o => ({
@@ -43,7 +31,6 @@ export const useOrderStore = defineStore('orders', {
       }
     },
 
-    // ✅✅ เพิ่มส่วนนี้เข้าไปครับ (สำคัญมาก)
     async placeOrder(payload) {
       this.isLoading = true;
       try {
@@ -67,7 +54,6 @@ export const useOrderStore = defineStore('orders', {
         })
         await this.fetchOrders()
       } catch (e) {
-        console.error('Update error:', e)
         throw e
       }
     }

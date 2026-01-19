@@ -22,7 +22,7 @@
                     :class="[
                       currentStatus === s.key ? 'bg-white ' + getTextClass(s.key) : 'bg-light text-muted'
                     ]">
-                {{ countByStatus(s.key) }}
+                {{ countMyOrdersByStatus(s.key) }}
               </span>
             </a>
           </li>
@@ -35,14 +35,14 @@
     </div>
 
     <div v-else class="row g-3">
-      <div class="col-12 text-center py-5" v-if="filteredOrders.length === 0">
+      <div class="col-12 text-center py-5" v-if="filteredMyOrders.length === 0">
         <div class="empty-state">
           <Icon name="feather:inbox" size="64" class="text-muted mb-3 opacity-25" />
           <h5 class="text-muted">ไม่มีรายการในสถานะ "{{ getStatusLabel(currentStatus) }}"</h5>
         </div>
       </div>
 
-      <div class="col-xl-4 col-md-6" v-for="order in filteredOrders" :key="order._id">
+      <div class="col-xl-4 col-md-6" v-for="order in filteredMyOrders" :key="order._id">
         <div class="card h-100 order-card border-0 shadow-sm rounded-4 overflow-hidden" @click="openDetail(order)">
           <div :class="['card-header border-0 py-3 d-flex justify-content-between align-items-center text-white', 'header-' + order.status]">
             <span class="fw-bold">Order #{{ order.orderId || (order._id ? order._id.substr(-6) : 'N/A') }}</span>
@@ -152,10 +152,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useOrderStore } from '~/store/orders'
+import { useAuthStore } from '~/store/auth' // ✅ 1. Import Auth Store
 
 definePageMeta({ layout: 'seller' })
 
 const orderStore = useOrderStore()
+const authStore = useAuthStore() // ✅ 2. Use Auth Store
 const currentStatus = ref('preparing')
 
 const statuses = [
@@ -169,8 +171,39 @@ onMounted(async () => {
     await orderStore.fetchOrders()
 })
 
-const filteredOrders = computed(() => orderStore.ordersByStatus(currentStatus.value))
-function countByStatus(s) { return orderStore.countByStatus(s) }
+// ✅ 3. Logic กรองออเดอร์ของ "ร้านฉัน" ทั้งหมดก่อน
+const myAllOrders = computed(() => {
+    const all = orderStore.allOrders || []
+    const myId = authStore.user?._id || authStore.user?.id
+
+    if (!myId) return []
+
+    return all.filter(order => {
+        const items = order.item || order.items || []
+        if (items.length === 0) return false
+        
+        // เช็คเจ้าของสินค้าจากชิ้นแรก
+        const productOwner = items[0]?.productId?.userId
+        const ownerId = (typeof productOwner === 'object') ? productOwner?._id : productOwner
+
+        return ownerId === myId
+    })
+})
+
+// ✅ 4. กรองตาม Status จาก myAllOrders อีกที
+const filteredMyOrders = computed(() => {
+    return myAllOrders.value.filter(o => 
+        (o.status || '').toLowerCase() === currentStatus.value.toLowerCase()
+    )
+})
+
+// ✅ 5. ฟังก์ชันนับจำนวนสำหรับ Badge
+function countMyOrdersByStatus(statusKey) {
+    return myAllOrders.value.filter(o => 
+        (o.status || '').toLowerCase() === statusKey.toLowerCase()
+    ).length
+}
+
 function getStatusLabel(key) { return statuses.find(s => s.key === key)?.label || key }
 
 function getItems(o) {
@@ -221,7 +254,7 @@ async function handleUpdate(id, newStatus) {
 </script>
 
 <style scoped>
-/* --- พื้นหลัง Card/Modal Header --- */
+/* --- STYLES เหมือนเดิม --- */
 .header-preparing { background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%); }
 .text-status-preparing { color: #0277BD; }
 
@@ -234,7 +267,6 @@ async function handleUpdate(id, newStatus) {
 .header-cancelled { background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%); }
 .text-status-cancelled { color: #C62828; }
 
-/* --- สี Active Tab เมื่อถูกกด --- */
 .active-tab-preparing { background-color: #0288D1 !important; color: white !important; }
 .active-tab-shipped { background-color: #5E35B1 !important; color: white !important; }
 .active-tab-completed { background-color: #00897B !important; color: white !important; }
