@@ -107,9 +107,11 @@ export default {
     wishlist() {
       if(!useProductStore().wishlistItems.length)
       {
-        this.whishItem.forEach(item=>{
-    useProductStore().addToWishlist(item)  
-  })
+        if(this.whishItem && Array.isArray(this.whishItem)) {
+          this.whishItem.forEach(item=>{
+            useProductStore().addToWishlist(item)  
+          })
+        }
  
   return useProductStore().wishlistItems
       }
@@ -151,7 +153,8 @@ export default {
     }
   },
   mounted(){
-    this.whishItem = JSON.parse(localStorage.getItem('whish'))
+    const storedWishlist = localStorage.getItem('whish')
+    this.whishItem = storedWishlist ? JSON.parse(storedWishlist) : []
    
   }
 }

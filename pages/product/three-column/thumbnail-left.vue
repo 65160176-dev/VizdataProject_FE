@@ -66,10 +66,6 @@
                         <td>{{ product.category || '-' }}</td>
                       </tr>
                       <tr>
-                        <td>น้ำหนัก:</td>
-                        <td>{{ product.weight || '-' }} กิโลกรัม</td>
-                      </tr>
-                      <tr>
                         <td>ค่าจัดส่ง:</td>
                         <td>฿{{ product.shippingCost || 0 }}</td>
                       </tr>
@@ -95,7 +91,6 @@
             <div class="col-lg-4">
               <div class="product-right product-form-box">
                 <h3>฿{{ product.price?.toFixed(2) }}</h3>
-                <div class="text-muted small mb-3">คอมมิชชั่น: {{ product.commission }}%</div>
                 
                 <div class="border-product">
                   <h5 class="avalibility" v-if="product.stock > 0 && counter <= product.stock">
@@ -161,6 +156,84 @@
         </div>
       </section>
     </section>
+
+    <!-- Related Products Section -->
+    <section class="section-b-space ratio_asos" v-if="relatedProducts.length > 0">
+      <div class="container-fluid px-4">
+        <div class="row">
+          <div class="col-12 product-related">
+            <h2>สินค้าในหมวดเดียวกัน</h2>
+          </div>
+        </div>
+        <div class="row g-sm-4 g-3">
+          <div class="col-xl-2 col-lg-3 col-md-4 col-6" v-for="(prod, idx) in relatedProducts" :key="'related-' + idx">
+            <div class="product-box">
+              <div class="img-wrapper">
+                <div class="front" @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">
+                  <img :src="getProductImage(prod.image)" class="img-fluid bg-img" :alt="prod.name" style="width: 100%; height: 200px; object-fit: cover;">
+                </div>
+                <div class="cart-info cart-wrap">
+                  <button title="Add to cart" @click="addToCart(prod, 1)">
+                    <i class="ti-shopping-cart"></i>
+                  </button>
+                  <a href="javascript:void(0)" title="Wishlist" @click="addToWishlist(prod)">
+                    <i class="ti-heart"></i>
+                  </a>
+                </div>
+              </div>
+              <div class="product-detail">
+                <h6 @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">{{ prod.name }}</h6>
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                  <h4 class="mb-0">฿{{ prod.price?.toFixed(2) }}</h4>
+                  <button class="btn btn-sm btn-solid" @click.stop="addToCart(prod, 1)" style="padding: 5px 12px; font-size: 12px;">
+                    <i class="ti-shopping-cart"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Random Products Section -->
+    <section class="section-b-space ratio_asos" v-if="randomProducts.length > 0">
+      <div class="container-fluid px-4">
+        <div class="row">
+          <div class="col-12 product-related">
+            <h2>สินค้าแนะนำ</h2>
+          </div>
+        </div>
+        <div class="row g-sm-4 g-3">
+          <div class="col-xl-2 col-lg-3 col-md-4 col-6" v-for="(prod, idx) in randomProducts" :key="'random-' + idx">
+            <div class="product-box">
+              <div class="img-wrapper">
+                <div class="front" @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">
+                  <img :src="getProductImage(prod.image)" class="img-fluid bg-img" :alt="prod.name" style="width: 100%; height: 200px; object-fit: cover;">
+                </div>
+                <div class="cart-info cart-wrap">
+                  <button title="Add to cart" @click="addToCart(prod, 1)">
+                    <i class="ti-shopping-cart"></i>
+                  </button>
+                  <a href="javascript:void(0)" title="Wishlist" @click="addToWishlist(prod)">
+                    <i class="ti-heart"></i>
+                  </a>
+                </div>
+              </div>
+              <div class="product-detail">
+                <h6 @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">{{ prod.name }}</h6>
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                  <h4 class="mb-0">฿{{ prod.price?.toFixed(2) }}</h4>
+                  <button class="btn btn-sm btn-solid" @click.stop="addToCart(prod, 1)" style="padding: 5px 12px; font-size: 12px;">
+                    <i class="ti-shopping-cart"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
     </div>
     </ClientOnly>
   </div>
@@ -178,10 +251,14 @@ export default {
       seller: null,
       loading: true,
       counter: 1,
+      relatedProducts: [],
+      randomProducts: [],
     }
   },
   async mounted() {
     await this.fetchProductDetail()
+    await this.fetchRelatedProducts()
+    await this.fetchRandomProducts()
   },
   methods: {
     async fetchProductDetail() {
@@ -224,7 +301,56 @@ export default {
       this.$router.push('/page/account/checkout')
     },
     increment() { if (this.counter < this.product.stock) this.counter++ },
-    decrement() { if (this.counter > 1) this.counter-- }
+    decrement() { if (this.counter > 1) this.counter-- },
+    
+    async fetchRelatedProducts() {
+      try {
+        if (!this.product || !this.product.category) return
+        
+        // ดึงสินค้าในหมวดเดียวกัน
+        const allProducts = await $fetch('http://localhost:3001/api/product')
+        const related = allProducts.filter(p => 
+          p.category === this.product.category && 
+          (p._id !== this.product._id && p.id !== this.product.id)
+        )
+        
+        // สุ่มเอา 6 ตัว
+        this.relatedProducts = this.shuffleArray(related).slice(0, 6)
+      } catch (error) {
+        console.error('Failed to fetch related products:', error)
+        this.relatedProducts = []
+      }
+    },
+    
+    async fetchRandomProducts() {
+      try {
+        // ดึงสินค้าทั้งหมด
+        const allProducts = await $fetch('http://localhost:3001/api/product')
+        const filtered = allProducts.filter(p => 
+          p._id !== this.product._id && p.id !== this.product.id
+        )
+        
+        // สุ่มเอา 6 ตัว
+        this.randomProducts = this.shuffleArray(filtered).slice(0, 6)
+      } catch (error) {
+        console.error('Failed to fetch random products:', error)
+        this.randomProducts = []
+      }
+    },
+    
+    shuffleArray(array) {
+      const shuffled = [...array]
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      }
+      return shuffled
+    },
+    
+    navigateToProduct(productId) {
+      // Reload page with new product ID
+      window.location.href = `/product/three-column/thumbnail-left?id=${productId}`
+    }
   }
 }
 </script>
@@ -233,4 +359,83 @@ export default {
 .seller-name{font-size:16px;font-weight:600;color:#333}
 .seller-block small{font-size:12px}
 .card img{height:150px;object-fit:cover}
+
+.product-related h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.product-box {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.product-box:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transform: translateY(-5px);
+}
+
+.product-box .img-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.product-box .cart-info {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.product-box:hover .cart-info {
+  opacity: 1;
+}
+
+.product-box .cart-info button,
+.product-box .cart-info a {
+  background: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 3px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.product-box .cart-info button:hover,
+.product-box .cart-info a:hover {
+  background: #ff4c3b;
+  color: white;
+}
+
+.product-box .product-detail {
+  padding: 15px;
+  text-align: center;
+}
+
+.product-box .product-detail h6 {
+  font-size: 14px;
+  margin: 10px 0;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-box .product-detail h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ff4c3b;
+  margin: 5px 0;
+}
 </style>
