@@ -57,7 +57,9 @@ export const useProductStore = defineStore({
       try {
         const token = localStorage.getItem('token')
         if (!token) {
-          this.wishlist = []
+          // โหลด wishlist จาก localStorage สำหรับ guest user
+          const localWishlist = localStorage.getItem('guestWishlist')
+          this.wishlist = localWishlist ? JSON.parse(localWishlist) : []
           return
         }
         const response = await $fetch('http://localhost:3001/api/wishlist', {
@@ -74,11 +76,6 @@ export const useProductStore = defineStore({
     async addToWishlist(payload) {
       try {
         const token = localStorage.getItem('token')
-        if (!token) {
-          console.warn('Please login to add to wishlist')
-          useNuxtApp().$showToast({ msg: "Please login to add to wishlist", type: "error" })
-          return
-        }
         
         console.log('addToWishlist payload:', payload)
         const productId = payload.id || payload._id
@@ -91,6 +88,25 @@ export const useProductStore = defineStore({
           return
         }
         
+        if (!token) {
+          // Guest user - save to localStorage
+          const localWishlist = localStorage.getItem('guestWishlist')
+          let wishlistArray = localWishlist ? JSON.parse(localWishlist) : []
+          
+          // Check if product already in wishlist
+          const exists = wishlistArray.find(item => (item.id || item._id) === productId)
+          if (!exists) {
+            wishlistArray.push(payload)
+            localStorage.setItem('guestWishlist', JSON.stringify(wishlistArray))
+            this.wishlist = wishlistArray
+            useNuxtApp().$showToast({ msg: "Product added to wishlist", type: "success" })
+          } else {
+            useNuxtApp().$showToast({ msg: "Product already in wishlist", type: "info" })
+          }
+          return
+        }
+        
+        // Logged in user - save to server
         await $fetch(`http://localhost:3001/api/wishlist/${productId}`, {
           method: 'POST',
           headers: {
@@ -111,7 +127,6 @@ export const useProductStore = defineStore({
     async removeWishlistItem(payload) {
       try {
         const token = localStorage.getItem('token')
-        if (!token) return
         
         const productId = payload.id || payload._id
         
@@ -121,6 +136,18 @@ export const useProductStore = defineStore({
           return
         }
         
+        if (!token) {
+          // Guest user - remove from localStorage
+          const localWishlist = localStorage.getItem('guestWishlist')
+          let wishlistArray = localWishlist ? JSON.parse(localWishlist) : []
+          wishlistArray = wishlistArray.filter(item => (item.id || item._id) !== productId)
+          localStorage.setItem('guestWishlist', JSON.stringify(wishlistArray))
+          this.wishlist = wishlistArray
+          useNuxtApp().$showToast({ msg: "Product removed from wishlist", type: "success" })
+          return
+        }
+        
+        // Logged in user - remove from server
         await $fetch(`http://localhost:3001/api/wishlist/${productId}`, {
           method: 'DELETE',
           headers: {

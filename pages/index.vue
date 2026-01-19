@@ -57,7 +57,7 @@
               </div>
 
               <div v-else class="product-grid">
-                <div v-for="product in paginatedProducts" :key="product._id || product.id" class="product-card">
+                <div v-for="product in displayedProducts" :key="product._id || product.id" class="product-card">
                   <div class="card h-100 shadow-sm">
                     <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: product._id || product.id } }">
                       <img :src="getImgUrl(product)" class="card-img-top" />
@@ -75,7 +75,7 @@
                           <div v-else class="fw-bold">฿{{ product?.price || 0 }}</div>
                         </div>
                         <div>
-                          <button class="btn btn-sm btn-primary" @click="addToCart(product)">เพิ่ม</button>
+                          <button class="btn btn-sm btn-primary" @click="addToCart(product)">เพิ่มสินค้าลงตะกร้า</button>
                         </div>
                       </div>
                     </div>
@@ -83,27 +83,21 @@
                 </div>
               </div>
 
-              <div v-if="totalPages > 1" class="pagination-wrapper mt-4">
-                <nav>
-                  <ul class="pagination justify-content-end">
-                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                      <a class="page-link" @click="goToPage(1)" href="javascript:void(0)"><i class="fa fa-angle-double-left"></i></a>
-                    </li>
-                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                      <a class="page-link" @click="goToPage(currentPage - 1)" href="javascript:void(0)"><i class="fa fa-angle-left"></i></a>
-                    </li>
-                    <li v-for="page in visiblePages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-                      <a class="page-link" @click="goToPage(page)" href="javascript:void(0)">{{ page }}</a>
-                    </li>
-                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                      <a class="page-link" @click="goToPage(currentPage + 1)" href="javascript:void(0)"><i class="fa fa-angle-right"></i></a>
-                    </li>
-                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                      <a class="page-link" @click="goToPage(totalPages)" href="javascript:void(0)"><i class="fa fa-angle-double-right"></i></a>
-                    </li>
-                  </ul>
-                </nav>
+              <!-- Infinite Scroll Loading Indicator -->
+              <div v-if="isLoadingMore && hasMoreProducts" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">กำลังโหลดเพิ่มเติม...</span>
+                </div>
+                <p class="mt-2 text-muted">กำลังโหลดสินค้าเพิ่มเติม...</p>
               </div>
+
+              <!-- End of Products Message -->
+              <div v-if="!hasMoreProducts && displayedProducts.length > 0" class="text-center py-4">
+                <p class="text-muted">แสดงสินค้าครบทั้งหมดแล้ว ({{ displayedProducts.length }} ชิ้น)</p>
+              </div>
+
+              <!-- Scroll Trigger Element -->
+              <div ref="scrollTrigger" class="scroll-trigger"></div>
             </ClientOnly>
           </div>
         </div>
@@ -116,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useCartStore } from '~/store/cart'
 import { useProductStore } from '~/store/products'
 
@@ -124,9 +118,23 @@ const q = ref('')
 const selectedCategories = ref([])
 const cart = useCartStore()
 const productStore = useProductStore()
+const scrollTrigger = ref(null)
+
+// Infinite Scroll Variables
+const itemsPerPage = 40
+const displayedCount = ref(40)
+const isLoadingMore = ref(false)
+let observer = null
 
 onMounted(async () => {
   await productStore.fetchProducts()
+  setupInfiniteScroll()
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+  }
 })
 
 const allProducts = computed(() => productStore.products || [])
@@ -160,42 +168,48 @@ const filteredProducts = computed(() => {
   return result
 })
 
-// Pagination
-const currentPage = ref(1)
-const itemsPerPage = 40 // 5 columns * 8 rows = 40
-
+// เมื่อค้นหาหรือเลือกหมวดหมู่ใหม่ ให้รีเซ็ตการแสดงผล
 watch([q, selectedCategories], () => {
-  currentPage.value = 1
+  displayedCount.value = itemsPerPage
 })
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredProducts.value.length / itemsPerPage)
+const displayedProducts = computed(() => {
+  return filteredProducts.value.slice(0, displayedCount.value)
 })
 
-const paginatedProducts = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredProducts.value.slice(start, end)
+const hasMoreProducts = computed(() => {
+  return displayedCount.value < filteredProducts.value.length
 })
 
-const visiblePages = computed(() => {
-  const total = totalPages.value
-  const current = currentPage.value
-  const pages = []
-  if (total <= 5) {
-    for (let i = 1; i <= total; i++) pages.push(i)
-  } else {
-    if (current <= 3) pages.push(1, 2, 3, 4, 5)
-    else if (current >= total - 2) pages.push(total - 4, total - 3, total - 2, total - 1, total)
-    else pages.push(current - 2, current - 1, current, current + 1, current + 2)
-  }
-  return pages
-})
+function loadMoreProducts() {
+  if (isLoadingMore.value || !hasMoreProducts.value) return
+  
+  isLoadingMore.value = true
+  
+  // จำลองการโหลด (เพื่อให้ดู smooth)
+  setTimeout(() => {
+    displayedCount.value += itemsPerPage
+    isLoadingMore.value = false
+  }, 500)
+}
 
-function goToPage(page) {
-  if (page < 1 || page > totalPages.value) return
-  currentPage.value = page
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+function setupInfiniteScroll() {
+  if (!scrollTrigger.value) return
+  
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && hasMoreProducts.value && !isLoadingMore.value) {
+          loadMoreProducts()
+        }
+      })
+    },
+    {
+      rootMargin: '200px', // เริ่มโหลดก่อนถึง 200px
+    }
+  )
+  
+  observer.observe(scrollTrigger.value)
 }
 
 function getImgUrl(product) {
@@ -278,9 +292,10 @@ function addToCart(product) {
 .category-list::-webkit-scrollbar { width: 4px; }
 .category-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
 
-/* Pagination */
-.pagination-wrapper { margin-top:30px; margin-bottom:30px; }
-.pagination .page-link { border:1px solid #dee2e6; border-radius:6px; padding:8px 14px; color:#495057; cursor:pointer; }
-.pagination .page-item.active .page-link { background:#0d6efd; border-color:#0d6efd; color:#fff; }
-.pagination .page-item.disabled .page-link { opacity:0.5; pointer-events:none; }
+/* Infinite Scroll */
+.scroll-trigger {
+  height: 1px;
+  width: 100%;
+  margin-top: 20px;
+}
 </style>

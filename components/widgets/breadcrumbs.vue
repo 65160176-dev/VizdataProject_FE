@@ -1,7 +1,7 @@
 <template>
   <div class="breadcrumb-main">
     <div class="breadcrumb-section">
-      <div class="container">
+      <div class="container-fluid px-4">
         <div class="row">
           <div class="col-sm-6">
             

@@ -2,11 +2,11 @@
   <div>
     <footer class="footer-light">
       <div class="light-layout">
-        <div class="container">
+        <div class="container-fluid px-4">
         </div>
       </div>
       <section class="section-b-space light-layout">
-        <div class="container">
+        <div class="container-fluid px-4">
           <div class="row footer-theme partition-f">
             <div class="col-lg-4 col-md-6">
               <div class="footer-title footer-mobile-title">
@@ -128,7 +128,7 @@
         </div>
       </section>
       <div class="sub-footer">
-        <div class="container">
+        <div class="container-fluid px-4">
           <div class="row">
             <div class="col-xl-6 col-md-6 col-sm-12">
               <div class="footer-end">

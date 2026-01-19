@@ -4,7 +4,7 @@
 
       <div class="mobile-fix-option"></div>
       <WidgetsTopbar />
-      <div class="container">
+      <div class="container-fluid px-4">
         <div class="row">
           <div class="col-12">
             <div class="main-menu">

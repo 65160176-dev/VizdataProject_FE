@@ -3,7 +3,7 @@
     <Header />
     <WidgetsBreadcrumbs title="Cart" />
     <section class="cart-section section-b-space">
-      <div class="container">
+      <div class="container-fluid" style="padding-left: 3rem; padding-right: 3rem;">
         <div class="mb-3"></div>
         <div class="row">
           <div class="col-sm-12">

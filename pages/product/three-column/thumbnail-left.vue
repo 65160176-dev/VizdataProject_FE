@@ -15,7 +15,7 @@
     <WidgetsBreadcrumbs :title="product.name" />
     <section>
       <div class="collection-wrapper">
-        <div class="container">
+        <div class="container-fluid px-4">
           <div class="row">
             <div class="col-lg-1 col-sm-2 col-xs-12">
               <div class="row">
@@ -94,35 +94,38 @@
             </div>
             <div class="col-lg-4">
               <div class="product-right product-form-box">
-                <h3 class="text-danger">฿{{ product.price?.toFixed(2) }}</h3>
+                <h3>฿{{ product.price?.toFixed(2) }}</h3>
                 <div class="text-muted small mb-3">คอมมิชชั่น: {{ product.commission }}%</div>
-                <div class="product-description border-product">
+                
+                <div class="border-product">
                   <h5 class="avalibility" v-if="product.stock > 0 && counter <= product.stock">
                     <span>มีสินค้า (เหลือ {{ product.stock }} ชิ้น)</span>
                   </h5>
                   <h5 class="avalibility text-danger" v-else>
                     <span>สินค้าหมด</span>
                   </h5>
-                  <h6 class="product-title">สินค้าคงเหลือ</h6>
-                  <div class="qty-box">
-                    <div class="input-group">
+                  
+                  <h6 class="product-title">จำนวน</h6>
+                  <div class="qty-box d-flex justify-content-center">
+                    <div class="input-group" style="width: 140px;">
                       <span class="input-group-prepend">
-                        <button type="button" class="btn quantity-left-minus" @click="decrement()">
+                        <button type="button" class="btn quantity-left-minus" style="padding: 10px 15px; height: 45px;" @click="decrement()" :disabled="counter <= 1">
                           <i class="ti-angle-left"></i>
                         </button>
                       </span>
-                      <input type="text" name="quantity" class="form-control input-number" :disabled="counter > product.stock" v-model="counter" />
+                      <input type="text" name="quantity" class="form-control input-number text-center" style="height: 45px; font-size: 16px; font-weight: 600;" :disabled="counter > product.stock" v-model="counter" readonly />
                       <span class="input-group-prepend">
-                        <button type="button" class="btn quantity-right-plus" @click="increment()" :disabled="counter >= product.stock">
+                        <button type="button" class="btn quantity-right-plus" style="padding: 10px 15px; height: 45px;" @click="increment()" :disabled="counter >= product.stock">
                           <i class="ti-angle-right"></i>
                         </button>
                       </span>
                     </div>
                   </div>
                 </div>
+
                 <div class="product-buttons">
-                  <button class="btn btn-solid" title="Add to cart" @click="addToCart(product, counter)" :disabled="counter > product.stock || product.stock === 0">เพิ่มลงรถเข็น</button>
-                  <button class="btn btn-solid" title="buy now" @click="buyNow(product, counter)" :disabled="counter > product.stock || product.stock === 0">ซื้อเลย</button>
+                  <button class="btn btn-solid" style="padding: 12px 24px; height: auto; min-height: 45px;" @click="addToCart(product, counter)" :disabled="counter > product.stock || product.stock === 0">เพิ่มลงรถเข็น</button>
+                  <button class="btn btn-solid" style="padding: 12px 24px; height: auto; min-height: 45px;" @click="buyNow(product, counter)" :disabled="counter > product.stock || product.stock === 0">ซื้อเลย</button>
                 </div>
               </div>
             </div>
@@ -130,7 +133,7 @@
         </div>
       </div>
       <section class="tab-product m-0">
-        <div class="container">
+        <div class="container-fluid px-4">
           <div class="row">
             <div class="col-sm-12 col-lg-12">
               <ul class="nav nav-tabs nav-material" id="top-tab" role="tablist">

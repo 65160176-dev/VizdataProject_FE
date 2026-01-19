@@ -3,7 +3,7 @@
   <div>
     <WidgetsBreadcrumbs title="Dashboard" />
     <section class="dashboard-section section-b-space user-dashboard-section">
-      <div class="container">
+      <div class="container-fluid" style="padding-left: 3rem; padding-right: 3rem;">
         <div class="row g-3">
           <div class="col-lg-3">
             <div class="dashboard-sidebar">
