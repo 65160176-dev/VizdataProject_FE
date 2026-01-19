@@ -6,6 +6,14 @@
         <h4 class="fw-bold mb-1 text-dark">Order Status</h4>
         <p class="text-secondary small mb-0">ติดตามสถานะการจัดส่งและจัดการคำสั่งซื้อ</p>
       </div>
+      
+      <button class="btn btn-white bg-white border shadow-sm rounded-pill px-4 py-2 position-relative text-primary fw-bold" @click="showRequestsModal = true">
+        <Icon name="feather:bell" size="18" class="me-2" />
+        คำขอใหม่
+        <span v-if="pendingOrders.length > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white shadow-sm">
+          {{ pendingOrders.length }}
+        </span>
+      </button>
     </div>
 
     <div class="card mb-4 border-0 shadow-sm rounded-4">
@@ -17,11 +25,8 @@
                href="#" @click.prevent="currentStatus = s.key">
               <Icon :name="s.icon" size="18" />
               <span>{{ s.label }}</span>
-              
               <span class="badge rounded-pill ms-2 transition-all shadow-sm" 
-                    :class="[
-                      currentStatus === s.key ? 'bg-white ' + getTextClass(s.key) : 'bg-light text-muted'
-                    ]">
+                    :class="[ currentStatus === s.key ? 'bg-white ' + getTextClass(s.key) : 'bg-light text-muted' ]">
                 {{ countMyOrdersByStatus(s.key) }}
               </span>
             </a>
@@ -50,7 +55,6 @@
                 <Icon name="feather:calendar" size="12" /> {{ formatDate(order) }}
             </small>
           </div>
-          
           <div class="card-body">
             <div class="d-flex align-items-center mb-3">
               <img :src="getItemImage(order)" class="rounded-3 border" style="width: 70px; height: 70px; object-fit: cover;">
@@ -63,16 +67,63 @@
               </div>
             </div>
           </div>
-
           <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center pb-3">
              <span class="text-secondary small">{{ getItems(order).length }} รายการ</span>
-             <div class="fw-bolder text-dark fs-5">
-                {{ formatCurrency(calculateTotal(order)) }}
-             </div>
+             <div class="fw-bolder text-dark fs-5">{{ formatCurrency(calculateTotal(order)) }}</div>
           </div>
         </div>
       </div>
     </div>
+
+    <Transition name="fade">
+      <div v-if="showRequestsModal" class="modal-backdrop-custom" @click.self="showRequestsModal = false">
+        <div class="modal-content-custom p-0 overflow-hidden shadow-lg" style="max-width: 600px;">
+          <div class="px-4 py-3 bg-white border-bottom d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">รายการคำขอใหม่ 🔔</h5>
+              <small class="text-muted">คุณมี {{ pendingOrders.length }} ออเดอร์ที่รอการยืนยัน</small>
+            </div>
+            <button class="btn btn-light rounded-circle" @click="showRequestsModal = false">
+              <Icon name="feather:x" size="20" />
+            </button>
+          </div>
+          
+          <div class="p-0 bg-light" style="max-height: 70vh; overflow-y: auto;">
+             <div v-if="pendingOrders.length === 0" class="text-center py-5">
+                <Icon name="feather:check-circle" size="48" class="text-success mb-2 opacity-50"/>
+                <p class="text-muted mb-0">ไม่มีคำขอใหม่ในขณะนี้</p>
+             </div>
+
+             <div v-else class="list-group list-group-flush">
+                <div v-for="order in pendingOrders" :key="order._id" class="list-group-item p-3 border-bottom">
+                   <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div class="d-flex align-items-center">
+                         <img :src="getItemImage(order)" class="rounded border me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                         <div>
+                            <h6 class="fw-bold mb-0 text-dark">Order #{{ order.orderId || order._id.substr(-6) }}</h6>
+                            <small class="text-muted">{{ order.customer }} • {{ getItems(order).length }} items</small>
+                         </div>
+                      </div>
+                      <div class="fw-bold text-primary">{{ formatCurrency(calculateTotal(order)) }}</div>
+                   </div>
+                   
+                   <div class="d-flex gap-2 mt-3">
+  <button class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill" 
+          @click="handleRequestAction(order._id, 'preparing')">
+    ไม่ยอมรับ
+  </button>
+
+  <button class="btn btn-sm btn-success flex-grow-1 rounded-pill text-white fw-bold" 
+          @click="handleRequestAction(order._id, 'cancelled')">
+    ยอมรับคำขอยกเลิก
+  </button>
+</div>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <Transition name="fade">
       <div v-if="showDetail" class="modal-backdrop-custom" @click.self="closeDetail">
@@ -152,13 +203,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useOrderStore } from '~/store/orders'
-import { useAuthStore } from '~/store/auth' // ✅ 1. Import Auth Store
+import { useAuthStore } from '~/store/auth'
 
 definePageMeta({ layout: 'seller' })
 
 const orderStore = useOrderStore()
-const authStore = useAuthStore() // ✅ 2. Use Auth Store
+const authStore = useAuthStore()
 const currentStatus = ref('preparing')
+const showRequestsModal = ref(false) // State สำหรับเปิด/ปิด Modal คำขอใหม่
 
 const statuses = [
   { key: 'preparing', label: 'กำลังเตรียม', icon: 'feather:package' },
@@ -171,99 +223,77 @@ onMounted(async () => {
     await orderStore.fetchOrders()
 })
 
-// ✅ 3. Logic กรองออเดอร์ของ "ร้านฉัน" ทั้งหมดก่อน
+// 1. กรองออเดอร์ของร้านนี้
 const myAllOrders = computed(() => {
     const all = orderStore.allOrders || []
     const myId = authStore.user?._id || authStore.user?.id
-
     if (!myId) return []
-
     return all.filter(order => {
         const items = order.item || order.items || []
         if (items.length === 0) return false
-        
-        // เช็คเจ้าของสินค้าจากชิ้นแรก
         const productOwner = items[0]?.productId?.userId
         const ownerId = (typeof productOwner === 'object') ? productOwner?._id : productOwner
-
         return ownerId === myId
     })
 })
 
-// ✅ 4. กรองตาม Status จาก myAllOrders อีกที
-const filteredMyOrders = computed(() => {
-    return myAllOrders.value.filter(o => 
-        (o.status || '').toLowerCase() === currentStatus.value.toLowerCase()
-    )
+// 2. กรองเฉพาะสถานะ Pending (สำหรับ Modal คำขอใหม่)
+const pendingOrders = computed(() => {
+    return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === 'pending')
 })
 
-// ✅ 5. ฟังก์ชันนับจำนวนสำหรับ Badge
+// 3. กรองตาม Tab ที่เลือก (Preparing/Shipped/etc.)
+const filteredMyOrders = computed(() => {
+    return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === currentStatus.value.toLowerCase())
+})
+
 function countMyOrdersByStatus(statusKey) {
-    return myAllOrders.value.filter(o => 
-        (o.status || '').toLowerCase() === statusKey.toLowerCase()
-    ).length
+    return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === statusKey.toLowerCase()).length
 }
 
-function getStatusLabel(key) { return statuses.find(s => s.key === key)?.label || key }
-
-function getItems(o) {
-    if (!o) return []
-    return o.item || o.items || []
+// Actions
+async function handleRequestAction(id, action) {
+    // action: 'preparing' (รับ) หรือ 'cancelled' (ไม่รับ)
+    await orderStore.updateStatus(id, action)
+    // ถ้าไม่มี Pending เหลือแล้ว ให้ปิด Modal
+    if (pendingOrders.value.length === 0) {
+        showRequestsModal.value = false
+    }
 }
-
-function calculateTotal(o) {
-    const items = getItems(o)
-    return items.length > 0 ? items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0) : (o.total || 0)
-}
-
-function getItemName(o) {
-    const items = getItems(o)
-    return items.length > 0 ? items[0].name : 'No Items'
-}
-
-function getItemImage(o) {
-    const items = getItems(o)
-    return (items.length > 0 && items[0].image) ? items[0].image : '/images/dashboard/default.png'
-}
-
-function formatDate(o) {
-    if (!o) return ''
-    const d = o.updatedAt || o.date
-    return d ? new Date(d).toLocaleDateString('th-TH') : 'N/A'
-}
-
-function formatCurrency(v) {
-    return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(v || 0)
-}
-
-function getTextClass(s) { return 'text-status-' + (s || '').toLowerCase() }
-
-const showDetail = ref(false)
-const selectedOrder = ref({ item: [] })
-
-function openDetail(o) {
-    selectedOrder.value = { ...o }
-    showDetail.value = true
-}
-function closeDetail() { showDetail.value = false }
 
 async function handleUpdate(id, newStatus) {
     await orderStore.updateStatus(id, newStatus)
     closeDetail()
 }
+
+// Helpers
+function getStatusLabel(key) { return statuses.find(s => s.key === key)?.label || key }
+function getItems(o) { return o.item || o.items || [] }
+function calculateTotal(o) { 
+    const items = getItems(o)
+    return items.length > 0 ? items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0) : (o.total || 0)
+}
+function getItemName(o) { const items = getItems(o); return items.length > 0 ? items[0].name : 'No Items' }
+function getItemImage(o) { const items = getItems(o); return (items.length > 0 && items[0].image) ? items[0].image : '/images/dashboard/default.png' }
+function formatDate(o) { if (!o) return ''; const d = o.updatedAt || o.date; return d ? new Date(d).toLocaleDateString('th-TH') : 'N/A' }
+function formatCurrency(v) { return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(v || 0) }
+function getTextClass(s) { return 'text-status-' + (s || '').toLowerCase() }
+
+// Detail Modal State
+const showDetail = ref(false)
+const selectedOrder = ref({ item: [] })
+function openDetail(o) { selectedOrder.value = { ...o }; showDetail.value = true }
+function closeDetail() { showDetail.value = false }
 </script>
 
 <style scoped>
-/* --- STYLES เหมือนเดิม --- */
+/* CSS เดิม + CSS สำหรับปุ่มใหม่ */
 .header-preparing { background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%); }
 .text-status-preparing { color: #0277BD; }
-
 .header-shipped { background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%); }
 .text-status-shipped { color: #4527A0; }
-
 .header-completed { background: linear-gradient(135deg, #00897B 0%, #26A69A 100%); }
 .text-status-completed { color: #00695C; }
-
 .header-cancelled { background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%); }
 .text-status-cancelled { color: #C62828; }
 
@@ -272,13 +302,7 @@ async function handleUpdate(id, newStatus) {
 .active-tab-completed { background-color: #00897B !important; color: white !important; }
 .active-tab-cancelled { background-color: #D32F2F !important; color: white !important; }
 
-.custom-tabs .nav-link { 
-  color: #64748b; 
-  border-radius: 12px; 
-  font-weight: 600; 
-  padding: 12px; 
-  border: 1px solid transparent; 
-}
+.custom-tabs .nav-link { color: #64748b; border-radius: 12px; font-weight: 600; padding: 12px; border: 1px solid transparent; }
 .custom-tabs .nav-link:hover { background-color: #f8fafc; }
 
 .transition-all { transition: all 0.3s ease; }
