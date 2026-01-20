@@ -63,6 +63,18 @@
         </div>
       </div>
 
+      <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1060;">
+        <div id="liveToast" class="toast align-items-center text-white bg-success border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body d-flex align-items-center">
+              <Icon name="feather:check-circle" size="20" class="me-2" />
+              {{ toastMessage }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>
+      </div>
+
       <ClientOnly>
         <div class="modal fade" id="categoryModal" tabindex="-1">
           <div class="modal-dialog modal-dialog-centered">
@@ -223,14 +235,40 @@
 
       <ClientOnly>
         <div class="modal fade" id="addStockModal" tabindex="-1">
-          <div class="modal-dialog border-0"><div class="modal-content border-0 shadow">
-            <div class="modal-header border-0"><h5 class="modal-title fw-bold">Add Stock</h5><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body py-4"><form>
-                <div class="form-group mb-3"><label class="small fw-bold">Select Product :</label><select class="form-select shadow-none" v-model="stockForm.id"><option disabled value="">Select...</option><option v-for="item in products" :key="item._id" :value="item._id">{{ item.name }} (Current: {{ item.stock }})</option></select></div>
-                <div class="form-group mb-3"><label class="small fw-bold">Quantity :</label><input class="form-control shadow-none" type="number" v-model="stockForm.quantity" min="1"></div>
-              </form></div>
-            <div class="modal-footer border-0"><button class="btn btn-success px-4" @click="saveAddStock">Update</button><button class="btn btn-secondary px-4 shadow-sm" data-bs-dismiss="modal">Close</button></div>
-          </div></div>
+          <div class="modal-dialog border-0">
+            <div class="modal-content border-0 shadow">
+              <div class="modal-header border-0"><h5 class="modal-title fw-bold">Add Stock</h5><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+              <div class="modal-body py-4">
+                <form>
+                  <div class="form-group mb-3">
+                    <label class="small fw-bold text-muted">Filter by Category :</label>
+                    <select class="form-select shadow-none border-secondary-subtle" v-model="stockCategoryFilter">
+                      <option value="">All Categories</option>
+                      <option v-for="cat in activeCategories" :key="cat" :value="cat">{{ cat }}</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group mb-3">
+                    <label class="small fw-bold">Select Product :</label>
+                    <select class="form-select shadow-none" v-model="stockForm.id" :disabled="filteredStockProducts.length === 0">
+                      <option disabled value="">
+                        {{ filteredStockProducts.length === 0 ? 'No products in this category' : 'Select Product...' }}
+                      </option>
+                      <option v-for="item in filteredStockProducts" :key="item._id" :value="item._id">
+                        {{ item.name }} (Current: {{ item.stock }})
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="form-group mb-3"><label class="small fw-bold">Quantity :</label><input class="form-control shadow-none" type="number" v-model="stockForm.quantity" min="1"></div>
+                </form>
+              </div>
+              <div class="modal-footer border-0">
+                <button class="btn btn-success px-4" @click="saveAddStock" :disabled="!stockForm.id || !stockForm.quantity">Update</button>
+                <button class="btn btn-secondary px-4 shadow-sm" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
         </div>
       </ClientOnly>
 
@@ -239,7 +277,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 definePageMeta({ layout: 'seller' })
@@ -247,7 +285,6 @@ definePageMeta({ layout: 'seller' })
 const products = ref([])
 const newCategoryInput = ref('')
 
-// รายการหมวดหมู่เริ่มต้นแบบครอบคลุม
 const defaultCats = [
   'Fashion (Women)', 'Fashion (Men)', 'Electronics', 'Mobile & Gadgets',
   'Beauty & Personal Care', 'Health & Wellness', 'Home & Living', 
@@ -260,6 +297,16 @@ const defaultCats = [
 const allCategories = ref([...defaultCats])
 const selectedCategories = ref([...defaultCats])
 const categoryToDelete = ref({ index: null, name: '' })
+
+// --- Toast Logic (New) ---
+const toastMessage = ref('')
+const showToast = (message) => {
+  toastMessage.value = message
+  const toastEl = document.getElementById('liveToast')
+  const toast = new bootstrap.Toast(toastEl) // สร้าง Toast instance
+  toast.show() // สั่งแสดง
+}
+// -------------------------
 
 // --- Category Logic ---
 const toggleCategory = (cat) => {
@@ -328,11 +375,31 @@ const safeCloseModal = (id) => {
 // --- CRUD ---
 const newItem = ref({ name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, description: '', category: '', previewImage: null, rawFile: null })
 const editItem = ref({ _id: null, name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null })
-const stockForm = ref({ id: '', quantity: '' })
 
 const availableOptionsAdd = ref([])
 const availableOptionsEdit = ref([])
 
+// --- Stock Logic (Active Filter) ---
+const stockForm = ref({ id: '', quantity: '' })
+const stockCategoryFilter = ref('')
+
+const activeCategories = computed(() => {
+  const used = products.value.map(p => p.category).filter(c => c)
+  return [...new Set(used)].sort()
+})
+
+const filteredStockProducts = computed(() => {
+  if (!stockCategoryFilter.value) {
+    return products.value
+  }
+  return products.value.filter(p => p.category === stockCategoryFilter.value)
+})
+
+watch(stockCategoryFilter, () => {
+  stockForm.value.id = '' 
+})
+
+// --- Watchers ---
 watch(() => newItem.value.weight, (v) => {
   availableOptionsAdd.value = calculateOptions(v)
   if (availableOptionsAdd.value.length > 0) newItem.value.shippingCost = availableOptionsAdd.value[availableOptionsAdd.value.length - 1].value
@@ -354,12 +421,16 @@ const onFileChange = (e, m) => {
 
 const resetNewItemForm = () => { newItem.value = { name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null } }
 
+// --- SAVE FUNCTIONS (Using Toast) ---
 const saveNewItem = async () => {
   const token = localStorage.getItem('token')
   const fd = new FormData()
   fd.append('name', newItem.value.name); fd.append('stock', newItem.value.stock); fd.append('price', newItem.value.price); fd.append('commission', newItem.value.commission); fd.append('weight', newItem.value.weight); fd.append('shippingCost', newItem.value.shippingCost); fd.append('description', newItem.value.description); fd.append('category', newItem.value.category)
   if (newItem.value.rawFile) fd.append('file', newItem.value.rawFile)
+  
   await $fetch('http://localhost:3001/api/product', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
+  
+  showToast('เพิ่มสินค้าใหม่เรียบร้อยแล้ว') // ✅ แจ้งเตือนแบบไม่ต้องกด
   refresh(); resetNewItemForm(); safeCloseModal('addModal')
 }
 
@@ -377,7 +448,10 @@ async function saveEdit() {
   const fd = new FormData()
   fd.append('name', editItem.value.name); fd.append('stock', editItem.value.stock); fd.append('price', editItem.value.price); fd.append('commission', editItem.value.commission); fd.append('weight', editItem.value.weight); fd.append('shippingCost', editItem.value.shippingCost); fd.append('category', editItem.value.category); fd.append('description', editItem.value.description)
   if (editItem.value.rawFile) fd.append('file', editItem.value.rawFile)
+  
   await $fetch(`http://localhost:3001/api/product/${editItem.value._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
+  
+  showToast('แก้ไขข้อมูลสินค้าเรียบร้อยแล้ว') // ✅ แจ้งเตือนแบบไม่ต้องกด
   refresh(); safeCloseModal('editModal')
 }
 
@@ -385,6 +459,8 @@ async function deleteItem(id) {
   if (confirm('ลบสินค้า?')) {
     const token = localStorage.getItem('token')
     await $fetch(`http://localhost:3001/api/product/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+    
+    showToast('ลบสินค้าเรียบร้อยแล้ว') // ✅ แจ้งเตือนแบบไม่ต้องกด
     refresh()
   }
 }
@@ -393,8 +469,19 @@ async function saveAddStock() {
   const t = products.value.find(p => p._id === stockForm.value.id)
   if (t) {
     const n = parseInt(t.stock) + parseInt(stockForm.value.quantity)
-    await $fetch(`http://localhost:3001/api/product/${t._id}`, { method: 'PUT', body: { stock: n } })
+    const token = localStorage.getItem('token')
+    const fd = new FormData()
+    fd.append('stock', n)
+    
+    await $fetch(`http://localhost:3001/api/product/${t._id}`, { 
+      method: 'PUT', 
+      headers: { 'Authorization': `Bearer ${token}` }, 
+      body: fd 
+    })
+    
+    showToast('เพิ่มสต็อกเรียบร้อยแล้ว') // ✅ แจ้งเตือนแบบไม่ต้องกด
     refresh(); safeCloseModal('addStockModal')
+    stockForm.value = { id: '', quantity: '' }
   }
 }
 </script>
