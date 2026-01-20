@@ -218,7 +218,7 @@
                                 <div class="row align-items-center">
                                   <div class="col-md-2 text-center">
                                     <NuxtLink
-                                      :to="`/product/three-column/thumbnail-left?id=${order.items[0]?.id || order.items[0]?.productId || '1'}`"
+                                      :to="`/product/three-column/thumbnail-left?id=${order.items[0]?.productId?._id || order.items[0]?.productId || '1'}`"
                                       class="bg-light rounded d-flex align-items-center justify-content-center"
                                       style="width: 80px; height: 80px; margin: 0 auto; overflow: hidden; text-decoration: none;"
                                       @click.stop>
@@ -231,13 +231,13 @@
                                     style="min-height: 100px;">
                                     <div class="mb-1 text-muted" style="font-size: 0.85rem;">
                                       ร้านค้า:
-                                      <NuxtLink :to="`/seller/${order.shopName || 'official-store'}`"
+                                      <NuxtLink :to="`/seller/${order.shopId || 'official-store'}`"
                                         class="fw-bold text-dark text-decoration-none hover-underline" @click.stop>
                                         {{ order.shopName }}
                                       </NuxtLink>
                                     </div>
                                     <NuxtLink
-                                      :to="`/product/three-column/thumbnail-left?id=${order.items[0]?.id || order.items[0]?.productId || '1'}`"
+                                      :to="`/product/three-column/thumbnail-left?id=${order.items[0]?.productId?._id || order.items[0]?.productId || '1'}`"
                                       class="mb-1 text-dark text-truncate text-decoration-none hover-underline"
                                       style="max-width: 100%; font-weight: 600;" @click.stop>
                                       {{ order.items[0]?.name || 'สินค้า' }}
@@ -361,14 +361,10 @@ const isLoadingOrders = ref(false)
 // --- Lifecycle ---
 onMounted(async () => {
   if (import.meta.client) {
-    // ตรวจสอบ auth ก่อน
     if (typeof auth.initAuth === 'function') {
       await auth.initAuth()
     }
-
-    // รอให้ auth พร้อม
     await nextTick()
-
     if (auth.isLoggedIn) {
       initAvatarAndName()
       await addressStore.fetchAddresses()
@@ -377,7 +373,6 @@ onMounted(async () => {
   }
 })
 
-// Watch Auth - ดึงข้อมูลเมื่อ user เปลี่ยน (login/logout)
 watch(() => auth.user, async (newUser, oldUser) => {
   if (newUser && newUser !== oldUser) {
     initAvatarAndName()
@@ -388,8 +383,7 @@ watch(() => auth.user, async (newUser, oldUser) => {
   }
 })
 
-
-// --- ✅ Function Fetch Orders (แก้ไขแล้ว) ---
+// --- ✅ Function Fetch Orders (แก้ไขใหม่) ---
 const fetchOrders = async () => {
   if (!auth.isLoggedIn) return;
   isLoadingOrders.value = true;
@@ -397,28 +391,21 @@ const fetchOrders = async () => {
     const token = auth.token || localStorage.getItem('token');
     if (!token) return;
 
-    // ยิง API ไปที่ Backend
     const response = await $fetch(`${API_BASE}/order`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    // Client-side Filter: กรองเฉพาะ order ของ user คนนี้
     const currentUserId = auth.user?._id || auth.user?.id;
     let myOrders = response;
 
     if (currentUserId) {
       myOrders = response.filter(o => {
-        // ดึง User ID จาก Order (รองรับทั้งแบบ Object และ String)
         const orderUserId = (o.user && typeof o.user === 'object') ? o.user._id : o.user;
-
-        // 🔴 จุดที่แก้ไข: แปลงเป็น String ทั้งคู่ก่อนเทียบ (ป้องกันปัญหา ObjectId vs String)
         return String(orderUserId) === String(currentUserId);
       });
     }
 
-    // Map ข้อมูลให้ตรงกับที่ Template ต้องการ
     orders.value = myOrders.map(order => {
-      // (โค้ดส่วน Map ข้อมูลเหมือนเดิม...)
       let displayDate = order.date;
       if (!displayDate && order.createdAt) {
         displayDate = new Date(order.createdAt).toLocaleString('en-GB', {
@@ -426,21 +413,25 @@ const fetchOrders = async () => {
         });
       }
 
+      // ✅ ดึง shopId ออกมา
       let shopName = 'Official Store';
+      let shopId = null;
       const firstItem = order.item && order.item[0];
       if (firstItem && firstItem.productId && firstItem.productId.userId) {
         shopName = firstItem.productId.userId.shopName || firstItem.productId.userId.username || 'Shop';
+        shopId = firstItem.productId.userId._id || firstItem.productId.userId;
       }
 
       return {
         ...order,
         items: order.item || [],
         date: displayDate,
-        shopName: shopName
+        shopName: shopName,
+        shopId: shopId, // ✅ ส่งออกไปใช้
+        shippingFee: order.shippingCost || order.shippingFee || 0 // ✅ แก้ไขการดึงค่าส่ง
       };
     });
 
-    // เรียงลำดับจากใหม่ไปเก่า (ล่าสุดขึ้นก่อน)
     orders.value.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
   } catch (error) {
@@ -451,6 +442,9 @@ const fetchOrders = async () => {
   }
 }
 
+// ... (ส่วน Address Functions และ Account Info เหมือนเดิม) ...
+// เพื่อความกระชับ ผมละไว้ในส่วนนี้ (เพราะคุณไม่ได้แก้ส่วนนี้)
+// แต่ถ้าก๊อปไปวาง ต้องเอาส่วน Address/Account Info กลับมาด้วยนะครับ (จากโค้ดเดิมของคุณ)
 
 // --- Address Functions ---
 const openModal = (item = null) => {
@@ -507,7 +501,6 @@ const confirmDeleteAddress = async () => {
   }
 }
 
-// ✅ setDefaultAddress แบบสะอาด
 const setDefaultAddress = async (selectedItem) => {
   try {
     const id = selectedItem._id || selectedItem.id;
@@ -645,26 +638,18 @@ const tabs = [
   { label: 'ยกเลิก', value: 'cancelled' },
 ]
 
-// ✅ ฟังก์ชันเช็คสถานะแบบ Case-Insensitive และรองรับหลายค่า
 const checkStatus = (orderStatus, tab) => {
   const s = (orderStatus || '').toLowerCase();
   switch (tab) {
-    case 'pending':
-      return s === 'pending' || s === 'pending review';
-    case 'processing':
-      return s === 'preparing' || s === 'processing' || s === 'accepted';
-    case 'shipping':
-      return s === 'shipped' || s === 'shipping' || s === 'arrived';
-    case 'completed':
-      return s === 'completed' || s === 'delivered';
-    case 'cancelled':
-      return s === 'cancelled' || s === 'cancel requested' || s === 'cancel';
-    default:
-      return false;
+    case 'pending': return s === 'pending' || s === 'pending review';
+    case 'processing': return s === 'preparing' || s === 'processing' || s === 'accepted';
+    case 'shipping': return s === 'shipped' || s === 'shipping' || s === 'arrived';
+    case 'completed': return s === 'completed' || s === 'delivered';
+    case 'cancelled': return s === 'cancelled' || s === 'cancel requested' || s === 'cancel';
+    default: return false;
   }
 }
 
-// ✅ ปรับ FilteredOrders ให้ใช้ checkStatus
 const filteredOrders = computed(() => {
   if (activeTab.value === 'all') return orders.value
   return orders.value.filter(o => checkStatus(o.status, activeTab.value))
@@ -678,19 +663,17 @@ const paginatedOrders = computed(() => {
 const changePage = (page) => { if (page >= 1 && page <= totalPages.value) currentPage.value = page }
 watch(activeTab, () => { currentPage.value = 1 })
 
-// ✅ ปรับ getCount ให้ใช้ checkStatus
 const getCount = (tabValue) => {
   if (tabValue === 'all') return orders.value.length
   return orders.value.filter(o => checkStatus(o.status, tabValue)).length
 }
 
-// ✅ ปรับ getStatusClass ให้รองรับสถานะพิมพ์เล็ก
 const getStatusClass = (status) => {
   const s = (status || '').toLowerCase();
   switch (s) {
     case 'accepted': case 'completed': return 'bg-success text-white'
     case 'pending review': case 'pending': return 'bg-warning text-dark'
-    case 'preparing': case 'processing': return 'bg-info text-dark' // Preparing ใช้สีฟ้า
+    case 'preparing': case 'processing': return 'bg-info text-dark'
     case 'shipped': case 'shipping': case 'arrived': return 'bg-primary text-white'
     case 'cancel requested': case 'cancelled': case 'cancel': return 'bg-danger text-white'
     default: return 'bg-light text-dark border'
@@ -709,7 +692,6 @@ const saveOrderChanges = (updatedOrder) => {
   }
 }
 
-// --- Utils ---
 const changeTab = (tabId) => {
   if (import.meta.client) {
     const triggerEl = document.querySelector(`#top-tab a[data-bs-target="#${tabId}"]`)
@@ -727,6 +709,7 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
+/* CSS เดิม */
 .custom-radio input[type="radio"] {
   accent-color: #28a745;
 }
