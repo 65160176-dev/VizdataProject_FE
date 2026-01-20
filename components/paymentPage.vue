@@ -703,9 +703,16 @@ export default {
         });
 
         await Promise.all(orderPromises);
+
+        // --- เริ่มส่วน Cart Cleanup หน้าบ้าน ---
         localStorage.removeItem('checkout_items');
+
         const cartStore = useCartStore();
         if (cartStore.cartItems) cartStore.cartItems = [];
+
+        // ✅✅ จุดสำคัญ: สั่งโหลดตะกร้าใหม่ทันที เพื่อให้เลขบนไอคอนรถเข็นหายไป
+        await cartStore.fetchCart();
+        // ------------------------------------
 
         try { useNuxtApp().$showToast({ msg: "สั่งซื้อสำเร็จเรียบร้อย!", type: "success" }); } catch (e) { }
         setTimeout(() => { this.$router.push('/page/account/userdashboard'); }, 500);
