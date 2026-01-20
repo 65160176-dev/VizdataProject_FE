@@ -85,32 +85,69 @@
 </template>
 
 <script>
-import notification from "~/data/notificationData.json"
+import { useAuthStore } from '~/store/auth'
+
 export default {
+    setup() {
+        const authStore = useAuthStore()
+        return { authStore }
+    },
     data() {
         return {
-            notifications: notification // กำหนดค่าจากไฟล์ JSON
+            notifications: [] // เริ่มต้นเป็น array ว่าง
         }
-    }
-    ,
+    },
     methods: {
         getImgUrl(path) {
-            // เช็คว่า path มีค่าหรือไม่ เพื่อกัน error กรณีรูปเป็น null
-            if (!path) return '/images/default-icon.png';
+            // ถ้า path เป็น URL เต็มๆ (เช่น https://...) ให้ใช้เลย
+            if (path && path.startsWith('http')) return path;
+            // ถ้าไม่มี path ใช้รูป default
+            if (!path) return '/images/icon/logo.png';
+            // ถ้าเป็น path รูปในโปรเจกต์
             return ('/images/' + path)
         },
-        removeNotification(index) {
-            this.notifications.splice(index, 1);
+        async fetchNotifications() {
+            try {
+                // 1. ดึง User ID จาก Store
+                const userId = this.authStore.user?._id || this.authStore.user?.id;
+                if (!userId) return;
+
+                // 2. ยิง API ไปที่ Backend (ปรับ URL Port ตามจริง เช่น http://localhost:3000)
+                // หรือถ้าตั้ง Proxy ใน nuxt.config ไว้แล้วใช้แค่ /notifications/... ก็ได้
+                const response = await fetch(`http://localhost:3000/notifications/user/${userId}`);
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch notifications');
+                }
+
+                const rawData = await response.json();
+
+                // 3. แปลงข้อมูลให้ตรงกับที่ Template ต้องการ
+                this.notifications = rawData.map(item => ({
+                    ...item,
+                    // แปลงวันที่ (createdAt) เป็นรูปแบบที่อ่านง่าย
+                    date: new Date(item.createdAt).toLocaleString('en-GB', {
+                        day: 'numeric', month: 'short', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    }),
+                    // จัดการเรื่องรูปภาพ
+                    image: item.image || ''
+                }));
+
+            } catch (error) {
+                console.error("Error loading notifications:", error);
+            }
         }
     },
-    setup() {
-        // Logic อื่นๆ ถ้าจำเป็น
-        return {}
-    },
-    mounted() {
-        // ในการใช้งานจริง โหลดข้อมูลจาก LocalStorage หรือ API ตรงนี้
-        // const savedNotis = JSON.parse(localStorage.getItem('notifications'))
-        // if (savedNotis) this.notifications = savedNotis
+    async mounted() {
+        // เช็คว่ามี User Login หรือยัง ถ้ามีให้ดึงข้อมูลเลย
+        if (this.authStore.user) {
+            await this.fetchNotifications();
+        } else {
+            // ถ้า Store ยังไม่พร้อม ลอง initAuth ก่อน (ถ้ามีฟังก์ชันนี้)
+            if (this.authStore.initAuth) await this.authStore.initAuth();
+            if (this.authStore.user) await this.fetchNotifications();
+        }
     }
 }
 </script>

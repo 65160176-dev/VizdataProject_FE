@@ -678,11 +678,12 @@ export default {
           }, 0);
           const total = subTotal + shippingCost;
           const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000) + '-' + (index + 1);
-
+          const finalSellerId = (sellerId === 'official_store') ? null : sellerId;
           const payload = {
             orderId: orderId,
             user: realUserId,
             email: realUserEmail,
+            seller: finalSellerId,
             address: `${this.user.firstName.value} ${this.user.lastName.value} (${this.user.phone.value}) ${this.user.address.value} ${this.user.subDistrict.value} ${this.user.district.value} ${this.user.province.value} ${this.user.zipCode.value}`,
             customer: `${this.user.firstName.value} ${this.user.lastName.value}`,
             date: dateString,

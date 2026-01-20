@@ -9,18 +9,24 @@
         </a>
 
         <div class="notification-dropdown">
-            <div class="dropdown-header">การแจ้งเตือน ({{ unreadCount }})</div>
+            <div class="dropdown-header">
+                <span>การแจ้งเตือน ({{ unreadCount }})</span>
+                <a href="javascript:void(0)" class="mark-all-btn" v-if="unreadCount > 0" @click.stop="markAllRead">
+                    อ่านทั้งหมด
+                </a>
+            </div>
 
             <ul class="notification-list">
                 <li v-if="notifications.length === 0" class="p-3 text-center text-muted small">
                     ไม่มีการแจ้งเตือน
                 </li>
 
-                <li v-for="item in notifications.slice(0, 10)" :key="item.id" class="notification-item"
+                <li v-for="item in notifications.slice(0, 10)" :key="item._id" class="notification-item"
                     :class="{ 'item-unread': !item.isRead, 'item-read': item.isRead }" @mouseenter="markAsRead(item)">
                     <div class="notif-box">
                         <div class="notif-img">
-                            <img v-if="item.image" :src="item.image" alt="icon">
+                            <img v-if="item.image" :src="getImgUrl(item.image)"
+                                @error="$event.target.src = '/images/icon/logo.png'" alt="icon">
                             <div v-else class="default-icon-bg">
                                 <i class="fa fa-info" aria-hidden="true"></i>
                             </div>
@@ -28,7 +34,7 @@
                         <div class="notif-content">
                             <div class="notif-title">{{ item.title }}</div>
                             <div class="notif-message">{{ item.message }}</div>
-                            <div class="notif-date">{{ item.date }}</div>
+                            <div class="notif-date">{{ formatDate(item.createdAt) }}</div>
                         </div>
                     </div>
                 </li>
@@ -38,58 +44,66 @@
 </template>
 
 <script>
+import { useAuthStore } from '~/store/auth'
+import { useNotificationStore } from '~/store/notification'
+
 export default {
     name: 'HeaderNotification',
-    data() {
-        return {
-            notifications: []
-        }
+    setup() {
+        const authStore = useAuthStore()
+        const notiStore = useNotificationStore()
+        return { authStore, notiStore }
     },
     computed: {
+        notifications() {
+            return this.notiStore.notifications
+        },
         unreadCount() {
-            if (!this.notifications) return 0;
-            return this.notifications.filter(n => n.isRead === false).length;
+            return this.notiStore.unreadCount
         }
     },
-    mounted() {
-        this.loadNotifications();
-        // [เพิ่ม] คอยฟัง event ชื่อ 'notification-updated'
-        if (typeof window !== 'undefined') {
-            window.addEventListener('notification-updated', this.loadNotifications);
-        }
-    },
-    beforeUnmount() {
-        // [เพิ่ม] ลบ listener เมื่อ component ถูกทำลาย
-        if (typeof window !== 'undefined') {
-            window.removeEventListener('notification-updated', this.loadNotifications);
+    watch: {
+        'authStore.user': {
+            handler(newUser) {
+                if (newUser && (newUser._id || newUser.id)) {
+                    console.log("User loaded, fetching notifications...");
+                    this.notiStore.fetchNotifications();
+                    this.notiStore.initSocket();
+                }
+            },
+            immediate: true,
+            deep: true
         }
     },
     methods: {
-        loadNotifications() {
-            if (process.client) {
-                const stored = localStorage.getItem('my_app_notifications');
-                if (stored) {
-                    this.notifications = JSON.parse(stored);
-                } else {
-                    this.notifications = [];
-                }
-            }
-        }, markAsRead(item) {
-            // ทำงานเฉพาะตอนที่ยังไม่ได้อ่าน (เพื่อไม่ให้เซฟซ้ำซ้อน)
-            if (!item.isRead) {
-                item.isRead = true; // เปลี่ยนสถานะเป็นอ่านแล้ว (สีพื้นหลังจะเปลี่ยนทันที)
-
-                // บันทึกสถานะใหม่ลง LocalStorage
-                if (process.client) {
-                    localStorage.setItem('my_app_notifications', JSON.stringify(this.notifications));
-                }
-            }
+        // ✅ แก้ไข 2: เพิ่มฟังก์ชันเรียก Store
+        markAllRead() {
+            this.notiStore.markAllAsRead();
+        },
+        markAsRead(item) {
+            this.notiStore.markAsRead(item)
+        },
+        getImgUrl(path) {
+            if (!path) return '/images/icon/logo.png';
+            if (path.startsWith('http')) return path;
+            return '/images/' + path;
+        },
+        formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleString('th-TH', {
+                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+            });
         }
+    },
+    beforeUnmount() {
+        this.notiStore.disconnectSocket();
     }
 }
 </script>
 
 <style scoped>
+/* (CSS เดิม) */
 .notification-icon-wrapper {
     position: relative;
     display: inline-block;
@@ -135,11 +149,32 @@ export default {
     display: block;
 }
 
+/* ✅ แก้ไข 3: ปรับ Header ให้เป็น Flexbox เพื่อวางปุ่มขวาสุด */
 .dropdown-header {
     padding: 12px 15px;
     font-weight: bold;
     border-bottom: 1px solid #eee;
     background: #fff;
+    display: flex;
+    /* เพิ่ม */
+    justify-content: space-between;
+    /* เพิ่ม */
+    align-items: center;
+    /* เพิ่ม */
+}
+
+/* ✅ แก้ไข 4: แต่งปุ่มอ่านทั้งหมด */
+.mark-all-btn {
+    font-size: 12px;
+    color: #ff4c3b;
+    /* สีส้มตามธีม */
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.mark-all-btn:hover {
+    text-decoration: underline;
 }
 
 .notification-list {
@@ -167,8 +202,8 @@ export default {
     transition: 0.2s;
     overflow: hidden;
     width: 100%;
-    cursor: default;
-    height: 90px;
+    height: auto;
+    min-height: 90px;
     box-sizing: border-box;
 }
 
@@ -234,12 +269,16 @@ export default {
 .notif-message {
     font-size: 13px;
     color: #555;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
+    white-space: normal;
     text-overflow: ellipsis;
     margin-bottom: 4px;
     text-align: left !important;
     width: 100%;
+    line-height: 1.4;
 }
 
 .notif-date {
