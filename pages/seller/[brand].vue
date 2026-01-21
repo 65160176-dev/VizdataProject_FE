@@ -79,7 +79,8 @@ export default {
 
         // ดึงเฉพาะสินค้าของร้านนี้
         const productsRes = await $fetch(`http://localhost:3001/api/product/seller/${sellerId}`)
-        this.products = productsRes
+        // ซ่อนสินค้าที่หมดสต็อก
+        this.products = productsRes.filter(p => p.stock && p.stock > 0)
 
       } catch (error) {
         console.error('Error fetching seller data:', error)

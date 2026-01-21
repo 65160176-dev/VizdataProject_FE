@@ -108,7 +108,7 @@
                           <i class="ti-angle-left"></i>
                         </button>
                       </span>
-                      <input type="text" name="quantity" class="form-control input-number text-center" style="height: 45px; font-size: 16px; font-weight: 600;" :disabled="counter > product.stock" v-model="counter" readonly />
+                      <input type="text" name="quantity" class="form-control input-number text-center qty-input-custom" style="height: 45px; font-size: 16px; font-weight: 600;" :disabled="counter > product.stock" v-model="counter" readonly />
                       <span class="input-group-prepend">
                         <button type="button" class="btn quantity-right-plus" style="padding: 10px 15px; height: 45px;" @click="increment()" :disabled="counter >= product.stock">
                           <i class="ti-angle-right"></i>
@@ -119,8 +119,8 @@
                 </div>
 
                 <div class="product-buttons">
-                  <button class="btn btn-solid" style="padding: 12px 24px; height: auto; min-height: 45px;" @click="addToCart(product, counter)" :disabled="counter > product.stock || product.stock === 0">เพิ่มลงรถเข็น</button>
-                  <button class="btn btn-solid" style="padding: 12px 24px; height: auto; min-height: 45px;" @click="buyNow(product, counter)" :disabled="counter > product.stock || product.stock === 0">ซื้อเลย</button>
+                  <button class="btn btn-solid" style="padding: 12px 24px; height: auto; min-height: 45px;" @click="addToCart(product, counter)">เพิ่มลงรถเข็น</button>
+                  <button class="btn btn-solid" style="padding: 12px 24px; height: auto; min-height: 45px;" @click="buyNow(product, counter)">ซื้อเลย</button>
                 </div>
               </div>
             </div>
@@ -297,7 +297,24 @@ export default {
       if (useNuxtApp().$showToast) { useNuxtApp().$showToast({ msg: `เพิ่ม ${product.name} ลงตะกร้าเรียบร้อย`, type: "success" }) }
     },
     buyNow(product, qty) {
-      this.addToCart(product, qty)
+      // สร้าง item สำหรับ checkout
+      const checkoutItem = {
+        ...product,
+        id: product._id || product.id,
+        _id: product._id || product.id,
+        quantity: qty || 1,
+        title: product.name,
+        name: product.name,
+        price: Number(product.price) || 0,
+        seller: this.seller,
+        shippingCost: product.shippingCost || 'Free',
+        image: product.image
+      }
+      
+      // เซ็ตเฉพาะสินค้านี้ใน localStorage สำหรับหน้า checkout
+      localStorage.setItem('checkout_items', JSON.stringify([checkoutItem]))
+      
+      // ไปหน้า checkout
       this.$router.push('/page/account/checkout')
     },
     increment() { if (this.counter < this.product.stock) this.counter++ },
@@ -311,7 +328,8 @@ export default {
         const allProducts = await $fetch('http://localhost:3001/api/product')
         const related = allProducts.filter(p => 
           p.category === this.product.category && 
-          (p._id !== this.product._id && p.id !== this.product.id)
+          (p._id !== this.product._id && p.id !== this.product.id) &&
+          p.stock && p.stock > 0  // ซ่อนสินค้าที่หมด
         )
         
         // สุ่มเอา 6 ตัว
@@ -327,7 +345,8 @@ export default {
         // ดึงสินค้าทั้งหมด
         const allProducts = await $fetch('http://localhost:3001/api/product')
         const filtered = allProducts.filter(p => 
-          p._id !== this.product._id && p.id !== this.product.id
+          p._id !== this.product._id && p.id !== this.product.id &&
+          p.stock && p.stock > 0  // ซ่อนสินค้าที่หมด
         )
         
         // สุ่มเอา 6 ตัว
@@ -437,5 +456,59 @@ export default {
   font-weight: 600;
   color: #ff4c3b;
   margin: 5px 0;
+}
+
+.qty-input-custom {
+  border-color: #ced4da !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.qty-input-custom:focus {
+  border-color: #ced4da !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.qty-input-custom:active {
+  border-color: #ced4da !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.qty-input-custom:disabled {
+  border-color: #ced4da !important;
+  background-color: #e9ecef !important;
+}
+
+/* ลบกรอบสีส้มออกจากปุ่มเพิ่ม/ลด */
+.qty-box .btn {
+  border-color: #ced4da !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.qty-box .btn:focus,
+.qty-box .btn:active,
+.qty-box .btn:hover {
+  border-color: #ced4da !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.quantity-left-minus,
+.quantity-right-plus {
+  border-color: #ced4da !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.quantity-left-minus:focus,
+.quantity-left-minus:active,
+.quantity-right-plus:focus,
+.quantity-right-plus:active {
+  border-color: #ced4da !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 </style>

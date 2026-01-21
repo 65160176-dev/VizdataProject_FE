@@ -154,6 +154,9 @@ const filteredProducts = computed(() => {
   let result = allProducts.value
   const term = (q.value || '').toLowerCase().trim()
 
+  // ซ่อนสินค้าที่หมดสต็อก
+  result = result.filter(p => p.stock && p.stock > 0)
+
   if (term) {
     result = result.filter(p => 
       (p.name || p.title || '').toLowerCase().includes(term) || 
