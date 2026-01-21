@@ -10,18 +10,27 @@
               <div class="faq-tab">
                 <ul class="nav nav-tabs flex-column" id="top-tab" role="tablist">
                   <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#info" class="nav-link active">Account Info</a>
+                    <a class="nav-link" :class="{ active: activeMainTab === 'info' }" data-bs-toggle="tab"
+                      data-bs-target="#info" @click="updateTab('info')">
+                      Account Info
+                    </a>
                   </li>
                   <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#address" class="nav-link">Address Book</a>
+                    <a class="nav-link" :class="{ active: activeMainTab === 'address' }" data-bs-toggle="tab"
+                      data-bs-target="#address" @click="updateTab('address')">
+                      Address Book
+                    </a>
                   </li>
                   <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#orders" class="nav-link" @click="selectedOrder = null">
+                    <a class="nav-link" :class="{ active: activeMainTab === 'orders' }" data-bs-toggle="tab"
+                      data-bs-target="#orders" @click="updateTab('orders'); selectedOrder = null">
                       My Orders
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a data-bs-toggle="tab" data-bs-target="#profile" class="nav-link">Logout</a>
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#profile">
+                      Logout
+                    </a>
                   </li>
                 </ul>
               </div>
@@ -79,7 +88,8 @@
                         <div class="box">
                           <div class="box-title">
                             <h3>Address Book</h3>
-                            <a href="javascript:void(0)" @click="changeTab('address')">Manage Addresses</a>
+                            <a href="javascript:void(0)" @click="updateTab('address'); changeTab('address')">Manage
+                              Addresses</a>
                           </div>
                           <div class="row">
                             <div class="col-sm-6">
@@ -328,7 +338,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router' // ✅ แก้ไข import: useRoute
 import { useAuthStore } from '~/store/auth'
 import { useAddressStore } from '~/store/address'
 import { useRuntimeConfig } from '#imports'
@@ -340,9 +350,19 @@ import OrderDetail from './orders/orderDetail.vue'
 const auth = useAuthStore()
 const addressStore = useAddressStore()
 const router = useRouter()
+const route = useRoute() // ✅ ประกาศ useRoute
 const config = useRuntimeConfig()
 const API_BASE = config.public?.apiBase || 'http://localhost:3001/api'
 const BACKEND_URL = 'http://localhost:3001'
+
+// ✅ เปลี่ยนชื่อตัวแปร Sidebar เป็น activeMainTab
+const activeMainTab = ref('info')
+
+// ✅ ฟังก์ชันเปลี่ยน Tab ของ Sidebar (อัปเดต URL ด้วย)
+const updateTab = (tabName) => {
+  activeMainTab.value = tabName
+  router.replace({ query: { ...route.query, tab: tabName } })
+}
 
 // --- Address Data ---
 const addressList = computed(() => addressStore.addresses)
@@ -370,6 +390,16 @@ onMounted(async () => {
       await addressStore.fetchAddresses()
       await fetchOrders()
     }
+
+    // ✅ เช็ค URL และตั้งค่า Tab เริ่มต้น
+    if (route.query.tab) {
+      const tabName = route.query.tab
+      const triggerEl = document.querySelector(`a[data-bs-target="#${tabName}"]`)
+      if (triggerEl) {
+        triggerEl.click()
+        activeMainTab.value = tabName
+      }
+    }
   }
 })
 
@@ -383,7 +413,7 @@ watch(() => auth.user, async (newUser, oldUser) => {
   }
 })
 
-// --- ✅ Function Fetch Orders (แก้ไขใหม่) ---
+// --- Function Fetch Orders ---
 const fetchOrders = async () => {
   if (!auth.isLoggedIn) return;
   isLoadingOrders.value = true;
@@ -413,7 +443,6 @@ const fetchOrders = async () => {
         });
       }
 
-      // ✅ ดึง shopId ออกมา
       let shopName = 'Official Store';
       let shopId = null;
       const firstItem = order.item && order.item[0];
@@ -427,8 +456,8 @@ const fetchOrders = async () => {
         items: order.item || [],
         date: displayDate,
         shopName: shopName,
-        shopId: shopId, // ✅ ส่งออกไปใช้
-        shippingFee: order.shippingCost || order.shippingFee || 0 // ✅ แก้ไขการดึงค่าส่ง
+        shopId: shopId,
+        shippingFee: order.shippingCost || order.shippingFee || 0
       };
     });
 
@@ -442,11 +471,8 @@ const fetchOrders = async () => {
   }
 }
 
-// ... (ส่วน Address Functions และ Account Info เหมือนเดิม) ...
-// เพื่อความกระชับ ผมละไว้ในส่วนนี้ (เพราะคุณไม่ได้แก้ส่วนนี้)
-// แต่ถ้าก๊อปไปวาง ต้องเอาส่วน Address/Account Info กลับมาด้วยนะครับ (จากโค้ดเดิมของคุณ)
+// ... (ส่วน Address Functions และ Account Info) ...
 
-// --- Address Functions ---
 const openModal = (item = null) => {
   if (item) selectedAddress.value = { ...item }
   else selectedAddress.value = null
@@ -624,7 +650,8 @@ const saveAvatar = async () => {
   }
 }
 
-// --- Order Logic & Tabs (Updated) ---
+// --- Order Logic & Tabs ---
+// ✅ ตัวแปร activeTab ยังคงไว้สำหรับกรอง Order (ไม่ชนกับ Sidebar แล้ว)
 const activeTab = ref('all')
 const currentPage = ref(1)
 const itemsPerPage = 5
@@ -684,14 +711,39 @@ const handleOrderCancel = (cancelledOrder) => {
   if (cancelledOrder) saveOrderChanges(cancelledOrder)
   selectedOrder.value = null
 }
-const saveOrderChanges = (updatedOrder) => {
-  const index = orders.value.findIndex(o => o.orderId === updatedOrder.orderId)
-  if (index !== -1) {
-    orders.value[index] = updatedOrder
-    orders.value = [...orders.value]
+
+const saveOrderChanges = async (updatedOrder) => {
+  try {
+    const token = auth.token || localStorage.getItem('token');
+    const id = updatedOrder._id || updatedOrder.id;
+
+    if (!id) return;
+
+    await $fetch(`${API_BASE}/order/${id}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: {
+        status: updatedOrder.status,
+        cancelReason: updatedOrder.cancelReason
+      }
+    });
+
+    const index = orders.value.findIndex(o => o.orderId === updatedOrder.orderId)
+    if (index !== -1) {
+      orders.value[index] = { ...updatedOrder }
+      orders.value = [...orders.value]
+    }
+
+    useNuxtApp().$showToast({ msg: "อัปเดตสถานะสำเร็จ", type: "success" });
+
+  } catch (error) {
+    console.error("Failed to update order status:", error);
+    useNuxtApp().$showToast({ msg: "บันทึกสถานะไม่สำเร็จ", type: "error" });
+    fetchOrders();
   }
 }
 
+// ฟังก์ชันนี้เก็บไว้สำหรับปุ่มลิงก์ภายใน
 const changeTab = (tabId) => {
   if (import.meta.client) {
     const triggerEl = document.querySelector(`#top-tab a[data-bs-target="#${tabId}"]`)
@@ -709,7 +761,6 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-/* CSS เดิม */
 .custom-radio input[type="radio"] {
   accent-color: #28a745;
 }
