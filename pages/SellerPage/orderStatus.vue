@@ -62,7 +62,7 @@
                 <h6 class="fw-bold mb-1 text-dark">{{ order.customer || 'Unknown' }}</h6>
                 <p class="text-muted small mb-0 text-truncate">{{ getItemName(order) }}</p>
                 <div class="mt-2 small fw-bold" :class="getTextClass(order.status)">
-                   ● {{ order.status.toUpperCase() }}
+                    ● {{ order.status.toUpperCase() }}
                 </div>
               </div>
             </div>
@@ -80,8 +80,8 @@
         <div class="modal-content-custom p-0 overflow-hidden shadow-lg" style="max-width: 600px;">
           <div class="px-4 py-3 bg-white border-bottom d-flex justify-content-between align-items-center">
             <div>
-              <h5 class="fw-bold mb-0 text-dark">รายการคำขอใหม่ 🔔</h5>
-              <small class="text-muted">คุณมี {{ pendingOrders.length }} ออเดอร์ที่รอการยืนยัน</small>
+              <h5 class="fw-bold mb-0 text-dark">รายการคำขอตรวจสอบ 🚨</h5>
+              <small class="text-muted">คุณมี {{ pendingOrders.length }} รายการที่ต้องแก้ไข</small>
             </div>
             <button class="btn btn-light rounded-circle" @click="showRequestsModal = false">
               <Icon name="feather:x" size="20" />
@@ -91,33 +91,38 @@
           <div class="p-0 bg-light" style="max-height: 70vh; overflow-y: auto;">
              <div v-if="pendingOrders.length === 0" class="text-center py-5">
                 <Icon name="feather:check-circle" size="48" class="text-success mb-2 opacity-50"/>
-                <p class="text-muted mb-0">ไม่มีคำขอใหม่ในขณะนี้</p>
+                <p class="text-muted mb-0">ไม่มีคำขอยกเลิกหรือคืนสินค้าในขณะนี้</p>
              </div>
 
              <div v-else class="list-group list-group-flush">
                 <div v-for="order in pendingOrders" :key="order._id" class="list-group-item p-3 border-bottom">
                    <div class="d-flex justify-content-between align-items-start mb-2">
                       <div class="d-flex align-items-center">
-                         <img :src="getItemImage(order)" class="rounded border me-3" style="width: 50px; height: 50px; object-fit: cover;">
-                         <div>
-                            <h6 class="fw-bold mb-0 text-dark">Order #{{ order.orderId || order._id.substr(-6) }}</h6>
-                            <small class="text-muted">{{ order.customer }} • {{ getItems(order).length }} items</small>
-                         </div>
+                          <img :src="getItemImage(order)" class="rounded border me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                          <div>
+                             <h6 class="fw-bold mb-0 text-dark">Order #{{ order.orderId || order._id.substr(-6) }}</h6>
+                             <small class="text-muted">{{ order.customer }} • {{ getItems(order).length }} items</small>
+                             <div class="text-danger small fw-bold mt-1" v-if="order.status === 'return_requested'">🚨 แจ้งปัญหา/ขอคืนสินค้า</div>
+                             <div class="text-warning small fw-bold mt-1" v-else-if="order.status === 'cancel requested'">⚠️ ขอยกเลิกออเดอร์</div>
+                          </div>
                       </div>
                       <div class="fw-bold text-primary">{{ formatCurrency(calculateTotal(order)) }}</div>
                    </div>
                    
-                   <div class="d-flex gap-2 mt-3">
-  <button class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill" 
-          @click="handleRequestAction(order._id, 'preparing')">
-    ไม่ยอมรับ
-  </button>
+                   <div v-if="order.cancelReason" class="bg-light p-2 rounded mb-2 border small text-secondary">
+                        <span class="fw-bold">เหตุผล:</span> {{ order.cancelReason }}
+                   </div>
 
-  <button class="btn btn-sm btn-success flex-grow-1 rounded-pill text-white fw-bold" 
-          @click="handleRequestAction(order._id, 'cancelled')">
-    ยอมรับคำขอยกเลิก
-  </button>
-</div>
+                   <div class="d-flex gap-2 mt-2">
+                        <button class="btn btn-sm btn-success flex-grow-1 rounded-pill text-white fw-bold" 
+                                @click="handleRequestAction(order._id, 'cancelled')">
+                            <Icon name="feather:check" size="14" class="me-1"/> อนุมัติการยกเลิก/คืนเงิน
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill" 
+                                @click="handleRequestAction(order._id, 'shipping')">
+                            ปฏิเสธคำขอ
+                        </button>
+                   </div>
                 </div>
              </div>
           </div>
@@ -168,12 +173,19 @@
                   </thead>
                   <tbody>
                     <tr v-for="(it, idx) in getItems(selectedOrder)" :key="idx" class="border-bottom">
-                      <td><div class="small fw-bold">{{ it.name }}</div></td>
+                      <td>
+                          <div class="d-flex align-items-center">
+                              <img :src="it.image || '/images/dashboard/default.png'" 
+                                   class="rounded border me-2" 
+                                   style="width: 40px; height: 40px; object-fit: cover;">
+                              <div class="small fw-bold text-wrap">{{ it.name }}</div>
+                          </div>
+                      </td>
                       <td class="text-end small">{{ formatCurrency(it.price) }}</td>
                       <td class="text-end small">x{{ it.qty }}</td>
                       <td class="text-end fw-bold">{{ formatCurrency(it.price * it.qty) }}</td>
                     </tr>
-                  </tbody>
+                    </tbody>
                 </table>
               </div>
 
@@ -190,7 +202,10 @@
                   <button v-if="selectedOrder.status === 'shipped'" class="btn btn-success rounded-pill px-4 shadow-sm text-white" @click="handleUpdate(selectedOrder._id, 'completed')">
                     เสร็จสมบูรณ์ <Icon name="feather:check" class="ms-1"/>
                   </button>
-                  <button v-else class="btn btn-secondary rounded-pill px-4" @click="closeDetail">ปิดหน้าต่าง</button>
+                  <button v-if="['cancel requested', 'return_requested'].includes(selectedOrder.status)" 
+                           class="btn btn-danger rounded-pill px-4 shadow-sm text-white" @click="handleUpdate(selectedOrder._id, 'cancelled')">
+                    อนุมัติยกเลิก <Icon name="feather:x-circle" class="ms-1"/>
+                  </button>
                 </div>
               </div>
           </div>
@@ -210,7 +225,7 @@ definePageMeta({ layout: 'seller' })
 const orderStore = useOrderStore()
 const authStore = useAuthStore()
 const currentStatus = ref('preparing')
-const showRequestsModal = ref(false) // State สำหรับเปิด/ปิด Modal คำขอใหม่
+const showRequestsModal = ref(false) 
 
 const statuses = [
   { key: 'preparing', label: 'กำลังเตรียม', icon: 'feather:package' },
@@ -237,12 +252,15 @@ const myAllOrders = computed(() => {
     })
 })
 
-// 2. กรองเฉพาะสถานะ Pending (สำหรับ Modal คำขอใหม่)
+// 2. กรองเฉพาะสถานะ "คำขอที่มีปัญหา"
 const pendingOrders = computed(() => {
-    return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === 'pending')
+    return myAllOrders.value.filter(o => {
+        const s = (o.status || '').toLowerCase()
+        return s === 'cancel requested' || s === 'return_requested'
+    })
 })
 
-// 3. กรองตาม Tab ที่เลือก (Preparing/Shipped/etc.)
+// 3. กรองตาม Tab ที่เลือก
 const filteredMyOrders = computed(() => {
     return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === currentStatus.value.toLowerCase())
 })
@@ -253,9 +271,7 @@ function countMyOrdersByStatus(statusKey) {
 
 // Actions
 async function handleRequestAction(id, action) {
-    // action: 'preparing' (รับ) หรือ 'cancelled' (ไม่รับ)
     await orderStore.updateStatus(id, action)
-    // ถ้าไม่มี Pending เหลือแล้ว ให้ปิด Modal
     if (pendingOrders.value.length === 0) {
         showRequestsModal.value = false
     }
@@ -287,7 +303,7 @@ function closeDetail() { showDetail.value = false }
 </script>
 
 <style scoped>
-/* CSS เดิม + CSS สำหรับปุ่มใหม่ */
+/* CSS Styling */
 .header-preparing { background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%); }
 .text-status-preparing { color: #0277BD; }
 .header-shipped { background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%); }
@@ -296,6 +312,7 @@ function closeDetail() { showDetail.value = false }
 .text-status-completed { color: #00695C; }
 .header-cancelled { background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%); }
 .text-status-cancelled { color: #C62828; }
+.header-return_requested { background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%); }
 
 .active-tab-preparing { background-color: #0288D1 !important; color: white !important; }
 .active-tab-shipped { background-color: #5E35B1 !important; color: white !important; }

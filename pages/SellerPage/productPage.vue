@@ -73,6 +73,15 @@
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>
         </div>
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body d-flex align-items-center">
+              <Icon name="feather:alert-circle" size="20" class="me-2" />
+              {{ errorMessage }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>
       </div>
 
       <ClientOnly>
@@ -146,14 +155,14 @@
                     <div class="col-md-7">
                       <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="newItem.name" type="text"></div>
                       <div class="row">
-                        <div class="col-6 form-group mb-3"><label class="small fw-bold">Stock :</label><input class="form-control" v-model="newItem.stock" type="number"></div>
-                        <div class="col-6 form-group mb-3"><label class="small fw-bold">Price :</label><input class="form-control" v-model="newItem.price" type="number"></div>
+                        <div class="col-6 form-group mb-3"><label class="small fw-bold">Stock :</label><input class="form-control" v-model="newItem.stock" type="number" min="0"></div>
+                        <div class="col-6 form-group mb-3"><label class="small fw-bold">Price :</label><input class="form-control" v-model="newItem.price" type="number" min="1"></div>
                       </div>
                       <div class="row">
-                        <div class="col-6 form-group mb-3"><label class="small fw-bold">Commission (%) :</label><input class="form-control" v-model="newItem.commission" type="number"></div>
+                        <div class="col-6 form-group mb-3"><label class="small fw-bold">Commission (%) :</label><input class="form-control" v-model="newItem.commission" type="number" min="0.1" step="0.1"></div>
                         <div class="col-6 form-group mb-3">
                           <label class="text-primary fw-bold small">Weight (kg) :</label>
-                          <input class="form-control border-primary" v-model="newItem.weight" type="number" step="0.1">
+                          <input class="form-control border-primary" v-model="newItem.weight" type="number" min="0" step="0.1">
                           
                           <div class="mt-2" v-if="newItem.weight >= 0">
                              <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
@@ -199,14 +208,14 @@
                     <div class="col-md-7">
                         <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="editItem.name"></div>
                         <div class="row">
-                          <div class="col-6 form-group mb-3"><label class="small fw-bold">Stock :</label><input class="form-control" v-model="editItem.stock" type="number"></div>
-                          <div class="col-6 form-group mb-3"><label class="small fw-bold">Price :</label><input class="form-control" v-model="editItem.price" type="number"></div>
+                          <div class="col-6 form-group mb-3"><label class="small fw-bold">Stock :</label><input class="form-control" v-model="editItem.stock" type="number" min="0"></div>
+                          <div class="col-6 form-group mb-3"><label class="small fw-bold">Price :</label><input class="form-control" v-model="editItem.price" type="number" min="1"></div>
                         </div>
                         <div class="row">
-                          <div class="col-6 form-group mb-3"><label class="small fw-bold">Commission (%) :</label><input class="form-control" v-model="editItem.commission" type="number"></div>
+                          <div class="col-6 form-group mb-3"><label class="small fw-bold">Commission (%) :</label><input class="form-control" v-model="editItem.commission" type="number" min="0.1" step="0.1"></div>
                           <div class="col-6 form-group mb-3">
                             <label class="text-primary fw-bold small">Weight (kg) :</label>
-                            <input class="form-control border-primary" v-model="editItem.weight" type="number" step="0.1">
+                            <input class="form-control border-primary" v-model="editItem.weight" type="number" min="0" step="0.1">
                             
                             <div class="mt-2" v-if="editItem.weight >= 0">
                                 <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
@@ -298,15 +307,23 @@ const allCategories = ref([...defaultCats])
 const selectedCategories = ref([...defaultCats])
 const categoryToDelete = ref({ index: null, name: '' })
 
-// --- Toast Logic (New) ---
+// --- Toast Logic ---
 const toastMessage = ref('')
+const errorMessage = ref('')
+
 const showToast = (message) => {
   toastMessage.value = message
   const toastEl = document.getElementById('liveToast')
-  const toast = new bootstrap.Toast(toastEl) // สร้าง Toast instance
-  toast.show() // สั่งแสดง
+  const toast = new bootstrap.Toast(toastEl)
+  toast.show()
 }
-// -------------------------
+
+const showError = (message) => {
+  errorMessage.value = message
+  const toastEl = document.getElementById('errorToast')
+  const toast = new bootstrap.Toast(toastEl)
+  toast.show()
+}
 
 // --- Category Logic ---
 const toggleCategory = (cat) => {
@@ -421,8 +438,21 @@ const onFileChange = (e, m) => {
 
 const resetNewItemForm = () => { newItem.value = { name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null } }
 
-// --- SAVE FUNCTIONS (Using Toast) ---
+// --- VALIDATION HELPER ---
+const validateProductData = (item) => {
+  if (item.price <= 0) return 'Price ห้ามน้อยกว่า 1 บาท'
+  if (item.commission <= 0) return 'Commission must be greater than 0.'
+  if (item.stock < 0) return 'stock ไม่สามารถใส่สินค้าติดลบได้'
+  if (item.weight < 0) return 'Weight cannot be negative.'
+  return null
+}
+
+// --- SAVE FUNCTIONS ---
 const saveNewItem = async () => {
+  // Validation
+  const error = validateProductData(newItem.value)
+  if (error) { showError(error); return; }
+
   const token = localStorage.getItem('token')
   const fd = new FormData()
   fd.append('name', newItem.value.name); fd.append('stock', newItem.value.stock); fd.append('price', newItem.value.price); fd.append('commission', newItem.value.commission); fd.append('weight', newItem.value.weight); fd.append('shippingCost', newItem.value.shippingCost); fd.append('description', newItem.value.description); fd.append('category', newItem.value.category)
@@ -430,7 +460,7 @@ const saveNewItem = async () => {
   
   await $fetch('http://localhost:3001/api/product', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
   
-  showToast('เพิ่มสินค้าใหม่เรียบร้อยแล้ว') // ✅ แจ้งเตือนแบบไม่ต้องกด
+  showToast('เพิ่มสินค้าใหม่เรียบร้อยแล้ว')
   refresh(); resetNewItemForm(); safeCloseModal('addModal')
 }
 
@@ -444,6 +474,10 @@ function goEdit(id) {
 }
 
 async function saveEdit() {
+  // Validation
+  const error = validateProductData(editItem.value)
+  if (error) { showError(error); return; }
+
   const token = localStorage.getItem('token')
   const fd = new FormData()
   fd.append('name', editItem.value.name); fd.append('stock', editItem.value.stock); fd.append('price', editItem.value.price); fd.append('commission', editItem.value.commission); fd.append('weight', editItem.value.weight); fd.append('shippingCost', editItem.value.shippingCost); fd.append('category', editItem.value.category); fd.append('description', editItem.value.description)
@@ -451,7 +485,7 @@ async function saveEdit() {
   
   await $fetch(`http://localhost:3001/api/product/${editItem.value._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
   
-  showToast('แก้ไขข้อมูลสินค้าเรียบร้อยแล้ว') // ✅ แจ้งเตือนแบบไม่ต้องกด
+  showToast('แก้ไขข้อมูลสินค้าเรียบร้อยแล้ว')
   refresh(); safeCloseModal('editModal')
 }
 
@@ -460,7 +494,7 @@ async function deleteItem(id) {
     const token = localStorage.getItem('token')
     await $fetch(`http://localhost:3001/api/product/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
     
-    showToast('ลบสินค้าเรียบร้อยแล้ว') // ✅ แจ้งเตือนแบบไม่ต้องกด
+    showToast('ลบสินค้าเรียบร้อยแล้ว')
     refresh()
   }
 }
@@ -468,7 +502,10 @@ async function deleteItem(id) {
 async function saveAddStock() {
   const t = products.value.find(p => p._id === stockForm.value.id)
   if (t) {
-    const n = parseInt(t.stock) + parseInt(stockForm.value.quantity)
+    const qtyToAdd = parseInt(stockForm.value.quantity)
+    if (qtyToAdd < 1) { showError('Quantity must be at least 1'); return; }
+
+    const n = parseInt(t.stock) + qtyToAdd
     const token = localStorage.getItem('token')
     const fd = new FormData()
     fd.append('stock', n)
@@ -479,7 +516,7 @@ async function saveAddStock() {
       body: fd 
     })
     
-    showToast('เพิ่มสต็อกเรียบร้อยแล้ว') // ✅ แจ้งเตือนแบบไม่ต้องกด
+    showToast('เพิ่มสต็อกเรียบร้อยแล้ว')
     refresh(); safeCloseModal('addStockModal')
     stockForm.value = { id: '', quantity: '' }
   }
