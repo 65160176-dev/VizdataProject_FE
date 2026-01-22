@@ -338,7 +338,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router' // ✅ แก้ไข import: useRoute
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '~/store/auth'
 import { useAddressStore } from '~/store/address'
 import { useRuntimeConfig } from '#imports'
@@ -350,15 +350,13 @@ import OrderDetail from './orders/orderDetail.vue'
 const auth = useAuthStore()
 const addressStore = useAddressStore()
 const router = useRouter()
-const route = useRoute() // ✅ ประกาศ useRoute
+const route = useRoute()
 const config = useRuntimeConfig()
 const API_BASE = config.public?.apiBase || 'http://localhost:3001/api'
 const BACKEND_URL = 'http://localhost:3001'
 
-// ✅ เปลี่ยนชื่อตัวแปร Sidebar เป็น activeMainTab
 const activeMainTab = ref('info')
 
-// ✅ ฟังก์ชันเปลี่ยน Tab ของ Sidebar (อัปเดต URL ด้วย)
 const updateTab = (tabName) => {
   activeMainTab.value = tabName
   router.replace({ query: { ...route.query, tab: tabName } })
@@ -391,7 +389,6 @@ onMounted(async () => {
       await fetchOrders()
     }
 
-    // ✅ เช็ค URL และตั้งค่า Tab เริ่มต้น
     if (route.query.tab) {
       const tabName = route.query.tab
       const triggerEl = document.querySelector(`a[data-bs-target="#${tabName}"]`)
@@ -471,15 +468,13 @@ const fetchOrders = async () => {
   }
 }
 
-// ... (ส่วน Address Functions และ Account Info) ...
-
+// ... (Address Functions omitted for brevity, logic remains same) ...
 const openModal = (item = null) => {
   if (item) selectedAddress.value = { ...item }
   else selectedAddress.value = null
   showAddModal.value = true
 }
 const closeModal = () => { showAddModal.value = false; selectedAddress.value = null }
-
 const handleSaveAddress = async (formData) => {
   try {
     const id = formData._id || formData.id;
@@ -507,12 +502,10 @@ const handleSaveAddress = async (formData) => {
     useNuxtApp().$showToast({ msg: "บันทึกไม่สำเร็จ", type: "error" });
   }
 }
-
 const deleteAddress = (itemToDelete) => {
   addressToDelete.value = itemToDelete
   showDeleteModal.value = true
 }
-
 const confirmDeleteAddress = async () => {
   if (addressToDelete.value) {
     try {
@@ -526,7 +519,6 @@ const confirmDeleteAddress = async () => {
     }
   }
 }
-
 const setDefaultAddress = async (selectedItem) => {
   try {
     const id = selectedItem._id || selectedItem.id;
@@ -540,11 +532,9 @@ const setDefaultAddress = async (selectedItem) => {
       zipCode: selectedItem.zipCode || selectedItem.pincode,
       isDefault: true
     };
-
     await addressStore.updateAddress(id, payload)
     useNuxtApp().$showToast({ msg: "ตั้งค่าเริ่มต้นสำเร็จ", type: "success" });
     await addressStore.fetchAddresses();
-
   } catch (err) {
     console.error(err)
     const msg = err.response?.data?.message || "ตั้งค่าไม่สำเร็จ";
@@ -552,24 +542,21 @@ const setDefaultAddress = async (selectedItem) => {
   }
 }
 
-// --- Account Info Logic ---
+// ... (Account Info Logic omitted for brevity, logic remains same) ...
 const editableName = ref('')
 const editingName = ref(false)
 const avatarSrc = ref('/images/default-avatar.png')
 const pendingAvatarFile = ref(null)
 const pendingAvatarPreview = ref(null)
-
 const isAuthenticated = computed(() => !!auth.isLoggedIn)
 const userEmail = computed(() => auth.user || '')
 const userName = computed(() => auth.userName || '')
-
 const initAvatarAndName = () => {
   if (auth.user && auth.user.avatar) {
     avatarSrc.value = auth.user.avatar.startsWith('http') ? auth.user.avatar : (`${BACKEND_URL}${auth.user.avatar}`)
   }
   editableName.value = auth.userName || (auth.user?.username || '')
 }
-
 const updateLocalAuth = (updatedUser) => {
   if (!updatedUser) return
   auth.user = updatedUser
@@ -581,9 +568,7 @@ const updateLocalAuth = (updatedUser) => {
     } catch (e) { }
   }
 }
-
 const cancelEditName = () => { editingName.value = false; editableName.value = auth.userName || (auth.user?.username || '') }
-
 const saveName = async () => {
   if (!editableName.value || !isAuthenticated.value) return
   const userId = auth.user?.id || auth.user?._id
@@ -604,7 +589,6 @@ const saveName = async () => {
     useNuxtApp().$showToast({ msg: "เปลี่ยนชื่อไม่สำเร็จ", type: "error" });
   }
 }
-
 const onAvatarSelected = (e) => {
   const file = e.target.files && e.target.files[0]
   if (!file) return
@@ -614,12 +598,10 @@ const onAvatarSelected = (e) => {
   reader.onload = () => { pendingAvatarPreview.value = reader.result }
   reader.readAsDataURL(file)
 }
-
 const cancelAvatar = () => {
   pendingAvatarFile.value = null
   pendingAvatarPreview.value = null
 }
-
 const saveAvatar = async () => {
   const file = pendingAvatarFile.value
   if (!file) return
@@ -627,7 +609,6 @@ const saveAvatar = async () => {
   form.append('file', file)
   const isSeller = Number(auth.userType) === 0
   const endpoint = isSeller ? `${API_BASE}/sellers/upload-avatar` : `${API_BASE}/users/upload-avatar`
-
   try {
     const uploadRes = await fetch(endpoint, {
       method: 'POST',
@@ -651,7 +632,6 @@ const saveAvatar = async () => {
 }
 
 // --- Order Logic & Tabs ---
-// ✅ ตัวแปร activeTab ยังคงไว้สำหรับกรอง Order (ไม่ชนกับ Sidebar แล้ว)
 const activeTab = ref('all')
 const currentPage = ref(1)
 const itemsPerPage = 5
@@ -665,14 +645,23 @@ const tabs = [
   { label: 'ยกเลิก', value: 'cancelled' },
 ]
 
+// ✅✅✅ แก้ไข Logic ตรงนี้: ให้ cancel requested อยู่ใน processing
 const checkStatus = (orderStatus, tab) => {
   const s = (orderStatus || '').toLowerCase();
   switch (tab) {
-    case 'pending': return s === 'pending' || s === 'pending review';
-    case 'processing': return s === 'preparing' || s === 'processing' || s === 'accepted';
-    case 'shipping': return s === 'shipped' || s === 'shipping' || s === 'arrived';
-    case 'completed': return s === 'completed' || s === 'delivered';
-    case 'cancelled': return s === 'cancelled' || s === 'cancel requested' || s === 'cancel';
+    case 'pending':
+      return s === 'pending' || s === 'pending review';
+    case 'processing':
+      // เพิ่ม cancel requested ให้ยังอยู่ใน Tab นี้
+      return s === 'preparing' || s === 'processing' || s === 'accepted' || s === 'confirmed' || s === 'cancel requested' || s === 'cancellation requested';
+    case 'shipping':
+      // เพิ่ม return_requested ให้ยังอยู่ใน Tab นี้
+      return s === 'shipped' || s === 'shipping' || s === 'arrived' || s === 'return_requested';
+    case 'completed':
+      return s === 'completed' || s === 'delivered';
+    case 'cancelled':
+      // เอา cancel requested ออก เพื่อให้แสดงเฉพาะที่ยกเลิกสำเร็จแล้ว
+      return s === 'cancelled' || s === 'cancel';
     default: return false;
   }
 }
@@ -743,7 +732,6 @@ const saveOrderChanges = async (updatedOrder) => {
   }
 }
 
-// ฟังก์ชันนี้เก็บไว้สำหรับปุ่มลิงก์ภายใน
 const changeTab = (tabId) => {
   if (import.meta.client) {
     const triggerEl = document.querySelector(`#top-tab a[data-bs-target="#${tabId}"]`)
