@@ -40,7 +40,7 @@
           <div class="col-lg-9">
             <div class="faq-content tab-content" id="top-tabContent">
 
-              <div class="tab-pane fade show active" id="info">
+              <div class="tab-pane fade" :class="{ 'show active': activeMainTab === 'info' }" id="info">
                 <div class="dashboard-right">
                   <div class="dashboard">
                     <div class="page-title">
@@ -115,7 +115,7 @@
                 </div>
               </div>
 
-              <div class="tab-pane fade" id="address">
+              <div class="tab-pane fade" :class="{ 'show active': activeMainTab === 'address' }" id="address">
                 <div class="dashboard-right">
                   <div class="dashboard">
                     <div class="page-title d-flex justify-content-between align-items-center mb-3">
@@ -187,7 +187,7 @@
                 </div>
               </div>
 
-              <div class="tab-pane fade" id="orders">
+              <div class="tab-pane fade" :class="{ 'show active': activeMainTab === 'orders' }" id="orders">
                 <div class="dashboard-right">
                   <div class="dashboard">
                     <div class="page-title mb-3" v-if="!selectedOrder">
@@ -205,7 +205,7 @@
                             class="d-flex w-100 overflow-auto mb-4 pb-2 border-bottom text-nowrap custom-scrollbar gap-2">
                             <button v-for="tab in tabs" :key="tab.value" class="btn rounded-pill px-3 flex-fill"
                               :class="activeTab === tab.value ? 'btn-dark' : 'btn-outline-secondary border-0'"
-                              @click="activeTab = tab.value">
+                              @click="updateOrderFilter(tab.value)">
                               {{ tab.label }}
                               <span class="small ms-1 opacity-75">({{ getCount(tab.value) }})</span>
                             </button>
@@ -221,7 +221,7 @@
                                   <span class="text-muted ms-2 small">{{ order.date }}</span>
                                 </div>
                                 <span class="badge rounded-pill text-uppercase" :class="getStatusClass(order.status)">
-                                  {{ order.status }}
+                                  {{ formatStatus(order.status) }}
                                 </span>
                               </div>
                               <div class="card-body p-3">
@@ -259,7 +259,7 @@
                                   <div class="col-md-4 text-end">
                                     <div class="mb-2 fw-bold text-primary">฿{{ order.total.toLocaleString() }}</div>
                                     <button class="btn btn-outline-secondary btn-sm" style="min-width: 120px;"
-                                      @click.stop="selectedOrder = order">ดูรายละเอียด</button>
+                                      @click.stop="openOrder(order)">ดูรายละเอียด</button>
                                   </div>
                                 </div>
                               </div>
@@ -269,17 +269,18 @@
                               <nav aria-label="Page navigation">
                                 <ul class="pagination">
                                   <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                                    <button class="page-link" @click="changePage(currentPage - 1)"
+                                    <button class="page-link" @click.stop="changePage(currentPage - 1)"
                                       aria-label="Previous">
                                       <span aria-hidden="true">&laquo;</span>
                                     </button>
                                   </li>
                                   <li class="page-item" v-for="page in totalPages" :key="page"
                                     :class="{ active: currentPage === page }">
-                                    <button class="page-link" @click="changePage(page)">{{ page }}</button>
+                                    <button class="page-link" @click.stop="changePage(page)">{{ page }}</button>
                                   </li>
                                   <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                                    <button class="page-link" @click="changePage(currentPage + 1)" aria-label="Next">
+                                    <button class="page-link" @click.stop="changePage(currentPage + 1)"
+                                      aria-label="Next">
                                       <span aria-hidden="true">&raquo;</span>
                                     </button>
                                   </li>
@@ -296,7 +297,7 @@
                       </div>
 
                       <div v-else>
-                        <OrderDetail :order="selectedOrder" @back="selectedOrder = null" @cancel="handleOrderCancel"
+                        <OrderDetail :order="selectedOrder" @back="closeOrder" @cancel="handleOrderCancel"
                           @update="saveOrderChanges" />
                       </div>
                     </template>
@@ -338,7 +339,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router' // ✅ แก้ไข import: useRoute
 import { useAuthStore } from '~/store/auth'
 import { useAddressStore } from '~/store/address'
 import { useRuntimeConfig } from '#imports'
@@ -350,13 +351,16 @@ import OrderDetail from './orders/orderDetail.vue'
 const auth = useAuthStore()
 const addressStore = useAddressStore()
 const router = useRouter()
-const route = useRoute()
+const route = useRoute() // ✅ ประกาศ useRoute
 const config = useRuntimeConfig()
 const API_BASE = config.public?.apiBase || 'http://localhost:3001/api'
 const BACKEND_URL = 'http://localhost:3001'
+const isAuthenticated = computed(() => !!auth.isLoggedIn || (!!auth.user && Object.keys(auth.user).length > 0))
 
+// ✅ เปลี่ยนชื่อตัวแปร Sidebar เป็น activeMainTab
 const activeMainTab = ref('info')
 
+// ✅ ฟังก์ชันเปลี่ยน Tab ของ Sidebar (อัปเดต URL ด้วย)
 const updateTab = (tabName) => {
   activeMainTab.value = tabName
   router.replace({ query: { ...route.query, tab: tabName } })
@@ -379,23 +383,41 @@ const isLoadingOrders = ref(false)
 // --- Lifecycle ---
 onMounted(async () => {
   if (import.meta.client) {
+    // A. กู้คืน Session จาก LocalStorage ก่อน (กันขึ้นว่า "กรุณาเข้าสู่ระบบ")
+    if (!auth.isLoggedIn) {
+      const storedUser = localStorage.getItem('user')
+      const storedToken = localStorage.getItem('token')
+      if (storedUser && storedToken) {
+        try {
+          auth.user = JSON.parse(storedUser)
+          auth.token = storedToken
+          auth.isLoggedIn = true
+        } catch (e) { }
+      }
+    }
+
+    // B. เริ่มโหลดข้อมูล
     if (typeof auth.initAuth === 'function') {
       await auth.initAuth()
     }
-    await nextTick()
-    if (auth.isLoggedIn) {
+
+    await nextTick() // รอ Vue อัปเดต State
+
+    // C. ถ้า Login แล้ว ให้โหลดข้อมูลออเดอร์
+    if (isAuthenticated.value) {
       initAvatarAndName()
       await addressStore.fetchAddresses()
-      await fetchOrders()
+      await fetchOrders() // 👈 ในนี้เราใส่ checkUrlAndOpenOrder ไว้แล้ว มันจะเปิดออเดอร์ให้อัตโนมัติหลังโหลดเสร็จ
     }
 
+    // D. จัดการ Tab หลัก (Sidebar) จาก URL
     if (route.query.tab) {
-      const tabName = route.query.tab
-      const triggerEl = document.querySelector(`a[data-bs-target="#${tabName}"]`)
-      if (triggerEl) {
-        triggerEl.click()
-        activeMainTab.value = tabName
-      }
+      activeMainTab.value = route.query.tab
+    }
+
+    // E. จัดการ Filter จาก URL
+    if (route.query.filter) {
+      activeTab.value = route.query.filter
     }
   }
 })
@@ -459,6 +481,7 @@ const fetchOrders = async () => {
     });
 
     orders.value.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+    checkUrlAndOpenOrder()
 
   } catch (error) {
     console.error("Failed to fetch orders:", error);
@@ -468,13 +491,15 @@ const fetchOrders = async () => {
   }
 }
 
-// ... (Address Functions omitted for brevity, logic remains same) ...
+// ... (ส่วน Address Functions และ Account Info) ...
+
 const openModal = (item = null) => {
   if (item) selectedAddress.value = { ...item }
   else selectedAddress.value = null
   showAddModal.value = true
 }
 const closeModal = () => { showAddModal.value = false; selectedAddress.value = null }
+
 const handleSaveAddress = async (formData) => {
   try {
     const id = formData._id || formData.id;
@@ -502,10 +527,12 @@ const handleSaveAddress = async (formData) => {
     useNuxtApp().$showToast({ msg: "บันทึกไม่สำเร็จ", type: "error" });
   }
 }
+
 const deleteAddress = (itemToDelete) => {
   addressToDelete.value = itemToDelete
   showDeleteModal.value = true
 }
+
 const confirmDeleteAddress = async () => {
   if (addressToDelete.value) {
     try {
@@ -519,6 +546,7 @@ const confirmDeleteAddress = async () => {
     }
   }
 }
+
 const setDefaultAddress = async (selectedItem) => {
   try {
     const id = selectedItem._id || selectedItem.id;
@@ -532,9 +560,11 @@ const setDefaultAddress = async (selectedItem) => {
       zipCode: selectedItem.zipCode || selectedItem.pincode,
       isDefault: true
     };
+
     await addressStore.updateAddress(id, payload)
     useNuxtApp().$showToast({ msg: "ตั้งค่าเริ่มต้นสำเร็จ", type: "success" });
     await addressStore.fetchAddresses();
+
   } catch (err) {
     console.error(err)
     const msg = err.response?.data?.message || "ตั้งค่าไม่สำเร็จ";
@@ -542,21 +572,20 @@ const setDefaultAddress = async (selectedItem) => {
   }
 }
 
-// ... (Account Info Logic omitted for brevity, logic remains same) ...
+// --- Account Info Logic ---
 const editableName = ref('')
 const editingName = ref(false)
 const avatarSrc = ref('/images/default-avatar.png')
 const pendingAvatarFile = ref(null)
 const pendingAvatarPreview = ref(null)
-const isAuthenticated = computed(() => !!auth.isLoggedIn)
-const userEmail = computed(() => auth.user || '')
-const userName = computed(() => auth.userName || '')
+
 const initAvatarAndName = () => {
   if (auth.user && auth.user.avatar) {
     avatarSrc.value = auth.user.avatar.startsWith('http') ? auth.user.avatar : (`${BACKEND_URL}${auth.user.avatar}`)
   }
   editableName.value = auth.userName || (auth.user?.username || '')
 }
+
 const updateLocalAuth = (updatedUser) => {
   if (!updatedUser) return
   auth.user = updatedUser
@@ -568,7 +597,9 @@ const updateLocalAuth = (updatedUser) => {
     } catch (e) { }
   }
 }
+
 const cancelEditName = () => { editingName.value = false; editableName.value = auth.userName || (auth.user?.username || '') }
+
 const saveName = async () => {
   if (!editableName.value || !isAuthenticated.value) return
   const userId = auth.user?.id || auth.user?._id
@@ -589,6 +620,7 @@ const saveName = async () => {
     useNuxtApp().$showToast({ msg: "เปลี่ยนชื่อไม่สำเร็จ", type: "error" });
   }
 }
+
 const onAvatarSelected = (e) => {
   const file = e.target.files && e.target.files[0]
   if (!file) return
@@ -598,10 +630,12 @@ const onAvatarSelected = (e) => {
   reader.onload = () => { pendingAvatarPreview.value = reader.result }
   reader.readAsDataURL(file)
 }
+
 const cancelAvatar = () => {
   pendingAvatarFile.value = null
   pendingAvatarPreview.value = null
 }
+
 const saveAvatar = async () => {
   const file = pendingAvatarFile.value
   if (!file) return
@@ -609,6 +643,7 @@ const saveAvatar = async () => {
   form.append('file', file)
   const isSeller = Number(auth.userType) === 0
   const endpoint = isSeller ? `${API_BASE}/sellers/upload-avatar` : `${API_BASE}/users/upload-avatar`
+
   try {
     const uploadRes = await fetch(endpoint, {
       method: 'POST',
@@ -632,6 +667,7 @@ const saveAvatar = async () => {
 }
 
 // --- Order Logic & Tabs ---
+// ✅ ตัวแปร activeTab ยังคงไว้สำหรับกรอง Order (ไม่ชนกับ Sidebar แล้ว)
 const activeTab = ref('all')
 const currentPage = ref(1)
 const itemsPerPage = 5
@@ -645,23 +681,20 @@ const tabs = [
   { label: 'ยกเลิก', value: 'cancelled' },
 ]
 
-// ✅✅✅ แก้ไข Logic ตรงนี้: ให้ cancel requested อยู่ใน processing
+// ค้นหาฟังก์ชัน checkStatus แล้วแก้ case 'cancelled' ครับ
+
 const checkStatus = (orderStatus, tab) => {
   const s = (orderStatus || '').toLowerCase();
   switch (tab) {
-    case 'pending':
-      return s === 'pending' || s === 'pending review';
-    case 'processing':
-      // เพิ่ม cancel requested ให้ยังอยู่ใน Tab นี้
-      return s === 'preparing' || s === 'processing' || s === 'accepted' || s === 'confirmed' || s === 'cancel requested' || s === 'cancellation requested';
-    case 'shipping':
-      // เพิ่ม return_requested ให้ยังอยู่ใน Tab นี้
-      return s === 'shipped' || s === 'shipping' || s === 'arrived' || s === 'return_requested';
-    case 'completed':
-      return s === 'completed' || s === 'delivered';
+    case 'pending': return s === 'pending' || s === 'pending review';
+    case 'processing': return s === 'preparing' || s === 'processing' || s === 'accepted';
+    case 'shipping': return s === 'shipped' || s === 'shipping' || s === 'arrived';
+    case 'completed': return s === 'completed' || s === 'delivered';
+
+    // ✅✅ แก้ตรงนี้: เพิ่ม 'return_requested' และ 'return requested'
     case 'cancelled':
-      // เอา cancel requested ออก เพื่อให้แสดงเฉพาะที่ยกเลิกสำเร็จแล้ว
-      return s === 'cancelled' || s === 'cancel';
+      return s === 'cancelled' || s === 'cancel requested' || s === 'cancel' || s === 'return_requested' || s === 'return requested';
+
     default: return false;
   }
 }
@@ -691,7 +724,12 @@ const getStatusClass = (status) => {
     case 'pending review': case 'pending': return 'bg-warning text-dark'
     case 'preparing': case 'processing': return 'bg-info text-dark'
     case 'shipped': case 'shipping': case 'arrived': return 'bg-primary text-white'
-    case 'cancel requested': case 'cancelled': case 'cancel': return 'bg-danger text-white'
+    case 'cancel requested':
+    case 'cancelled':
+    case 'cancel':
+    case 'return_requested':
+    case 'return requested':
+      return 'bg-danger text-white'
     default: return 'bg-light text-dark border'
   }
 }
@@ -732,6 +770,42 @@ const saveOrderChanges = async (updatedOrder) => {
   }
 }
 
+const checkUrlAndOpenOrder = () => {
+  const orderIdFromUrl = route.query.orderId
+
+  // ต้องรอให้มีข้อมูล orders ก่อนถึงจะหาเจอ
+  if (orders.value.length > 0) {
+    if (orderIdFromUrl) {
+      const targetOrder = orders.value.find(o => o.orderId === orderIdFromUrl)
+      if (targetOrder) {
+        selectedOrder.value = targetOrder
+        // บังคับเปลี่ยน Tab ไปที่ orders ถ้ายังไม่ได้เลือก
+        if (activeMainTab.value !== 'orders') {
+          activeMainTab.value = 'orders'
+        }
+      }
+    } else {
+      // ถ้า URL ไม่มี orderId ให้ปิดหน้ารายละเอียด (กรณีกด Back)
+      selectedOrder.value = null
+    }
+  }
+}
+
+// ✅✅ (ทำเพิ่ม) Watcher: ดักจับการเปลี่ยน URL (เช่น กด Notification ขณะเปิดหน้านี้ค้างไว้)
+watch(() => route.query, () => {
+  // เช็ค Tab หลัก
+  if (route.query.tab && route.query.tab !== activeMainTab.value) {
+    activeMainTab.value = route.query.tab
+  }
+  // เช็ค Filter
+  if (route.query.filter && route.query.filter !== activeTab.value) {
+    activeTab.value = route.query.filter
+  }
+  // เช็ค Order Detail
+  checkUrlAndOpenOrder()
+})
+
+// ฟังก์ชันนี้เก็บไว้สำหรับปุ่มลิงก์ภายใน
 const changeTab = (tabId) => {
   if (import.meta.client) {
     const triggerEl = document.querySelector(`#top-tab a[data-bs-target="#${tabId}"]`)
@@ -745,6 +819,38 @@ const handleLogout = () => {
     else { auth.user = null; auth.isLoggedIn = false; }
     router.push('/')
   }
+}
+
+// ✅✅ ฟังก์ชันจัดรูปแบบสถานะ (เพิ่มใหม่)
+const formatStatus = (status) => {
+  if (!status) return '';
+  const s = status.toLowerCase();
+
+  // ถ้าเจอคำว่า return requested ให้เปลี่ยนเป็น Cancel Requested
+  if (s === 'return_requested' || s === 'return requested') {
+    return 'Cancel Requested';
+  }
+
+  // กรณีอื่นๆ แสดงตามเดิม
+  return status;
+}
+
+// --- เปลี่ยน Tab ของ Sidebar และ Filter (อัปเดต URL ด้วย) ---
+const updateOrderFilter = (filterVal) => {
+  activeTab.value = filterVal
+  router.replace({ query: { ...route.query, tab: 'orders', filter: filterVal } })
+}
+
+const openOrder = (order) => {
+  selectedOrder.value = order
+  router.push({ query: { ...route.query, tab: 'orders', orderId: order.orderId } })
+}
+
+const closeOrder = () => {
+  selectedOrder.value = null
+  const newQuery = { ...route.query }
+  delete newQuery.orderId
+  router.replace({ query: newQuery })
 }
 </script>
 

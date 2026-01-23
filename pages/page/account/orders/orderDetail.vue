@@ -41,24 +41,29 @@
       </div>
     </div>
 
-    <div class="alert mb-3 shadow-sm border-0"
-      :class="checkStatus(order.status, 'cancelled') ? 'alert-danger' : 'alert-warning'" v-else>
-      <div class="d-flex align-items-center">
-        <i class="fa fs-4 me-3"
-          :class="checkStatus(order.status, 'cancelled') ? 'fa-times-circle' : 'fa-clock'"></i>
-        <div>
-          <template v-if="checkStatus(order.status, 'cancelled')">
-            <strong>คำสั่งซื้อถูกยกเลิก/คืนเงิน</strong><br>
-            <small>รายการนี้สิ้นสุดแล้ว</small>
-          </template>
-          <template v-else>
-            <strong>รอตรวจสอบคำขอ</strong><br>
-            <small>คุณได้ส่งคำขอยกเลิกหรือแจ้งปัญหา กรุณารอร้านค้าตรวจสอบ</small>
-          </template>
-          <div v-if="order.cancelReason" class="mt-1 small text-dark">
-            เหตุผล: {{ order.cancelReason }}
+    <div class="alert shadow-lg border-0"
+      :class="checkStatus(order.status, 'cancelled') ? 'alert-danger' : 'alert-warning'" v-else v-show="showStatusAlert"
+      style="position: fixed; top: 100px; right: 30px; z-index: 9999; max-width: 400px; width: 100%;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="d-flex align-items-center">
+          <i class="fa fs-4 me-3" :class="checkStatus(order.status, 'cancelled') ? 'fa-times-circle' : 'fa-clock'"></i>
+          <div>
+            <template v-if="checkStatus(order.status, 'cancelled')">
+              <strong>คำสั่งซื้อถูกยกเลิก/คืนเงิน</strong><br>
+              <small>รายการนี้สิ้นสุดแล้ว</small>
+            </template>
+            <template v-else>
+              <strong>รอตรวจสอบคำขอ</strong><br>
+              <small>คุณได้ส่งคำขอยกเลิกหรือแจ้งปัญหา กรุณารอร้านค้าตรวจสอบ</small>
+            </template>
+            <div v-if="order.cancelReason" class="mt-1 small text-dark">
+              เหตุผล: {{ order.cancelReason }}
+            </div>
           </div>
         </div>
+
+        <button type="button" class="btn-close ms-3" aria-label="Close" @click="showStatusAlert = false">
+        </button>
       </div>
     </div>
 
@@ -180,7 +185,8 @@
       </div>
     </div>
 
-    <cancelOrderPop v-if="showDirectCancelModal" @close="showDirectCancelModal = false" @confirm="confirmDirectCancel" />
+    <cancelOrderPop v-if="showDirectCancelModal" @close="showDirectCancelModal = false"
+      @confirm="confirmDirectCancel" />
     <cancReqOrderPop v-if="showCancelModal" @close="closeCancelModal" @confirm="submitRequestCancellation" />
     <confirmOrder v-if="showConfirmReceivedModal" @close="showConfirmReceivedModal = false"
       @confirm="submitConfirmReceived" />
@@ -204,6 +210,7 @@ const emit = defineEmits(['back', 'cancel', 'update'])
 
 // State to track if we are in "Return/Issue" mode or just "Cancel" mode
 const isReturnMode = ref(false)
+const showStatusAlert = ref(true)
 
 // --- Helper Functions ---
 const checkStatus = (status, type) => {
@@ -301,7 +308,7 @@ const submitRequestCancellation = (reason) => {
   // Logic แยกสถานะตามโหมด
   const statusToSend = isReturnMode.value ? 'return_requested' : 'cancel requested'
   const title = isReturnMode.value ? 'แจ้งปัญหาสินค้า' : 'ส่งคำขอยกเลิกแล้ว'
-  const msg = isReturnMode.value 
+  const msg = isReturnMode.value
     ? `คำขอคืนสินค้า/แจ้งปัญหา #${props.order.orderId} ถูกส่งให้ร้านค้าตรวจสอบแล้ว`
     : `คำขอยกเลิกคำสั่งซื้อ #${props.order.orderId} ได้ถูกส่งให้ร้านค้าตรวจสอบแล้ว`
 

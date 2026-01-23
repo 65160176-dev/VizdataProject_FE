@@ -23,7 +23,8 @@
 
                 <li v-for="item in notifications.slice(0, 10)" :key="item._id" class="notification-item"
                     :class="{ 'item-unread': !item.isRead, 'item-read': item.isRead }" @mouseenter="markAsRead(item)">
-                    <div class="notif-box">
+
+                    <div class="notif-box" @click="handleNotificationClick(item)">
                         <div class="notif-img">
                             <img v-if="item.image" :src="getImgUrl(item.image)"
                                 @error="$event.target.src = '/images/icon/logo.png'" alt="icon">
@@ -76,13 +77,41 @@ export default {
         }
     },
     methods: {
-        // ✅ แก้ไข 2: เพิ่มฟังก์ชันเรียก Store
         markAllRead() {
             this.notiStore.markAllAsRead();
         },
         markAsRead(item) {
-            this.notiStore.markAsRead(item)
+            if (!item.isRead) {
+                this.notiStore.markAsRead(item)
+            }
         },
+
+        // ✅ 2. เพิ่มฟังก์ชันคลิกแจ้งเตือน
+        handleNotificationClick(item) {
+            // อ่านแล้ว
+            this.markAsRead(item);
+
+            // ดึง Order ID (รองรับทั้งแบบอยู่ใน data object หรืออยู่ชั้นนอก)
+            const orderId = item.data?.orderId || item.orderId;
+
+            if (orderId) {
+                // Redirect ไปหน้า Dashboard พร้อมเปิด Order Detail
+                this.$router.push({
+                    path: '/page/account/userdashboard',
+                    query: {
+                        tab: 'orders',
+                        orderId: orderId
+                    }
+                });
+            } else {
+                // กรณีไม่มี Order ID ให้ไปหน้า Orders เฉยๆ
+                this.$router.push({
+                    path: '/page/account/userdashboard',
+                    query: { tab: 'orders' }
+                });
+            }
+        },
+
         getImgUrl(path) {
             if (!path) return '/images/icon/logo.png';
             if (path.startsWith('http')) return path;
@@ -103,7 +132,6 @@ export default {
 </script>
 
 <style scoped>
-/* (CSS เดิม) */
 .notification-icon-wrapper {
     position: relative;
     display: inline-block;
@@ -149,25 +177,19 @@ export default {
     display: block;
 }
 
-/* ✅ แก้ไข 3: ปรับ Header ให้เป็น Flexbox เพื่อวางปุ่มขวาสุด */
 .dropdown-header {
     padding: 12px 15px;
     font-weight: bold;
     border-bottom: 1px solid #eee;
     background: #fff;
     display: flex;
-    /* เพิ่ม */
     justify-content: space-between;
-    /* เพิ่ม */
     align-items: center;
-    /* เพิ่ม */
 }
 
-/* ✅ แก้ไข 4: แต่งปุ่มอ่านทั้งหมด */
 .mark-all-btn {
     font-size: 12px;
     color: #ff4c3b;
-    /* สีส้มตามธีม */
     text-decoration: none;
     cursor: pointer;
     font-weight: normal;
@@ -205,6 +227,8 @@ export default {
     height: auto;
     min-height: 90px;
     box-sizing: border-box;
+    /* ✅ 3. เพิ่ม cursor pointer */
+    cursor: pointer;
 }
 
 .notification-item:hover {

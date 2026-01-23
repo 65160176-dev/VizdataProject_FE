@@ -715,7 +715,12 @@ export default {
         // ------------------------------------
 
         try { useNuxtApp().$showToast({ msg: "สั่งซื้อสำเร็จเรียบร้อย!", type: "success" }); } catch (e) { }
-        setTimeout(() => { this.$router.push('/page/account/userdashboard'); }, 500);
+        setTimeout(() => {
+          this.$router.push({
+            path: '/page/account/userdashboard',
+            query: { tab: 'orders' } // ✅ เพิ่มตรงนี้เพื่อให้เปิด Tab Orders อัตโนมัติ
+          });
+        }, 500);
 
       } catch (error) {
         console.error("Order Failed:", error);
