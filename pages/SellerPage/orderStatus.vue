@@ -215,11 +215,7 @@
                   @click="handleUpdate(selectedOrder._id, 'shipped')">
                   ส่งสินค้าแล้ว <Icon name="feather:truck" class="ms-1" />
                 </button>
-                <button v-if="selectedOrder.status === 'shipped'"
-                  class="btn btn-success rounded-pill px-4 shadow-sm text-white"
-                  @click="handleUpdate(selectedOrder._id, 'completed')">
-                  เสร็จสมบูรณ์ <Icon name="feather:check" class="ms-1" />
-                </button>
+                
                 <button v-if="['cancel requested', 'return_requested'].includes(selectedOrder.status)"
                   class="btn btn-danger rounded-pill px-4 shadow-sm text-white"
                   @click="handleUpdate(selectedOrder._id, 'cancelled')">

@@ -1,142 +1,85 @@
 <template>
-   <div class="col-xl-3 col-md-6 xl-50">
-    <div class="card order-graph sales-carousel">
-      <div class="card-header">
-        <h6>Total purchase</h6>
-        <div class="row">
-          <div class="col-6">
-            <div class="sales-apex-chart">
-                <apexchart
-                type="line"
-                height="120"
-                width="160"
-                :options="chartOptions"
-                :series="series"
-              ></apexchart>
-             </div>
-              
+  <div class="col-xl-6 col-md-6">
+    <div class="card shadow-sm border-0 h-100 overflow-hidden">
+      <div class="card-body pb-0">
+        <div class="d-flex justify-content-between">
+          <div>
+            <p class="text-muted mb-1 text-uppercase small fw-bold">My Orders Volume</p>
+            <h4 class="fw-bolder mb-0">{{ totalOrders7Days }} Order(s)</h4>
+            <small class="text-muted" style="font-size: 10px;">(7 วันล่าสุด)</small>
           </div>
-          <div class="col-6">
-            <div class="value-graph">
-              <h3>
-                20% <span><i class="fa fa-angle-up font-secondary"></i></span>
-              </h3>
-            </div>
+          <div class="d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary rounded-3 px-2" style="height: 35px; width: 35px;">
+            <Icon name="feather:shopping-bag" size="18" />
           </div>
         </div>
       </div>
-      <div class="card-body">
-        <div class="media">
-          <div class="media-body">
-            <span>Monthly purchase</span>
-            <h2 class="mb-0">2154</h2>
-            <p>
-              0.13% <span><i class="fa fa-angle-up"></i></span>
-            </p>
-            <h5 class="f-w-600">Avg Gross purchase</h5>
-            <p>
-              Lorem Ipsum is simply dummy text of the printing and typesetting
-            </p>
-          </div>
-          <div class="bg-secondary b-r-8">
-            <div class="small-box">
-              <vue-feather type="credit-card"></vue-feather>
-            </div>
-          </div>
-        </div>
+      <div class="chart-area mt-2" style="margin-bottom: -15px;">
+        <apexchart type="bar" height="100" :options="chartOptions" :series="series"></apexchart>
       </div>
     </div>
   </div>
 </template>
-<script setup>
-import { ref } from "vue";
 
-const series = ref([
-  {
-    data: [85, 83, 90, 70, 85, 60, 65, 63, 68, 68, 65, 40, 60, 68, 75, 70, 90],
-  },
-]);
+<script setup>
+import { ref, computed } from "vue";
+import { useOrderStore } from '~/store/orders';
+import { useAuthStore } from '~/store/auth'; // ✅ เรียก Auth
+
+const orderStore = useOrderStore();
+const authStore = useAuthStore();
+
+// 1. กรองเฉพาะออเดอร์ของร้านเรา
+const myOrders = computed(() => {
+    const all = orderStore.allOrders || []
+    const myId = authStore.user?._id || authStore.user?.id || ''
+    if (!myId) return []
+
+    return all.filter(order => {
+        const sellerId = typeof order.seller === 'object' ? order.seller?._id : order.seller
+        return sellerId === myId
+    })
+})
+
+// 2. นับจำนวนออเดอร์ 7 วัน (Auto-detect Date)
+const last7DaysCount = computed(() => {
+  const data = Array(7).fill(0);
+  const orders = myOrders.value; // ใช้ myOrders
+  
+  if (orders.length === 0) return data;
+
+  // หา "วันที่ล่าสุด"
+  const dates = orders.map(o => new Date(o.createdAt || o.date).getTime()).filter(d => !isNaN(d));
+  if (dates.length === 0) return data;
+  const maxDate = new Date(Math.max(...dates));
+  maxDate.setHours(23, 59, 59, 999);
+
+  orders.forEach(order => {
+    const d = new Date(order.createdAt || order.date);
+    if (isNaN(d.getTime())) return;
+    
+    const diffTime = maxDate - d;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays >= 0 && diffDays < 7) {
+       const index = 6 - diffDays;
+       data[index] += 1; // นับ +1
+    }
+  });
+  return data;
+});
+
+const totalOrders7Days = computed(() => last7DaysCount.value.reduce((a,b)=>a+b, 0));
+const series = computed(() => [{ name: "Orders", data: last7DaysCount.value }]);
 
 const chartOptions = ref({
-  chart: {
-          height: "10%",
-          width: 30,
-          type: "line",
-          zoom: {
-            enabled: false
-          },
-          toolbar: {
-            show: false
-          }
-        },
-        colors: ["#38C9CA"],
-        dataLabels: {
-          enabled: false
-        },
-        labels: {
-          show: false
-        },
-        stroke: {
-          width: [1],
-          curve: "straight"
-        },
-        title: {
-          show: false
-        },
-        legend: {
-          tooltipHoverFormatter: function(val, opts) {
-            return (
-              val +
-              " - " +
-              opts.w.globals.series[opts.seriesIndex][opts.dataPointIndex] +
-              ""
-            );
-          }
-        },
-        markers: {
-          size: 0,
-          hover: {
-            sizeOffset: 2
-          }
-        },
-        xaxis: {
-          labels: {
-            show: false
-          },
-          axisBorder: {
-            show: false
-          },
-          axisTicks: {
-            show: false
-          }
-        },
-        yaxis: {
-          labels: { show: false }
-        },
-        axisBorder: {
-          show: false
-        },
-        tooltip: {
-          y: [
-            {
-              title: {
-                formatter: function(val) {
-                  return val + " (mins)";
-                }
-              }
-            }
-          ]
-        },
-        grid: {
-          borderColor: "F98085"
-        },
-        fill: {
-          color: "F98085"
-        }
+  chart: { type: "bar", height: 100, sparkline: { enabled: true }, fontFamily: 'Nunito, sans-serif' },
+  colors: ["#544fff"], // สีน้ำเงินเข้ม
+  plotOptions: { bar: { borderRadius: 3, columnWidth: '60%', distributed: false } },
+  tooltip: { 
+      fixed: { enabled: false }, 
+      x: { show: false }, 
+      marker: { show: false },
+      y: { formatter: (val) => `${val} Orders` }
+  }
 });
 </script>
-<style  scoped>
-.ct-series-a .ct-line .ct-point{
-    stroke: #38C9CA !important;
-}
-</style>>

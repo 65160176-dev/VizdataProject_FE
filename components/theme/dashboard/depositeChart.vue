@@ -1,141 +1,46 @@
 <template>
-  <div class="col-xl-3 col-md-6 xl-50">
-    <div class="card order-graph sales-carousel">
-      <div class="card-header">
-        <h6>Daily Deposits</h6>
-        <div class="row">
-          <div class="col-6">
-            <div class="sales-apex-chart">
-                <apexchart
-                  type="line"
-                   height="120"
-                  width="160"
-                  :options="chartOptions"
-                  :series="series"
-                ></apexchart>
-              </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="card shadow-sm border-0 h-100 overflow-hidden">
+      <div class="card-body pb-0">
+        <div class="d-flex justify-content-between">
+          <div>
+            <p class="text-muted mb-1 text-uppercase small fw-bold">Net Income</p>
+            <h4 class="fw-bolder mb-0 text-success">{{ formatCurrency(netIncome) }}</h4>
+             <small class="text-muted" style="font-size: 10px;">(หัก Cancel แล้ว)</small>
           </div>
-          <div class="col-6">
-            <div class="value-graph">
-              <h3>
-                75% <span><i class="fa fa-angle-up font-danger"></i></span>
-              </h3>
-            </div>
+          <div class="d-flex align-items-center justify-content-center bg-warning-subtle text-warning rounded-3 px-2" style="height: 35px; width: 35px;">
+            <Icon name="feather:credit-card" size="18" />
           </div>
         </div>
       </div>
-      <div class="card-body">
-        <div class="media">
-          <div class="media-body">
-            <span>Security Deposits</span>
-            <h2 class="mb-0">0782</h2>
-            <p>
-              0.25% <span><i class="fa fa-angle-up"></i></span>
-            </p>
-            <h5 class="f-w-600">Gross sales of June</h5>
-            <p>
-              Lorem Ipsum is simply dummy text of the printing and typesetting
-            </p>
-          </div>
-          <div class="bg-danger b-r-8">
-            <div class="small-box">
-              <vue-feather type="calendar"></vue-feather>
-            </div>
-          </div>
-        </div>
+      <div class="chart-area mt-2" style="margin-bottom: -15px;">
+        <apexchart type="bar" height="100" :options="chartOptions" :series="series"></apexchart>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { useOrderStore } from '~/store/orders';
 
-const series = ref([
-  {
-    data: [85, 83, 90, 70, 85, 60, 65, 63, 68, 68, 65, 40, 60, 68, 75, 70, 90],
-  },
-]);
+const orderStore = useOrderStore();
+
+const netIncome = computed(() => {
+    return (orderStore.orders || [])
+        .filter(o => o.status === 'completed' || o.status === 'shipped') // นับเฉพาะที่ชัวร์ๆ
+        .reduce((sum, o) => sum + (o.total || 0), 0);
+});
+
+// สร้าง Data จำลองจากยอดจริง (กระจายให้ดูสวย)
+const series = computed(() => [{ name: "Income", data: [netIncome.value * 0.1, netIncome.value * 0.2, netIncome.value * 0.15, netIncome.value * 0.3, netIncome.value * 0.25] }]);
+
+const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits:0 }).format(val);
 
 const chartOptions = ref({
-  chart: {
-          height: "10%",
-          width: 30,
-          type: "line",
-          zoom: {
-            enabled: false
-          },
-          toolbar: {
-            show: false
-          }
-        },
-        colors: ["#A5A5A5"],
-        dataLabels: {
-          enabled: false
-        },
-        labels: {
-          show: false
-        },
-        stroke: {
-          width: [1],
-          curve: "straight"
-        },
-        title: {
-          show: false
-        },
-        legend: {
-          tooltipHoverFormatter: function(val, opts) {
-            return (
-              val +
-              " - " +
-              opts.w.globals.series[opts.seriesIndex][opts.dataPointIndex] +
-              ""
-            );
-          }
-        },
-        markers: {
-          size: 0,
-          hover: {
-            sizeOffset: 2
-          }
-        },
-        xaxis: {
-          labels: {
-            show: false
-          },
-          axisBorder: {
-            show: false
-          },
-          axisTicks: {
-            show: false
-          }
-        },
-        yaxis: {
-          labels: { show: false }
-        },
-        axisBorder: {
-          show: false
-        },
-        tooltip: {
-          y: [
-            {
-              title: {
-                formatter: function(val) {
-                  return val + " (mins)";
-                }
-              }
-            }
-          ]
-        },
-        grid: {
-          borderColor: "F98085"
-        },
-        fill: {
-          color: "F98085"
-        }
+  chart: { type: "bar", height: 100, sparkline: { enabled: true } },
+  colors: ["#f73164"],
+  plotOptions: { bar: { borderRadius: 3, columnWidth: '50%' } },
+  tooltip: { fixed: { enabled: false }, x: { show: false } }
 });
 </script>
-
-<style>
-/* Add your styles here if needed */
-</style>

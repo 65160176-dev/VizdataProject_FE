@@ -1,130 +1,79 @@
 <template>
-     <div class="col-xl-3 col-md-6 xl-50">
-                        <div class="card order-graph sales-carousel">
-                            <div class="card-header">
-                                <h6>Total Sales</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                      <div class="sales-apex-chart">
-  <apexchart
-                type="line"
-                 height="120"
-                width="160"
-                class="flot-chart-placeholder"
-                :options="chartOptions"
-                :series="series"
-              ></apexchart>
-                                      </div>
-                                      
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="value-graph">
-                                            <h3>42% <span><i class="fa fa-angle-up font-primary"></i></span></h3>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="media">
-                                    <div class="media-body">
-                                        <span>Sales Last Month</span>
-                                        <h2 class="mb-0">9054</h2>
-                                        <p>0.25% <span><i class="fa fa-angle-up"></i></span></p>
-                                        <h5 class="f-w-600">Gross sales of August</h5>
-                                        <p>Lorem Ipsum is simply dummy text of the printing and typesetting</p>
-                                    </div>
-                                    <div class="bg-primary b-r-8">
-                                        <div class="small-box">
-                                            <vue-feather type="briefcase"></vue-feather>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+  <div class="col-xl-6 col-md-6">
+    <div class="card shadow-sm border-0 h-100 overflow-hidden">
+      <div class="card-body pb-0">
+        <p class="text-muted mb-1 text-uppercase small fw-bold">My Revenue (7 Days)</p>
+        <h4 class="fw-bolder mb-0">{{ formatCurrency(total7Days) }}</h4>
+        <small class="text-muted" style="font-size: 10px;">(ยอดขายเฉพาะร้านคุณ)</small>
+      </div>
+      <div class="chart-area mt-2" style="margin-bottom: -15px;">
+        <apexchart type="area" height="100" :options="chartOptions" :series="series"></apexchart>
+      </div>
+    </div>
+  </div>
 </template>
-<script setup>
-import { ref } from "vue";
 
-const series = ref([
-  {
-    data: [20, 5, 50, 10, 70, 15],
-  },
-]);
+<script setup>
+import { ref, computed } from "vue";
+import { useOrderStore } from '~/store/orders';
+import { useAuthStore } from '~/store/auth'; // ✅ เรียก Auth
+
+const orderStore = useOrderStore();
+const authStore = useAuthStore();
+
+// 1. กรองเฉพาะออเดอร์ของร้านเรา
+const myOrders = computed(() => {
+    const all = orderStore.allOrders || []
+    const myId = authStore.user?._id || authStore.user?.id || ''
+    if (!myId) return []
+
+    return all.filter(order => {
+        const sellerId = typeof order.seller === 'object' ? order.seller?._id : order.seller
+        return sellerId === myId
+    })
+})
+
+// 2. คำนวณยอดขาย 7 วัน (Auto-detect Date)
+const last7DaysData = computed(() => {
+  const data = Array(7).fill(0);
+  const orders = myOrders.value; // ใช้ myOrders แทน allOrders
+  
+  if (orders.length === 0) return data;
+
+  // หา "วันที่ล่าสุด" ของร้านเราที่มีออเดอร์
+  const dates = orders.map(o => new Date(o.createdAt || o.date).getTime()).filter(d => !isNaN(d));
+  if (dates.length === 0) return data;
+  
+  const maxDate = new Date(Math.max(...dates));
+  maxDate.setHours(23, 59, 59, 999); // set เป็นจบวัน
+
+  orders.forEach(order => {
+    // ไม่นับที่ยกเลิก
+    if (order.status === 'cancelled' || order.status === 'cancel') return;
+    
+    const d = new Date(order.createdAt || order.date);
+    if (isNaN(d.getTime())) return;
+
+    const diffTime = maxDate - d;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+
+    if (diffDays >= 0 && diffDays < 7) {
+       const index = 6 - diffDays; 
+       data[index] += Number(order.total || 0);
+    }
+  });
+  return data;
+});
+
+const total7Days = computed(() => last7DaysData.value.reduce((a,b)=>a+b,0));
+const series = computed(() => [{ name: "Sales", data: last7DaysData.value }]);
+const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits:0 }).format(val);
 
 const chartOptions = ref({
-  chart: {
-          height: '100%', 
-          width: '148px',
-          type: "line",
-          zoom: {
-            enabled: false
-          },
-          toolbar: {
-            show: false
-          }
-        },
-        colors:[ "#F98C91"],
-        dataLabels: {
-          enabled: false
-        },
-        labels: {
-          show: false
-        },
-        stroke: {
-          width: [1],
-          curve: "straight"
-        },
-        title: {
-          show: false
-        },
-        legend: {
-          tooltipHoverFormatter: function(val, opts) {
-            return (
-              val +
-              " - " +
-              opts.w.globals.series[opts.seriesIndex][opts.dataPointIndex] +
-              ""
-            );
-          }
-        },
-        markers: {
-          size: 0,
-          hover: {
-            sizeOffset: 2
-          }
-        },
-        xaxis: {
-          labels: {
-            show: false
-          },
-          axisBorder: {
-            show: false
-          },
-          axisTicks: {
-            show: false
-          },
-        },
-        yaxis: {
-          labels: { show: false,
-           }
-        },
-        axisBorder: {
-          show: false
-        },
-        tooltip: {
-          y: [
-            {
-              title: {
-                formatter: function(val) {
-                  return val + " (mins)";
-                }
-              }
-            }
-          ]
-        },
-        grid: {
-          borderColor: "",
-        }
+  chart: { type: "area", height: 100, sparkline: { enabled: true } },
+  stroke: { curve: "smooth", width: 2 },
+  fill: { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.0, stops: [0, 100] } },
+  colors: ["#7366ff"], // สีม่วง
+  tooltip: { fixed: { enabled: false }, x: { show: false }, y: { formatter: (val) => formatCurrency(val) } }
 });
 </script>
