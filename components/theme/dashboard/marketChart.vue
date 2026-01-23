@@ -4,7 +4,7 @@
       <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
         <div>
           <h5 class="fw-bold mb-0">Monthly Revenue 📊</h5>
-          <small class="text-muted">ยอดขายปี {{ selectedYear }}</small>
+          <small class="text-muted">ยอดขายปี {{ selectedYear }} (ร้านคุณ)</small>
         </div>
         <div class="dropdown">
           <button class="btn btn-light btn-sm dropdown-toggle rounded-pill px-3 shadow-sm" type="button" data-bs-toggle="dropdown">
@@ -31,26 +31,54 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useOrderStore } from '~/store/orders';
+import { useAuthStore } from '~/store/auth'; // ✅ 1. เพิ่ม Auth Store
 
 const orderStore = useOrderStore();
-const selectedYear = ref(2026); // เริ่มต้นปี 2026 ตามข้อมูลคุณ
+const authStore = useAuthStore();
+const selectedYear = ref(new Date().getFullYear()); // เริ่มต้นที่ปีปัจจุบันก่อน เดี๋ยว Auto-detect จะทำงาน
 
-// หาปีทั้งหมดที่มีใน Order
+// ✅ 2. สร้างตัวแปร myOrders เพื่อกรองเฉพาะของร้านเรา
+const myOrders = computed(() => {
+    const all = orderStore.allOrders || []
+    const myId = authStore.user?._id || authStore.user?.id || ''
+    
+    // ถ้ายังไม่ login หรือหา ID ไม่เจอ ให้ส่งค่าว่างกลับไป (ปลอดภัยไว้ก่อน)
+    if (!myId) return []
+
+    return all.filter(order => {
+        // รองรับทั้งแบบที่ seller เป็น ID (String) หรือ Object
+        const sellerId = typeof order.seller === 'object' ? order.seller?._id : order.seller
+        return sellerId === myId
+    })
+})
+
+// ✅ 3. ใช้ myOrders แทน orderStore.allOrders ในการหาปีที่มีข้อมูล
 const availableYears = computed(() => {
-  const years = new Set([2026, new Date().getFullYear()]);
-  (orderStore.allOrders || []).forEach(o => {
+  const years = new Set();
+  const currentYear = new Date().getFullYear();
+  years.add(currentYear); // ใส่ปีปัจจุบันไว้เสมอ
+  years.add(2026); // ใส่ปี 2026 เผื่อไว้ตามข้อมูลคุณ
+
+  myOrders.value.forEach(o => {
     const d = new Date(o.createdAt || o.date);
     if (!isNaN(d.getTime())) years.add(d.getFullYear());
   });
+  
+  // เรียงปีจาก มาก -> น้อย (ล่าสุดอยู่บน)
   return Array.from(years).sort((a, b) => b - a);
 });
 
-// คำนวณยอดขายรายเดือน
+// Auto Select: เมื่อโหลดเสร็จ ให้เลือกปีล่าสุดที่มีข้อมูลให้เลย
+watch(availableYears, (years) => {
+    if (years.length > 0) selectedYear.value = years[0];
+}, { immediate: true });
+
+// ✅ 4. ใช้ myOrders ในการคำนวณกราฟ
 const monthlyData = computed(() => {
   const months = Array(12).fill(0);
-  const orders = orderStore.allOrders || [];
+  const orders = myOrders.value; // ใช้ข้อมูลที่กรองแล้ว
 
   orders.forEach(order => {
     const d = new Date(order.createdAt || order.date);
@@ -58,7 +86,9 @@ const monthlyData = computed(() => {
 
     if (d.getFullYear() === selectedYear.value) {
       const status = (order.status || '').toLowerCase();
-      if (status === 'cancelled' || status === 'cancel') return;
+      // ไม่นับออเดอร์ที่ยกเลิก
+      if (['cancelled', 'cancel', 'return_requested'].includes(status)) return;
+      
       months[d.getMonth()] += Number(order.total || 0);
     }
   });
@@ -77,7 +107,11 @@ const chartOptions = ref({
   yaxis: { labels: { formatter: (val) => val >= 1000 ? `${(val/1000).toFixed(1)}k` : val } },
   tooltip: { y: { formatter: (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(val) } },
   legend: { show: false },
+  // ใส่สีสลับๆ กันให้ดูสวยงาม
   colors: ['#7366ff', '#51bb25', '#f73164', '#ff9f40', '#544fff', '#7366ff', '#51bb25', '#f73164', '#ff9f40', '#544fff', '#7366ff', '#51bb25']
 });
 </script>
-<style scoped> .market-chart-container { min-height: 320px; } </style>
+
+<style scoped> 
+.market-chart-container { min-height: 320px; } 
+</style>
