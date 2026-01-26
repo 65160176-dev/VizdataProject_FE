@@ -295,25 +295,30 @@ const confirmDirectCancel = () => {
 // 2. Request Cancel (Processing) OR Report Issue (Shipping)
 const showCancelModal = ref(false)
 const openCancelModal = () => {
-  isReturnMode.value = false // โหมดขอยกเลิกปกติ
+  isReturnMode.value = false // โหมดขอยกเลิกปกติ (ต้องรออนุมัติ)
   showCancelModal.value = true
 }
 const openReturnModal = () => {
-  isReturnMode.value = true // โหมดแจ้งปัญหา/ขอคืนสินค้า
+  isReturnMode.value = true // โหมดแจ้งปัญหา/ขอคืนสินค้า (ปรับให้ยกเลิกเลยตามความต้องการ)
   showCancelModal.value = true
 }
 const closeCancelModal = () => { showCancelModal.value = false }
 
 const submitRequestCancellation = (reason) => {
-  // Logic แยกสถานะตามโหมด
-  const statusToSend = isReturnMode.value ? 'return_requested' : 'cancel requested'
-  const title = isReturnMode.value ? 'แจ้งปัญหาสินค้า' : 'ส่งคำขอยกเลิกแล้ว'
+  // --- แก้ไข LOGIC ตรงนี้ ---
+  // ถ้าเป็นโหมด Return/Issue ให้เป็น 'cancelled' เลยทันที
+  // ถ้าเป็นโหมด Cancel ปกติ (Processing) ให้เป็น 'cancel requested'
+  const statusToSend = isReturnMode.value ? 'cancelled' : 'cancel requested'
+
+  // ปรับ Title และ Message ให้เหมาะสม
+  const title = isReturnMode.value ? 'ยกเลิกคำสั่งซื้อสำเร็จ' : 'ส่งคำขอยกเลิกแล้ว'
   const msg = isReturnMode.value
-    ? `คำขอคืนสินค้า/แจ้งปัญหา #${props.order.orderId} ถูกส่งให้ร้านค้าตรวจสอบแล้ว`
+    ? `คำสั่งซื้อ #${props.order.orderId} ถูกยกเลิกเนื่องจากแจ้งปัญหา: ${reason}`
     : `คำขอยกเลิกคำสั่งซื้อ #${props.order.orderId} ได้ถูกส่งให้ร้านค้าตรวจสอบแล้ว`
 
   props.order.status = statusToSend
   props.order.cancelReason = reason
+  
   createNotification(title, msg)
   emit('update', props.order)
   closeCancelModal()
