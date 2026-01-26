@@ -81,3 +81,6 @@ httpClient.interceptors.response.use(
 );
 
 export default httpClient;
+
+// Named export for convenience
+export { httpClient };

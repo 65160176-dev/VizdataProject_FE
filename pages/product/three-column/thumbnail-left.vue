@@ -122,6 +122,27 @@
                   <button class="btn btn-solid" style="padding: 12px 24px; height: auto; min-height: 45px;" @click="addToCart(product, counter)">เพิ่มลงรถเข็น</button>
                   <button class="btn btn-solid" style="padding: 12px 24px; height: auto; min-height: 45px;" @click="buyNow(product, counter)">ซื้อเลย</button>
                 </div>
+ 
+ 
+                <div class="border-product mt-3" v-if="isAffiliate">
+                  <h6 class="product-title">🔗 แชร์ลิงก์รับค่าคอม (Affiliate)</h6>
+                  <div class="d-flex gap-2 align-items-center">
+                    <input 
+                      type="text" 
+                      :value="affiliateLink" 
+                      readonly 
+                      class="form-control form-control-sm"
+                    />
+                    <button 
+                      @click="copyAffiliateLink" 
+                      class="btn btn-outline-primary btn-sm"
+                      style="min-width: 100px;"
+                    >
+                      <i class="fa fa-copy me-1"></i>Copy
+                    </button>
+                  </div>
+                  <small class="text-muted mt-1 d-block">คัดลอกลิงก์ไปแชร์เพื่อรับค่าคอมมิชชั่น</small>
+                </div>
               </div>
             </div>
           </div>
@@ -243,6 +264,8 @@
 <script>
 import { useProductStore } from '~~/store/products'
 import { useCartStore } from '~~/store/cart'
+import { useAuthStore } from '~/store/auth'
+import { affiliateService } from '~/services/affiliate.service'
 
 export default {
   data() {
@@ -253,14 +276,51 @@ export default {
       counter: 1,
       relatedProducts: [],
       randomProducts: [],
+      isAffiliate: false,
+      affiliateCode: null
     }
   },
   async mounted() {
     await this.fetchProductDetail()
     await this.fetchRelatedProducts()
     await this.fetchRandomProducts()
+    await this.checkAffiliateStatus()
+  },
+   computed: {
+    affiliateLink() {
+      if (!this.product || !this.affiliateCode) return ''
+      const productId = this.product._id || this.product.id
+      // ใช้พารามิเตอร์ 'ref' ให้สอดคล้องกับตัวติดตาม affiliate ฝั่ง client
+      return `${window.location.origin}/product/three-column/thumbnail-left?id=${productId}&ref=${this.affiliateCode}`
+    }
   },
   methods: {
+    async checkAffiliateStatus() {
+      try {
+        const authStore = useAuthStore()
+        const userId = authStore.user?._id || authStore.user?.id
+        if (!userId) return
+
+        const data = await affiliateService.getMyAffiliate(userId)
+        if (data && data.code) {
+          this.isAffiliate = true
+          this.affiliateCode = data.code
+        }
+      } catch (error) {
+        // ไม่ใช่ affiliate
+        this.isAffiliate = false
+      }
+    },
+    copyAffiliateLink() {
+      if (!this.affiliateLink) return
+      navigator.clipboard.writeText(this.affiliateLink).then(() => {
+        if (useNuxtApp().$showToast) {
+          useNuxtApp().$showToast({ msg: 'คัดลอกลิงก์แล้ว!', type: 'success' })
+        }
+      }).catch(err => {
+        console.error('Failed to copy:', err)
+      })
+    },
     async fetchProductDetail() {
       try {
         this.loading = true

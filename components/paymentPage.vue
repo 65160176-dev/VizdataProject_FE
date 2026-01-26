@@ -698,12 +698,34 @@ export default {
               image: p.image || (p.images && p.images[0]?.src) || ''
             }))
           };
-
+ // แนบ affiliateId ถ้ามาจาก affiliate link ในครั้งนี้เท่านั้น (session-based)
+          try {
+            const aff = this.getSessionAffiliateId();
+            console.log('🔍 Checking session affiliate ID:', aff);
+            
+            if (aff) {
+              payload.affiliateId = aff;
+              console.log(`✅ Order includes affiliate ID: ${aff}`);
+              console.log('📦 Order payload with affiliate:', JSON.stringify(payload, null, 2));
+              // เก็บ affiliate id ไว้ก่อน เพื่อ clear หลังจากสั่งซื้อสำเร็จ
+            } else {
+              console.log('❌ No affiliate ID found in current session');
+              console.log('📦 Order payload without affiliate:', JSON.stringify(payload, null, 2));
+            }
+          } catch (e) { 
+            console.error('Error getting affiliate ID:', e);
+          }
           return await this.orderStore.placeOrder(payload);
         });
 
         await Promise.all(orderPromises);
-
+// ✅ Clear affiliate ID หลังจาก order สำเร็จทั้งหมดแล้ว
+        try {
+          this.clearSessionAffiliateId();
+          console.log('🗑️ Cleared affiliate session after successful order');
+        } catch (e) {
+          console.error('Error clearing affiliate session:', e);
+        }
         // --- เริ่มส่วน Cart Cleanup หน้าบ้าน ---
         localStorage.removeItem('checkout_items');
 
@@ -783,6 +805,65 @@ export default {
         this.formTemp.zipCode = codes[0];
       } else {
         this.formTemp.zipCode = '';
+      }
+      },
+
+    // === Affiliate Session Management ===
+    getSessionAffiliateId() {
+      // ใช้ sessionStorage แทน localStorage เพื่อให้หายเมื่อปิด browser tab
+      try {
+        const affiliateId = sessionStorage.getItem('affiliateId');
+        console.log('📋 Getting affiliate from session:', affiliateId);
+        return affiliateId;
+      } catch (e) {
+        console.error('Error getting affiliate from session:', e);
+        return null;
+      }
+    },
+
+    setSessionAffiliateId(affiliateId) {
+      try {
+        sessionStorage.setItem('affiliateId', affiliateId);
+        sessionStorage.setItem('affiliateStartTime', Date.now().toString());
+        console.log(`🔗 Affiliate ID set for this session: ${affiliateId}`);
+      } catch (e) {
+        console.error('Error setting affiliate in session:', e);
+      }
+    },
+
+    clearSessionAffiliateId() {
+      try {
+        const currentId = sessionStorage.getItem('affiliateId');
+        sessionStorage.removeItem('affiliateId');
+        sessionStorage.removeItem('affiliateStartTime');
+        console.log(`🗑️ Affiliate ID cleared from session: ${currentId}`);
+      } catch (e) {
+        console.error('Error clearing affiliate from session:', e);
+      }
+    },
+
+    isValidAffiliateSession() {
+      try {
+        const affiliateId = sessionStorage.getItem('affiliateId');
+        const startTime = sessionStorage.getItem('affiliateStartTime');
+        
+        if (!affiliateId || !startTime) {
+          return false;
+        }
+        
+        // ตรวจสอบว่า affiliate session ยังไม่หมดอายุ (30 นาที)
+        const sessionDuration = Date.now() - parseInt(startTime);
+        const maxSessionTime = 30 * 60 * 1000; // 30 minutes
+        
+        if (sessionDuration > maxSessionTime) {
+          this.clearSessionAffiliateId();
+          return false;
+        }
+        
+        return true;
+      } catch (e) {
+        console.error('Error checking affiliate session validity:', e);
+        return false;
       }
     }
   },

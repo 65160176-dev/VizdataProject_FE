@@ -56,7 +56,7 @@ export default defineNuxtConfig({
 
     { src: './plugins/useBootstrap.client.ts', mode: 'client' },
     { src: './plugins/showToast.client.js', mode: 'client' },
-    
+        { src: './plugins/affiliate.client.ts', mode: 'client' },
   ],
 
   compatibilityDate: '2025-03-26',

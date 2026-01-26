@@ -58,6 +58,7 @@ import affiliateRegPopup from '~/pages/afiliate/affiliateRegPopup.vue';
 import UserAuth from '../../pages/page/auth/auth'
 import { useAuthStore } from '~/store/auth'
 import HeaderNotification from '~/components/widgets/topbarItems/notification.vue'
+import { affiliateService } from '~/services/affiliate.service'
 
 export default {
   components: {
@@ -68,7 +69,8 @@ export default {
     return {
       isLogin: false,
       showAffiliate: false,
-      isAffiliate: false
+      isAffiliate: false,
+      affiliateData: null
     }
   },
 
@@ -87,10 +89,35 @@ export default {
         this.$router.replace('/page/auth/LoginPage')
       }
     },
-    checkAffiliateStatus() {
-      if (this.isAffiliate === true) {
+    async checkAffiliateStatus() {
+      console.log('🔗 Affiliate button clicked')
+      // เช็คว่าเป็น affiliate หรือยัง
+      try {
+        const authStore = useAuthStore();
+        const userId = authStore.user?._id || authStore.user?.id;
+        console.log('👤 User ID:', userId)
+        
+        if (!userId) {
+          console.log('❌ No user ID, redirecting to login')
+          this.$router.push('/page/auth/LoginPage');
+          return;
+        }
+
+        console.log('📡 Checking affiliate status...')
+        const data = await affiliateService.getMyAffiliate(userId);
+        console.log('✅ Affiliate data found:', data)
+        
+        if (data && data._id) {
+          this.isAffiliate = true;
+          this.affiliateData = data;
+          console.log('🚀 Navigating to affiliate dashboard...')
         this.$router.push('/afiliate/afiliatePage');
-      } else {
+      }
+      } catch (error) {
+        console.log('⚠️ Not an affiliate yet, showing registration popup')
+        console.error('Affiliate check error:', error)
+        // ยังไม่ได้สมัคร affiliate
+        this.isAffiliate = false;
         this.showAffiliate = true;
       }
     },
@@ -99,10 +126,25 @@ export default {
       this.showAffiliate = false;
     },
 
-    confirmAffiliate() {
-      this.isAffiliate = true;
-      this.showAffiliate = false;
-      this.$router.push('/afiliate/afiliatePage');
+    async confirmAffiliate() {
+      try {
+        const authStore = useAuthStore();
+        const userId = authStore.user?._id || authStore.user?.id;
+        if (!userId) return;
+
+        await affiliateService.register(userId);
+        this.isAffiliate = true;
+        this.showAffiliate = false;
+        if (useNuxtApp().$showToast) {
+          useNuxtApp().$showToast({ msg: 'สมัคร Affiliate สำเร็จ!', type: 'success' });
+        }
+        this.$router.push('/afiliate/afiliatePage');
+      } catch (error) {
+        console.error('Failed to register affiliate:', error);
+        if (useNuxtApp().$showToast) {
+          useNuxtApp().$showToast({ msg: 'เกิดข้อผิดพลาด กรุณาลองใหม่', type: 'error' });
+        }
+      }
     }
   },
   created() {
