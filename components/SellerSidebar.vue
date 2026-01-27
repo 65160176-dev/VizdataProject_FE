@@ -3,22 +3,28 @@
 
     <div v-if="isNotiOpen" class="fixed-overlay" @click="isNotiOpen = false"></div>
 
+    <OrderDetailModal v-if="showOrderModal" :order="selectedOrder" @close="closeOrderModal"
+      @updated="handleOrderUpdated" />
+
+    <div v-if="loadingOrder" class="fixed-overlay d-flex align-items-center justify-content-center"
+      style="z-index: 2100; background: rgba(255,255,255,0.5);">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
     <button class="toggle-btn" @click="$emit('toggle')">
       <Icon :name="isCollapsed ? 'feather:chevron-right' : 'feather:chevron-left'" size="18" />
     </button>
 
     <div class="sidebar-top">
       <div class="profile">
-
-        <div class="avatar-container" @click="triggerFileInput" title="คลิกเพื่อเปลี่ยนรูป">
+        <div class="avatar-container" @click="triggerFileInput">
           <img :src="avatar" alt="avatar" class="avatar" :class="{ 'uploading': isUploading }"
             @error="handleImageError" />
           <div v-if="isUploading" class="loading-overlay">
             <div class="spinner-border text-white spinner-border-sm" role="status"></div>
           </div>
         </div>
-
-        <input type="file" ref="fileInputRef" class="d-none" accept="image/*" @click.stop @change="handleFileUpload" />
+        <input type="file" ref="fileInputRef" class="d-none" accept="image/*" @change="handleFileUpload" />
 
         <div class="profile-info" v-show="!isCollapsed">
           <div class="name text-truncate">{{ displayName }}</div>
@@ -42,23 +48,19 @@
               </div>
 
               <div class="noti-list">
-                <div v-for="item in notifications" :key="item._id" class="noti-item"
-                  :class="{ 'unread': !item.isRead }">
-                  <!-- @click="handleNotificationClick(item)" -->
+                <div v-for="item in notifications" :key="item._id" class="noti-item" :class="{ 'unread': !item.isRead }"
+                  @click="handleNotificationClick(item)">
                   <div class="noti-dot"></div>
-
                   <div class="noti-img-wrapper" v-if="item.image">
                     <img :src="getImgUrl(item.image)" class="noti-img"
                       @error="$event.target.src = '/images/icon/logo.png'">
                   </div>
-
                   <div class="noti-content">
                     <div class="noti-title">{{ item.title }}</div>
                     <p class="noti-text">{{ item.message }}</p>
                     <span class="noti-time">{{ formatDate(item.createdAt) }}</span>
                   </div>
                 </div>
-
                 <div v-if="notifications.length === 0" class="noti-empty">ไม่มีการแจ้งเตือน</div>
               </div>
             </div>
@@ -82,22 +84,26 @@
       <ul>
         <li>
           <NuxtLink to="/SellerPage/dashboard"
-            :class="['menu-item', { 'is-active': isActive('/SellerPage/dashboard') }]"><span
-              class="icon-slot">📊</span><span class="menu-label" v-show="!isCollapsed">Dashboard</span></NuxtLink>
+            :class="['menu-item', { 'is-active': isActive('/SellerPage/dashboard') }]">
+            <span class="icon-slot">📊</span><span class="menu-label" v-show="!isCollapsed">Dashboard</span>
+          </NuxtLink>
         </li>
         <li>
           <NuxtLink to="/SellerPage/productPage"
-            :class="['menu-item', { 'is-active': isActive('/SellerPage/productPage') }]"><span
-              class="icon-slot">📦</span><span class="menu-label" v-show="!isCollapsed">Product</span></NuxtLink>
+            :class="['menu-item', { 'is-active': isActive('/SellerPage/productPage') }]">
+            <span class="icon-slot">📦</span><span class="menu-label" v-show="!isCollapsed">Product</span>
+          </NuxtLink>
         </li>
         <li>
-          <NuxtLink to="/SellerPage/order" :class="['menu-item', { 'is-active': isActive('/SellerPage/order') }]"><span
-              class="icon-slot">📋</span><span class="menu-label" v-show="!isCollapsed">Order</span></NuxtLink>
+          <NuxtLink to="/SellerPage/order" :class="['menu-item', { 'is-active': isActive('/SellerPage/order') }]">
+            <span class="icon-slot">📋</span><span class="menu-label" v-show="!isCollapsed">Order</span>
+          </NuxtLink>
         </li>
         <li>
           <NuxtLink to="/SellerPage/orderStatus"
-            :class="['menu-item', { 'is-active': isActive('/SellerPage/orderStatus') }]"><span
-              class="icon-slot">🚚</span><span class="menu-label" v-show="!isCollapsed">Order Status</span></NuxtLink>
+            :class="['menu-item', { 'is-active': isActive('/SellerPage/orderStatus') }]">
+            <span class="icon-slot">🚚</span><span class="menu-label" v-show="!isCollapsed">Order Status</span>
+          </NuxtLink>
         </li>
         <li>
           <NuxtLink to="/SellerPage/setting" :class="['menu-item', { 'is-active': isActive('/SellerPage/setting') }]">
@@ -109,8 +115,7 @@
 
     <div class="sidebar-bottom">
       <button class="logout-btn" @click="logout" :title="isCollapsed ? 'Logout' : ''">
-        <span v-if="isCollapsed">⎋</span>
-        <span v-else>⎋ Logout</span>
+        <span v-if="isCollapsed">⎋</span><span v-else>⎋ Logout</span>
       </button>
     </div>
   </aside>
@@ -121,8 +126,9 @@ import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useNuxtApp } from '#app'
 import { useAuthStore } from '~/store/auth'
-import { useNotificationStore } from '~/store/notification' // 👈 ตรวจสอบ path ให้ถูกต้อง
+import { useNotificationStore } from '~/store/notification'
 import { useRuntimeConfig } from '#app'
+import OrderDetailModal from '~/pages/SellerPage/components/orderDetailModal.vue'
 
 const props = defineProps({ isCollapsed: { type: Boolean, default: false } })
 const emit = defineEmits(['toggle'])
@@ -133,6 +139,7 @@ const auth = useAuthStore()
 const notiStore = useNotificationStore()
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
+const { $showToast } = useNuxtApp()
 
 const displayName = computed(() => auth.userName || 'ร้านของฉัน')
 
@@ -140,9 +147,7 @@ const displayName = computed(() => auth.userName || 'ร้านของฉั
 const avatar = computed(() => {
   const userAvatar = auth.user?.avatar || null
   if (userAvatar) {
-    if (userAvatar.startsWith('data:') || userAvatar.startsWith('blob:') || userAvatar.startsWith('http')) {
-      return userAvatar
-    }
+    if (userAvatar.startsWith('data:') || userAvatar.startsWith('blob:') || userAvatar.startsWith('http')) return userAvatar
     const cleanPath = userAvatar.startsWith('/') ? userAvatar : `/${userAvatar}`
     return `${API_BASE_URL}${cleanPath}`
   }
@@ -157,47 +162,71 @@ const handleImageError = (e) => { e.target.src = '/images/avtar.jpg' }
 const handleFileUpload = async (event) => {
   const file = event.target.files[0]
   if (!file) return
-  if (file.size > 5 * 1024 * 1024) { alert('ไฟล์ใหญ่เกินไป (สูงสุด 5MB)'); return; }
-
+  if (file.size > 5 * 1024 * 1024) { alert('ไฟล์ใหญ่เกินไป'); return; }
   isUploading.value = true
   try {
     const token = localStorage.getItem('token')
     const formData = new FormData()
     formData.append('file', file)
-
     const response = await $fetch(`${API_BASE_URL}/api/sellers/upload-avatar`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
       body: formData
     })
-
     if (response.success) {
       auth.user.avatar = response.data.avatar
-      try {
-        const userLS = JSON.parse(localStorage.getItem('user') || '{}')
-        userLS.avatar = response.data.avatar
-        localStorage.setItem('user', JSON.stringify(userLS))
-      } catch (e) { }
-      try { useNuxtApp().$showToast({ msg: 'อัปโหลดรูปโปรไฟล์เรียบร้อย', type: 'success' }) } catch (e) { }
     }
-  } catch (error) {
-    console.error('Upload Error:', error)
-    alert('อัปโหลดไม่สำเร็จ: ' + (error.data?.message || error.message))
-  } finally {
-    isUploading.value = false
-    if (fileInputRef.value) fileInputRef.value.value = ''
-  }
+  } catch (error) { console.error('Upload Error:', error) }
+  finally { isUploading.value = false; if (fileInputRef.value) fileInputRef.value.value = '' }
 }
 
-// --- Notification Logic ---
+// --- Notification & Popup Logic ---
 const isNotiOpen = ref(false)
 const notifications = computed(() => notiStore.notifications)
 const unreadCount = computed(() => notiStore.unreadCount)
+const showOrderModal = ref(false)
+const selectedOrder = ref(null)
+const loadingOrder = ref(false)
 
 function toggleNoti() { isNotiOpen.value = !isNotiOpen.value }
 function markAllRead() { notiStore.markAllAsRead() }
 
-// Watch User Login เพื่อเริ่มระบบ Noti
+// ✅ ฟังก์ชันคลิกแจ้งเตือน -> เปิด Popup
+const handleNotificationClick = async (item) => {
+  if (!item.isRead) notiStore.markAsRead(item);
+  isNotiOpen.value = false;
+
+  const orderId = item.data?.orderId || item.orderId;
+  if (orderId) {
+    loadingOrder.value = true
+    try {
+      const token = localStorage.getItem('token')
+      // เรียก API (Backend ที่แก้แล้วจะรับ orderId ได้)
+      const response = await $fetch(`${API_BASE_URL}/api/order/${orderId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      selectedOrder.value = response
+      showOrderModal.value = true
+    } catch (error) {
+      console.error("Fetch Order Error:", error)
+      try { $showToast({ msg: "ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้", type: "error" }) } catch (e) { }
+    } finally {
+      loadingOrder.value = false
+    }
+  }
+}
+
+const closeOrderModal = () => {
+  showOrderModal.value = false
+  selectedOrder.value = null
+}
+
+const handleOrderUpdated = () => {
+  // เมื่อมีการอัปเดตใน Popup (Accept/Reject)
+  // ให้โหลด Notification ใหม่ เพื่อให้สถานะอัปเดต หรือจะทำอย่างอื่นเพิ่มเติมก็ได้
+  notiStore.fetchNotifications()
+}
+
 watch(() => auth.user, (newUser) => {
   if (newUser && (newUser._id || newUser.id)) {
     notiStore.fetchNotifications();
@@ -205,57 +234,35 @@ watch(() => auth.user, (newUser) => {
   }
 }, { immediate: true, deep: true })
 
-// Cleanup Socket
-onBeforeUnmount(() => {
-  notiStore.disconnectSocket();
-})
+onBeforeUnmount(() => { notiStore.disconnectSocket() })
 
-// Helper Functions
+// Helper
 const getImgUrl = (path) => {
   if (!path) return '/images/icon/logo.png';
   if (path.startsWith('http')) return path;
+  if (path.startsWith('uploads') || path.startsWith('/uploads')) {
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    return `${API_BASE_URL}/${cleanPath}`;
+  }
   return '/images/' + path;
 }
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleString('th-TH', {
-    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-  });
+  return new Date(dateString).toLocaleString('th-TH', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-// const handleNotificationClick = (item) => {
-//   notiStore.markAsRead(item);
-//   isNotiOpen.value = false;
-
-//   // Logic การเปลี่ยนหน้า
-//   if (item.data && item.data.orderId) {
-//     // ตรวจสอบว่าเป็น Seller หรือไม่ (จริงๆ หน้านี้คือ Sidebar Seller อยู่แล้ว)
-//     if (item.data.role === 'seller') {
-//       router.push(`/SellerPage/order/detail/${item.data.orderId}`);
-//     } else {
-//       // เผื่อไว้กรณีร้านค้าไปกดซื้อของร้านอื่น
-//       router.push(`/page/account/order-detail/${item.data.orderId}`);
-//     }
-//   }
-// }
-
-// --- Menu Logic ---
 function isActive(path) { try { return route.path === path || route.path.startsWith(path + '/') } catch (e) { return false } }
 
 function logout() {
   if (auth && typeof auth.logout === 'function') auth.logout()
-  if (process.client) {
-    localStorage.removeItem('user')
-    localStorage.removeItem('token')
-  }
+  if (process.client) { localStorage.removeItem('user'); localStorage.removeItem('token') }
   router.replace('/page/auth/LoginPage')
 }
 </script>
 
 <style scoped>
-/* CSS Layout หลัก */
+/* CSS เดิมทั้งหมด */
 .seller-sidebar {
   width: 260px;
   height: 100vh;
@@ -336,7 +343,6 @@ function logout() {
   background: transparent;
 }
 
-/* Profile Section */
 .sidebar-top .profile {
   display: flex;
   gap: 12px;
@@ -346,7 +352,6 @@ function logout() {
   overflow: visible;
 }
 
-/* Avatar Styling & Upload */
 .avatar-container {
   position: relative;
   cursor: pointer;
@@ -394,7 +399,6 @@ function logout() {
   white-space: nowrap;
 }
 
-/* Menu */
 .sidebar-menu {
   flex: 1;
   overflow: hidden;
@@ -473,7 +477,6 @@ function logout() {
   max-width: 110px;
 }
 
-/* --- Notification Styles --- */
 .noti-wrapper {
   margin-left: auto;
   position: relative;
@@ -541,7 +544,6 @@ function logout() {
   z-index: 1;
 }
 
-/* Dropdown */
 .noti-dropdown {
   position: absolute;
   top: -10px;
@@ -603,14 +605,12 @@ function logout() {
   background: white;
 }
 
-/* Item */
 .noti-item {
   padding: 12px 16px;
   border-bottom: 1px solid #f9f9f9;
   display: flex;
   gap: 10px;
-  /* cursor: pointer; */
-  cursor: default !important;
+  cursor: pointer !important;
   transition: background 0.2s;
   align-items: flex-start;
 }
@@ -627,7 +627,6 @@ function logout() {
   background: #fff8eb;
 }
 
-/* Content Inside Item */
 .noti-dot {
   width: 8px;
   height: 8px;
@@ -691,7 +690,6 @@ function logout() {
   font-size: 13px;
 }
 
-/* Animations */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s, transform 0.2s;
@@ -710,6 +708,45 @@ function logout() {
     transform: scale(2.5);
     opacity: 0;
   }
+}
+
+/* ✅ CSS สำหรับ Modal Style (นำมาจาก Order.vue) */
+.header-pending {
+  background: linear-gradient(135deg, #FF8F00 0%, #FFB300 100%);
+}
+
+.text-status-pending {
+  color: #E65100;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-content-custom {
+  background: #fff;
+  width: 90%;
+  max-width: 700px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.btn-white-glass {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  transition: 0.2s;
+}
+
+.btn-white-glass:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: rotate(90deg);
 }
 
 /* Dark Mode Overrides */
