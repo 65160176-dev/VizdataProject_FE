@@ -231,6 +231,15 @@
                         </ul>
                       </div>
                     </div>
+                    <!-- <div class="checkout-title mt-4">
+                      <h3>Note (Optional)</h3>
+                    </div>
+                    <div class="row">
+                      <div class="col-12">
+                        <textarea class="form-control" v-model="note" rows="3"
+                          placeholder="หมายเหตุถึงร้านค้า เช่น ฝากไว้ที่ป้อมยาม, เบอร์ติดต่อสำรอง"></textarea>
+                      </div>
+                    </div> -->
 
                     <div class="text-center mt-4">
                       <div v-if="isQRVisible && selectedPayment === 'promptpay'"
@@ -338,6 +347,7 @@ export default {
 
       checkoutItems: [],
       selectedPayment: 'promptpay',
+      note: '', // ✅ เพิ่มตัวแปร note
       isLoading: false,
       isQRVisible: false,
       isAddressListVisible: false,
@@ -679,6 +689,7 @@ export default {
           const total = subTotal + shippingCost;
           const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000) + '-' + (index + 1);
           const finalSellerId = (sellerId === 'official_store') ? null : sellerId;
+
           const payload = {
             orderId: orderId,
             user: realUserId,
@@ -690,6 +701,9 @@ export default {
             status: 'Pending',
             total: total,
             shippingCost: shippingCost,
+            // ✅✅ ส่ง paymentMethod และ note ไป Backend ✅✅
+            paymentMethod: this.selectedPayment === 'cod' ? 'COD' : 'PromptPay',
+            note: this.note,
             item: group.items.map(p => ({
               productId: getSafeStringId(p.id) || getSafeStringId(p._id),
               name: p.name || p.title,
@@ -698,49 +712,38 @@ export default {
               image: p.image || (p.images && p.images[0]?.src) || ''
             }))
           };
- // แนบ affiliateId ถ้ามาจาก affiliate link ในครั้งนี้เท่านั้น (session-based)
+
+          // Affiliate Logic
           try {
             const aff = this.getSessionAffiliateId();
-            console.log('🔍 Checking session affiliate ID:', aff);
-            
             if (aff) {
               payload.affiliateId = aff;
-              console.log(`✅ Order includes affiliate ID: ${aff}`);
-              console.log('📦 Order payload with affiliate:', JSON.stringify(payload, null, 2));
-              // เก็บ affiliate id ไว้ก่อน เพื่อ clear หลังจากสั่งซื้อสำเร็จ
-            } else {
-              console.log('❌ No affiliate ID found in current session');
-              console.log('📦 Order payload without affiliate:', JSON.stringify(payload, null, 2));
             }
-          } catch (e) { 
+          } catch (e) {
             console.error('Error getting affiliate ID:', e);
           }
           return await this.orderStore.placeOrder(payload);
         });
 
         await Promise.all(orderPromises);
-// ✅ Clear affiliate ID หลังจาก order สำเร็จทั้งหมดแล้ว
+
         try {
           this.clearSessionAffiliateId();
-          console.log('🗑️ Cleared affiliate session after successful order');
         } catch (e) {
           console.error('Error clearing affiliate session:', e);
         }
-        // --- เริ่มส่วน Cart Cleanup หน้าบ้าน ---
+
         localStorage.removeItem('checkout_items');
 
         const cartStore = useCartStore();
         if (cartStore.cartItems) cartStore.cartItems = [];
-
-        // ✅✅ จุดสำคัญ: สั่งโหลดตะกร้าใหม่ทันที เพื่อให้เลขบนไอคอนรถเข็นหายไป
         await cartStore.fetchCart();
-        // ------------------------------------
 
         try { useNuxtApp().$showToast({ msg: "สั่งซื้อสำเร็จเรียบร้อย!", type: "success" }); } catch (e) { }
         setTimeout(() => {
           this.$router.push({
             path: '/page/account/userdashboard',
-            query: { tab: 'orders' } // ✅ เพิ่มตรงนี้เพื่อให้เปิด Tab Orders อัตโนมัติ
+            query: { tab: 'orders' }
           });
         }, 500);
 
@@ -752,6 +755,7 @@ export default {
         this.isLoading = false;
       }
     },
+    // ... (ส่วนอื่นๆ เหมือนเดิม)
     onSubmit() {
       if (!this.user.firstName.value || this.user.firstName.value.length <= 1) this.user.firstName.errormsg = 'required'; else this.user.firstName.errormsg = '';
       if (!this.user.phone.value) this.user.phone.errormsg = 'required'; else this.user.phone.errormsg = '';
@@ -806,17 +810,13 @@ export default {
       } else {
         this.formTemp.zipCode = '';
       }
-      },
+    },
 
-    // === Affiliate Session Management ===
     getSessionAffiliateId() {
-      // ใช้ sessionStorage แทน localStorage เพื่อให้หายเมื่อปิด browser tab
       try {
         const affiliateId = sessionStorage.getItem('affiliateId');
-        console.log('📋 Getting affiliate from session:', affiliateId);
         return affiliateId;
       } catch (e) {
-        console.error('Error getting affiliate from session:', e);
         return null;
       }
     },
@@ -825,44 +825,35 @@ export default {
       try {
         sessionStorage.setItem('affiliateId', affiliateId);
         sessionStorage.setItem('affiliateStartTime', Date.now().toString());
-        console.log(`🔗 Affiliate ID set for this session: ${affiliateId}`);
-      } catch (e) {
-        console.error('Error setting affiliate in session:', e);
-      }
+      } catch (e) { }
     },
 
     clearSessionAffiliateId() {
       try {
-        const currentId = sessionStorage.getItem('affiliateId');
         sessionStorage.removeItem('affiliateId');
         sessionStorage.removeItem('affiliateStartTime');
-        console.log(`🗑️ Affiliate ID cleared from session: ${currentId}`);
-      } catch (e) {
-        console.error('Error clearing affiliate from session:', e);
-      }
+      } catch (e) { }
     },
 
     isValidAffiliateSession() {
       try {
         const affiliateId = sessionStorage.getItem('affiliateId');
         const startTime = sessionStorage.getItem('affiliateStartTime');
-        
+
         if (!affiliateId || !startTime) {
           return false;
         }
-        
-        // ตรวจสอบว่า affiliate session ยังไม่หมดอายุ (30 นาที)
+
         const sessionDuration = Date.now() - parseInt(startTime);
-        const maxSessionTime = 30 * 60 * 1000; // 30 minutes
-        
+        const maxSessionTime = 30 * 60 * 1000;
+
         if (sessionDuration > maxSessionTime) {
           this.clearSessionAffiliateId();
           return false;
         }
-        
+
         return true;
       } catch (e) {
-        console.error('Error checking affiliate session validity:', e);
         return false;
       }
     }
@@ -874,13 +865,12 @@ export default {
 
     if (this.authStore.initAuth) this.authStore.initAuth();
 
-    // ✅ เพิ่ม Logic ตรวจสอบที่อยู่ตอนเข้าหน้า
     await this.addressStore.fetchAddresses();
     if (!this.addressStore.addresses || this.addressStore.addresses.length === 0) {
       useNuxtApp().$showToast({ msg: "กรุณาเพิ่มที่อยู่จัดส่งสินค้า", type: "error" });
 
       this.openAddressForm();
-      this.validateForm();    // ✅ สั่งตรวจสอบทันที เพื่อให้ขึ้นตัวแดง
+      this.validateForm();
     }
 
     this.fetchThaiAddressData();
@@ -917,7 +907,7 @@ export default {
 </script>
 
 <style scoped>
-/* (Style เดิมคงไว้) */
+/* (Style เดิม) */
 .address-box {
   border: 1px solid #ddd;
   padding: 20px;
@@ -996,7 +986,6 @@ export default {
   }
 }
 
-/* Style for validation */
 .is-invalid {
   border-color: #dc3545 !important;
   padding-right: calc(1.5em + 0.75rem);

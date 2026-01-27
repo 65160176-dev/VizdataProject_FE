@@ -6,8 +6,11 @@
                 <div
                     :class="['px-4 py-3 d-flex justify-content-between align-items-center text-white', 'header-' + (order.status || 'default').toLowerCase()]">
                     <div>
-                        <h5 class="fw-bold mb-0">Manage Order</h5>
-                        <small class="opacity-90">สถานะ: {{ order.status }}</small>
+                        <h5 class="fw-bold mb-0">Order Detail</h5>
+                        <small class="opacity-90" v-if="order.isCancelRequest || checkStatus(order.status, 'request')">
+                            ⚠️ ลูกค้าขอคืนสินค้า/ยกเลิก
+                        </small>
+                        <small class="opacity-90" v-else>สถานะ: {{ order.status }}</small>
                     </div>
                     <button class="btn btn-icon btn-white-glass rounded-circle text-white" @click="$emit('close')">
                         <Icon name="feather:x" size="20" />
@@ -22,22 +25,34 @@
                                 <div class="fw-bold mb-1 text-dark">{{ order.customer?.firstName || order.customer ||
                                     'Unknown' }}</div>
                                 <div class="small text-secondary">{{ order.address }}</div>
+
+                                <div v-if="order.note" class="mt-3 pt-2 border-top border-secondary-subtle">
+                                    <h6 class="text-muted small mb-1 fw-bold text-uppercase">หมายเหตุ</h6>
+                                    <div class="small text-danger fst-italic">"{{ order.note }}"</div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-3 h-100 border border-light">
                                 <h6 class="text-muted small mb-2 fw-bold text-uppercase">ข้อมูลคำสั่งซื้อ</h6>
                                 <div class="d-flex justify-content-between small mb-1">
-                                    <span class="text-secondary">Email:</span> <span class="fw-bold text-dark">{{
-                                        order.email }}</span>
-                                </div>
-                                <div class="d-flex justify-content-between small mb-1">
                                     <span class="text-secondary">Order ID:</span> <span class="fw-bold text-dark">{{
                                         order.orderId }}</span>
                                 </div>
-                                <div class="d-flex justify-content-between small">
+                                <div class="d-flex justify-content-between small mb-1">
                                     <span class="text-secondary">Date:</span> <span class="fw-bold text-dark">{{
                                         formatDate(order.createdAt || order.date) }}</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span class="text-secondary">Payment:</span>
+                                    <span class="badge bg-secondary text-white">{{ order.paymentMethod || 'N/A'
+                                        }}</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between small">
+                                    <span class="text-secondary">Status:</span>
+                                    <span class="badge" :class="getStatusClass(order.status)">{{ order.status }}</span>
                                 </div>
                             </div>
                         </div>
@@ -81,12 +96,11 @@
 
                         <div class="d-flex gap-2">
 
-                            <template v-if="checkStatus(order.status, 'request')">
+                            <template v-if="checkStatus(order.status, 'request') || order.isCancelRequest">
                                 <button class="btn btn-outline-secondary rounded-pill px-4 shadow-sm fw-bold"
                                     @click="handleAction('preparing')">
                                     ปฏิเสธคำขอ
                                 </button>
-
                                 <button class="btn btn-danger rounded-pill px-4 shadow-sm text-white fw-bold"
                                     @click="handleAction('cancelled')">
                                     อนุมัติยกเลิก
@@ -94,7 +108,7 @@
                                 </button>
                             </template>
 
-                            <button v-if="checkStatus(order.status, 'preparing')"
+                            <button v-if="checkStatus(order.status, 'preparing') && !order.isCancelRequest"
                                 class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold"
                                 @click="handleAction('shipped')">
                                 ส่งสินค้าแล้ว
@@ -161,6 +175,17 @@ const calculateTotal = (o) => {
 
 const getTextClass = (s) => 'text-status-' + (s || '').toLowerCase()
 
+const getStatusClass = (status) => {
+    switch (status?.toLowerCase()) {
+        case 'pending': return 'bg-warning text-dark';
+        case 'preparing': return 'bg-info text-white';
+        case 'shipped': return 'bg-primary text-white';
+        case 'completed': return 'bg-success text-white';
+        case 'cancelled': return 'bg-danger text-white';
+        default: return 'bg-secondary text-white';
+    }
+}
+
 const checkStatus = (status, type) => {
     const s = (status || '').toLowerCase();
     if (type === 'preparing') return s === 'preparing' || s === 'processing' || s === 'confirmed';
@@ -171,7 +196,6 @@ const checkStatus = (status, type) => {
 
 // --- Action Logic ---
 const handleAction = async (newStatus) => {
-    // ใช้ _id ในการ update
     if (!props.order._id) return;
     try {
         await orderStore.updateStatus(props.order._id, newStatus)
@@ -186,7 +210,6 @@ const handleAction = async (newStatus) => {
 </script>
 
 <style scoped>
-/* Header Gradients */
 .header-preparing,
 .header-processing,
 .header-confirmed {
@@ -218,7 +241,6 @@ const handleAction = async (newStatus) => {
     background: #6c757d;
 }
 
-/* Text Colors */
 .text-status-preparing,
 .text-status-processing {
     color: #0277BD;

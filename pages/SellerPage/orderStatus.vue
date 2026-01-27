@@ -121,6 +121,12 @@
                   <span class="fw-bold">เหตุผล:</span> {{ order.cancelReason }}
                 </div>
 
+                <div v-if="order.note" class="bg-warning-subtle p-2 rounded mb-2 border border-warning small text-dark">
+                  <span class="fw-bold">
+                    <Icon name="feather:file-text" size="12" /> Note:
+                  </span> {{ order.note }}
+                </div>
+
                 <div class="d-flex gap-2 mt-2">
                   <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill"
                     @click="handleRequestAction(order._id, 'preparing')">
@@ -210,16 +216,17 @@
               </div>
 
               <div>
-                <button v-if="selectedOrder.status === 'preparing'"
-                  class="btn btn-primary rounded-pill px-4 shadow-sm"
+                <button v-if="selectedOrder.status === 'preparing'" class="btn btn-primary rounded-pill px-4 shadow-sm"
                   @click="handleUpdate(selectedOrder._id, 'shipped')">
-                  ส่งสินค้าแล้ว <Icon name="feather:truck" class="ms-1" />
+                  ส่งสินค้าแล้ว
+                  <Icon name="feather:truck" class="ms-1" />
                 </button>
-                
+
                 <button v-if="['cancel requested', 'return_requested'].includes(selectedOrder.status)"
                   class="btn btn-danger rounded-pill px-4 shadow-sm text-white"
                   @click="handleUpdate(selectedOrder._id, 'cancelled')">
-                  อนุมัติยกเลิก <Icon name="feather:x-circle" class="ms-1" />
+                  อนุมัติยกเลิก
+                  <Icon name="feather:x-circle" class="ms-1" />
                 </button>
               </div>
             </div>
@@ -312,31 +319,114 @@ function closeDetail() { showDetail.value = false }
 </script>
 
 <style scoped>
-.header-preparing { background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%); }
-.text-status-preparing { color: #0277BD; }
-.header-shipped { background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%); }
-.text-status-shipped { color: #4527A0; }
-.header-completed { background: linear-gradient(135deg, #00897B 0%, #26A69A 100%); }
-.text-status-completed { color: #00695C; }
-.header-cancelled { background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%); }
-.text-status-cancelled { color: #C62828; }
-.header-return_requested { background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%); }
+.header-preparing {
+  background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%);
+}
 
-.active-tab-preparing { background-color: #0288D1 !important; color: white !important; }
-.active-tab-shipped { background-color: #5E35B1 !important; color: white !important; }
-.active-tab-completed { background-color: #00897B !important; color: white !important; }
-.active-tab-cancelled { background-color: #D32F2F !important; color: white !important; }
+.text-status-preparing {
+  color: #0277BD;
+}
 
-.custom-tabs .nav-link { color: #64748b; border-radius: 12px; font-weight: 600; padding: 12px; border: 1px solid transparent; }
-.custom-tabs .nav-link:hover { background-color: #f8fafc; }
+.header-shipped {
+  background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%);
+}
 
-.transition-all { transition: all 0.3s ease; }
-.order-card { cursor: pointer; transition: 0.2s; }
-.order-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important; }
+.text-status-shipped {
+  color: #4527A0;
+}
 
-.modal-backdrop-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1050; padding: 20px; }
-.modal-content-custom { background: #fff; width: 100%; max-width: 700px; border-radius: 20px; }
+.header-completed {
+  background: linear-gradient(135deg, #00897B 0%, #26A69A 100%);
+}
 
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.text-status-completed {
+  color: #00695C;
+}
+
+.header-cancelled {
+  background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%);
+}
+
+.text-status-cancelled {
+  color: #C62828;
+}
+
+.header-return_requested {
+  background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%);
+}
+
+.active-tab-preparing {
+  background-color: #0288D1 !important;
+  color: white !important;
+}
+
+.active-tab-shipped {
+  background-color: #5E35B1 !important;
+  color: white !important;
+}
+
+.active-tab-completed {
+  background-color: #00897B !important;
+  color: white !important;
+}
+
+.active-tab-cancelled {
+  background-color: #D32F2F !important;
+  color: white !important;
+}
+
+.custom-tabs .nav-link {
+  color: #64748b;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 12px;
+  border: 1px solid transparent;
+}
+
+.custom-tabs .nav-link:hover {
+  background-color: #f8fafc;
+}
+
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+.order-card {
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 20px;
+}
+
+.modal-content-custom {
+  background: #fff;
+  width: 100%;
+  max-width: 700px;
+  border-radius: 20px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
