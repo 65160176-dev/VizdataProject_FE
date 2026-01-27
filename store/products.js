@@ -88,6 +88,13 @@ export const useProductStore = defineStore({
           return
         }
         
+        // Check stock before adding to wishlist
+        const productStock = payload.stock !== undefined ? payload.stock : 0
+        if (productStock <= 0) {
+          useNuxtApp().$showToast({ msg: "This product is out of stock", type: "error" })
+          return
+        }
+        
         if (!token) {
           // Guest user - save to localStorage
           const localWishlist = localStorage.getItem('guestWishlist')

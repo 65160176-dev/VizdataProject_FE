@@ -110,28 +110,55 @@ export const useAuthStore = defineStore('auth', {
               document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`
             } catch (e) {}
             
-            // Sync Cart logic (เหมือนเดิม)
+            // Sync Cart logic with stock validation
             const { useCartStore } = await import('~/store/cart')
             const { useProductStore } = await import('~/store/products')
             const cartStore = useCartStore()
             const productStore = useProductStore()
             
+            // Fetch server cart first to check existing items
+            await cartStore.fetchCart()
+            
             const localCart = JSON.parse(localStorage.getItem('product') || '[]')
             if (localCart.length > 0) {
               for (const item of localCart) {
                 try {
-                  await $fetch('http://localhost:3001/api/cart', {
-                    method: 'POST',
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                      'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                      productId: item._id || item.id,
-                      quantity: item.quantity || 1
-                    })
+                  const productId = item._id || item.id
+                  const localQty = item.quantity || 1
+                  
+                  // Get current product info to check stock
+                  const productResponse = await $fetch(`http://localhost:3001/api/product/${productId}`)
+                  const productStock = productResponse?.stock || 0
+                  
+                  // Check if product already in server cart
+                  const existingItem = cartStore.cart.find(cartItem => {
+                    const cartItemId = cartItem._id || cartItem.id
+                    return cartItemId === productId
                   })
-                } catch (e) {}
+                  
+                  const existingQty = existingItem ? existingItem.quantity : 0
+                  const totalQty = existingQty + localQty
+                  
+                  // Only add if total quantity doesn't exceed stock
+                  if (totalQty <= productStock && productStock > 0) {
+                    const qtyToAdd = Math.min(localQty, productStock - existingQty)
+                    if (qtyToAdd > 0) {
+                      await $fetch('http://localhost:3001/api/cart', {
+                        method: 'POST',
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                          productId: productId,
+                          quantity: qtyToAdd
+                        })
+                      })
+                    }
+                  }
+                } catch (e) {
+                  console.warn('Failed to merge cart item:', e)
+                }
               }
               localStorage.removeItem('product')
             }

@@ -108,10 +108,28 @@ export const useCartStore = defineStore({
           return itemId === payloadId
         })
         const qty = payload.quantity ? payload.quantity : 1
+        const productStock = payload.stock || 0
+        
+        // Check stock availability
+        if (productStock <= 0) {
+          useNuxtApp().$showToast({ msg: "This product is out of stock", type: "error" })
+          return
+        }
         
         if (cartItems) {
-          cartItems.quantity += qty
+          const newQty = cartItems.quantity + qty
+          // Check if new quantity exceeds stock
+          if (newQty > productStock) {
+            useNuxtApp().$showToast({ msg: `Only ${productStock} items available in stock`, type: "error" })
+            return
+          }
+          cartItems.quantity = newQty
         } else {
+          // Check if quantity exceeds stock for new item
+          if (qty > productStock) {
+            useNuxtApp().$showToast({ msg: `Only ${productStock} items available in stock`, type: "error" })
+            return
+          }
           this.cart.push({
             ...payload,
             quantity: qty
@@ -120,6 +138,7 @@ export const useCartStore = defineStore({
         
         // Save to localStorage
         localStorage.setItem('product', JSON.stringify(this.cart))
+        useNuxtApp().$showToast({ msg: "Product added to cart", type: "success" })
         return
       }
       

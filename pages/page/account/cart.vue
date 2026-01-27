@@ -85,8 +85,13 @@
                               <i class="ti-angle-left"></i>
                             </button>
                           </span>
-                          <input type="text" name="quantity" class="form-control input-number qty-input"
-                            :disabled="item.quantity > item.stock" :value="item.quantity" readonly />
+                          <input type="number" name="quantity" class="form-control input-number qty-input"
+                            :disabled="item.quantity > item.stock" 
+                            :value="item.quantity" 
+                            @input="handleQuantityInput($event, item)"
+                            @blur="handleQuantityBlur($event, item)"
+                            min="1" 
+                            :max="item.stock" />
                           <span class="input-group-prepend">
                             <button type="button" class="btn quantity-btn" @click="increment(item)"
                               :disabled="item.quantity >= item.stock">
@@ -222,6 +227,38 @@ export default {
       this.cartKey++;
     },
     async decrement(product) { await useCartStore().updateCartQuantity({ product: product, qty: -1 }); this.cartKey++; },
+    handleQuantityInput(event, item) {
+      // Allow typing but don't update yet
+      const value = parseInt(event.target.value) || 0;
+      if (value < 1) {
+        event.target.value = 1;
+      } else if (value > item.stock) {
+        event.target.value = item.stock;
+        useNuxtApp().$showToast({ msg: `สินค้ามีเพียง ${item.stock} ชิ้นในสต็อก`, type: "error" });
+      }
+    },
+    async handleQuantityBlur(event, item) {
+      const newQuantity = parseInt(event.target.value) || 1;
+      const oldQuantity = item.quantity;
+      
+      // Validate quantity
+      if (newQuantity < 1) {
+        event.target.value = oldQuantity;
+        return;
+      }
+      if (newQuantity > item.stock) {
+        event.target.value = item.stock;
+        useNuxtApp().$showToast({ msg: `สินค้ามีเพียง ${item.stock} ชิ้นในสต็อก`, type: "error" });
+        return;
+      }
+      
+      // Only update if quantity changed
+      if (newQuantity !== oldQuantity) {
+        const diff = newQuantity - oldQuantity;
+        await useCartStore().updateCartQuantity({ product: item, qty: diff });
+        this.cartKey++;
+      }
+    },
     goToCheckout() {
       if (this.selectedItems.length === 0) {
         useNuxtApp().$showToast({ msg: "Please select items to checkout.", type: "error" })

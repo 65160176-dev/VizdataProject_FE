@@ -146,6 +146,11 @@ export default {
   },
   setup(){
     const addToCart = (product) => {
+      // Check stock before adding to cart
+      if (!product.stock || product.stock <= 0) {
+        useNuxtApp().$showToast({ msg: "This product is out of stock", type: "error" })
+        return
+      }
       useCartStore().addToCart(product)
     }
     return {
