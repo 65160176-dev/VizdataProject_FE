@@ -56,8 +56,8 @@
               <strong>รอตรวจสอบคำขอ</strong><br>
               <small>คุณได้ส่งคำขอยกเลิกหรือแจ้งปัญหา กรุณารอร้านค้าตรวจสอบ</small>
             </template>
-            <div v-if="order.note" class="mt-1 small text-dark fst-italic">
-              เหตุผล: {{ order.note }}
+            <div v-if="order.note || order.cancelReason" class="mt-1 small text-dark fst-italic">
+              เหตุผล: {{ order.note || order.cancelReason }}
             </div>
           </div>
         </div>
@@ -195,8 +195,8 @@ import { computed, ref } from 'vue'
 import { useNuxtApp, useRuntimeConfig } from '#app'
 
 // Import Popups
-// import cancelOrderPop from './cancelOrderPop.vue' // ❌ ไม่ได้ใช้แล้ว
-import cancReqOrderPop from './cancReqOrderPop.vue' // ✅ ใช้ตัวนี้สำหรับเลือกเหตุผล
+import cancelOrderPop from './cancelOrderPop.vue'
+import cancReqOrderPop from './cancReqOrderPop.vue'
 import confirmOrder from './confirmOrder.vue'
 
 const props = defineProps({
@@ -209,13 +209,14 @@ const emit = defineEmits(['back', 'cancel', 'update'])
 const isReturnMode = ref(false)
 const showStatusAlert = ref(true)
 const showCancelModal = ref(false)
+const showDirectCancelModal = ref(false) // ✅ เพิ่มตัวแปรนี้กลับมาเพราะมีการเรียกใช้
 const showConfirmReceivedModal = ref(false)
 
 const { $showToast } = useNuxtApp()
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
 
-// --- Helper Functions (เหมือนเดิม) ---
+// --- Helper Functions ---
 const checkStatus = (status, type) => {
   const s = (status || '').toLowerCase();
   switch (type) {
@@ -263,28 +264,40 @@ const statusBadgeClass = computed(() => {
   }
 })
 
-// Notification Helper
-const createNotification = (title, message) => {
-  if (typeof window === 'undefined') return
-  const currentNotifs = JSON.parse(localStorage.getItem('my_app_notifications') || "[]")
-  const now = new Date()
-  const dateString = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-
-  const newNotif = {
-    id: Date.now(),
-    title: title,
-    message: message,
-    date: dateString,
-    isRead: false,
-    image: props.order.items[0]?.image || ''
-  }
-  localStorage.setItem('my_app_notifications', JSON.stringify([newNotif, ...currentNotifs]))
-  window.dispatchEvent(new Event('notification-updated'))
-}
+// ❌ ลบฟังก์ชัน createNotification ออกไปเลย เพื่อป้องกันการเรียกใช้โดยเผลอ
+// const createNotification = (title, message) => { ... }
 
 // --- Action Logic ---
 
-// 1. Open Modal (ใช้ร่วมกันทั้ง Pending, Processing, Return)
+// 1. Direct Cancel (Pending only)
+const handleDirectCancel = () => { showDirectCancelModal.value = true }
+
+const confirmDirectCancel = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    await $fetch(`${API_BASE_URL}/api/order/${props.order._id || props.order.orderId}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: {
+        status: 'Cancelled',
+        note: 'User cancelled directly'
+      }
+    })
+
+    props.order.status = 'Cancelled'
+
+    // ❌ เอา createNotification ออก
+
+    emit('cancel', props.order)
+    showDirectCancelModal.value = false
+    $showToast({ msg: 'ยกเลิกคำสั่งซื้อเรียบร้อย', type: 'success' })
+  } catch (error) {
+    console.error(error)
+    $showToast({ msg: 'เกิดข้อผิดพลาดในการยกเลิก', type: 'error' })
+  }
+}
+
+// 2. Request Cancel / Return
 const openCancelModal = () => {
   isReturnMode.value = false
   showCancelModal.value = true
@@ -295,29 +308,21 @@ const openReturnModal = () => {
 }
 const closeCancelModal = () => { showCancelModal.value = false }
 
-// ✅✅ 2. Submit Logic (รวม Pending Cancel + Request Cancel) ✅✅
 const submitRequestCancellation = async (reason) => {
-  let statusToSend = 'cancel requested'; // Default: รอตรวจสอบ
+  let statusToSend = 'cancel requested';
   let title = 'ส่งคำขอยกเลิกแล้ว';
-  let msg = `คำขอยกเลิกคำสั่งซื้อ #${props.order.orderId} ได้ถูกส่งให้ร้านค้าตรวจสอบแล้ว`;
 
-  // กรณี Pending: ยกเลิกได้เลย ไม่ต้องรออนุมัติ
   if (checkStatus(props.order.status, 'pending')) {
     statusToSend = 'Cancelled';
     title = 'ยกเลิกคำสั่งซื้อสำเร็จ';
-    msg = `คำสั่งซื้อ #${props.order.orderId} ถูกยกเลิกเรียบร้อยแล้ว`;
-  }
-  // กรณี Return/Issue: แจ้งปัญหา (แล้วแต่ Business Logic ว่าจะให้เป็นสถานะอะไร)
-  else if (isReturnMode.value) {
-    statusToSend = 'return_requested'; // หรือ 'cancelled' ถ้าอยากให้จบเลย
+  } else if (isReturnMode.value) {
+    statusToSend = 'return_requested';
     title = 'แจ้งปัญหา/ขอคืนสินค้า';
-    msg = `คำสั่งซื้อ #${props.order.orderId} ถูกแจ้งปัญหา: ${reason}`;
   }
 
   try {
     const token = localStorage.getItem('token')
-    // เรียก API อัปเดตทั้ง Status และ Note (เหตุผล)
-    const response = await $fetch(`${API_BASE_URL}/api/order/${props.order._id || props.order.orderId}`, {
+    await $fetch(`${API_BASE_URL}/api/order/${props.order._id || props.order.orderId}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -325,21 +330,20 @@ const submitRequestCancellation = async (reason) => {
       },
       body: {
         status: statusToSend,
-        note: reason, // บันทึกเหตุผลลง Note
-        isCancelRequest: statusToSend === 'cancel requested' // Flag บอกว่าเป็นคำขอ (เฉพาะเคสต้องรอ)
+        note: reason,
+        isCancelRequest: statusToSend === 'cancel requested'
       }
     })
 
-    // อัปเดต UI ทันที
     props.order.status = statusToSend
     props.order.note = reason
 
-    createNotification(title, msg)
+    // ❌ เอา createNotification ออก
 
     if (statusToSend === 'Cancelled') {
-      emit('cancel', props.order) // ถ้าจบเลย ส่ง event cancel
+      emit('cancel', props.order)
     } else {
-      emit('update', props.order) // ถ้าแค่ขอ ส่ง event update
+      emit('update', props.order)
     }
 
     closeCancelModal()
@@ -353,6 +357,7 @@ const submitRequestCancellation = async (reason) => {
 
 // 3. Confirm Received
 const handleConfirmReceived = () => { showConfirmReceivedModal.value = true }
+
 const submitConfirmReceived = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -363,7 +368,9 @@ const submitConfirmReceived = async () => {
     })
 
     props.order.status = 'Completed'
-    createNotification('คำสั่งซื้อเสร็จสมบูรณ์', `คุณได้ยืนยันการรับสินค้าสำหรับคำสั่งซื้อ #${props.order.orderId} เรียบร้อยแล้ว`)
+
+    // ❌ เอา createNotification ออก
+
     emit('update', props.order)
     showConfirmReceivedModal.value = false
     $showToast({ msg: 'ยืนยันรับสินค้าเรียบร้อย', type: 'success' })
@@ -375,6 +382,7 @@ const submitConfirmReceived = async () => {
 </script>
 
 <style scoped>
+/* CSS คงเดิม */
 .stepper-wrapper {
   display: flex;
   justify-content: space-between;
