@@ -57,17 +57,33 @@ export const useProductStore = defineStore({
       try {
         const token = localStorage.getItem('token')
         if (!token) {
-          // โหลด wishlist จาก localStorage สำหรับ guest user
-          const localWishlist = localStorage.getItem('guestWishlist')
-          this.wishlist = localWishlist ? JSON.parse(localWishlist) : []
+          // โหลด wishlist สำหรับ guest จาก localStorage และอัปเดตสต็อกล่าสุดจากเซิร์ฟเวอร์
+          const localWishlistRaw = localStorage.getItem('guestWishlist') || localStorage.getItem('whish')
+          const localItems = localWishlistRaw ? JSON.parse(localWishlistRaw) : []
+          const refreshed = await Promise.all(localItems.map(async (item) => {
+            const id = item._id || item.id
+            if (!id) return item
+            try {
+              const latest = await $fetch(`http://localhost:3001/api/product/${id}`)
+              return {
+                ...item,
+                stock: (latest && typeof latest.stock === 'number') ? latest.stock : item.stock,
+                price: (latest && typeof latest.price === 'number') ? latest.price : item.price,
+                image: latest?.image || item.image,
+                name: latest?.name || item.name || item.title,
+              }
+            } catch (e) {
+              return item
+            }
+          }))
+          this.wishlist = refreshed
+          try { localStorage.setItem('guestWishlist', JSON.stringify(refreshed)) } catch (e) {}
           return
         }
         const response = await $fetch('http://localhost:3001/api/wishlist', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         })
-        this.wishlist = response.products || []
+        this.wishlist = Array.isArray(response?.products) ? response.products : []
       } catch (error) {
         console.error('Error fetching wishlist:', error)
         this.wishlist = []

@@ -164,27 +164,28 @@ export const useAuthStore = defineStore('auth', {
             }
             
             await cartStore.fetchCart()
-            // Merge guest wishlist (localStorage key 'whish') into user's wishlist on login
+            // Merge guest wishlist into user's wishlist on login (support legacy 'whish' and new 'guestWishlist')
             try {
-              const localWish = JSON.parse(localStorage.getItem('whish') || '[]')
-              if (localWish.length > 0) {
-                for (const item of localWish) {
+              const legacy = JSON.parse(localStorage.getItem('whish') || '[]')
+              const guest = JSON.parse(localStorage.getItem('guestWishlist') || '[]')
+              const merged = [...legacy, ...guest]
+              if (merged.length > 0) {
+                const seen = new Set()
+                for (const item of merged) {
                   try {
-                    const prodId = item._id || item.id
-                    if (!prodId) continue
+                    const prodId = item?._id || item?.id
+                    if (!prodId || seen.has(prodId)) continue
+                    seen.add(prodId)
                     await $fetch(`http://localhost:3001/api/wishlist/${prodId}`, {
                       method: 'POST',
-                      headers: {
-                        Authorization: `Bearer ${token}`
-                      }
+                      headers: { Authorization: `Bearer ${token}` }
                     })
                   } catch (e) {}
                 }
                 localStorage.removeItem('whish')
+                localStorage.removeItem('guestWishlist')
               }
-            } catch (e) {
-              console.warn('Failed to merge local wishlist:', e)
-            }
+            } catch (e) { console.warn('Failed to merge local wishlist:', e) }
 
             await productStore.fetchWishlist()
           }
@@ -235,30 +236,31 @@ export const useAuthStore = defineStore('auth', {
               document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`
             } catch (e) {}
             
-            // Merge guest wishlist (localStorage key 'whish') into user's wishlist on register
+            // Merge guest wishlist into user's wishlist on register (support legacy 'whish' and new 'guestWishlist')
             try {
               const { useProductStore } = await import('~/store/products')
               const productStore = useProductStore()
-              const localWish = JSON.parse(localStorage.getItem('whish') || '[]')
-              if (localWish.length > 0) {
-                for (const item of localWish) {
+              const legacy = JSON.parse(localStorage.getItem('whish') || '[]')
+              const guest = JSON.parse(localStorage.getItem('guestWishlist') || '[]')
+              const merged = [...legacy, ...guest]
+              if (merged.length > 0) {
+                const seen = new Set()
+                for (const item of merged) {
                   try {
-                    const prodId = item._id || item.id
-                    if (!prodId) continue
+                    const prodId = item?._id || item?.id
+                    if (!prodId || seen.has(prodId)) continue
+                    seen.add(prodId)
                     await $fetch(`http://localhost:3001/api/wishlist/${prodId}`, {
                       method: 'POST',
-                      headers: {
-                        Authorization: `Bearer ${token}`
-                      }
+                      headers: { Authorization: `Bearer ${token}` }
                     })
                   } catch (e) {}
                 }
                 localStorage.removeItem('whish')
+                localStorage.removeItem('guestWishlist')
               }
               await productStore.fetchWishlist()
-            } catch (e) {
-              console.warn('Failed to merge local wishlist on register:', e)
-            }
+            } catch (e) { console.warn('Failed to merge local wishlist on register:', e) }
           }
 
           return { success: true, message: response.message }
@@ -271,7 +273,7 @@ export const useAuthStore = defineStore('auth', {
     },
     
     // Logout action
-    logout() {
+    async logout() {
       this.user = null
       this.userName = null
       this.isLoggedIn = false
@@ -289,6 +291,17 @@ export const useAuthStore = defineStore('auth', {
         try {
           document.cookie = 'userlogin=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
         } catch (e) {}
+
+        // ✅ Refresh dependent stores (e.g., wishlist) immediately after logout
+        try {
+          const { useProductStore } = await import('~/store/products')
+          const productStore = useProductStore()
+          // Clear current wishlist and reload from guest storage
+          productStore.wishlist = []
+          await productStore.fetchWishlist()
+        } catch (e) {
+          try { console.warn('Failed to refresh wishlist on logout:', e) } catch (_) {}
+        }
       }
     }
   }

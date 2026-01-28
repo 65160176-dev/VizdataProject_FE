@@ -57,7 +57,9 @@
                       <h2>{{ curr.symbol }}{{ item.price * curr.curr  }}</h2>
                     </td>
                     <td>
-                      <p>in stock</p>
+                      <p :class="{ 'text-success': (item.stock || 0) > 0, 'text-danger': (item.stock || 0) <= 0 }">
+                        {{ (item.stock || 0) > 0 ? 'In Stock' : 'Out of Stock' }}
+                      </p>
                     </td>
                     <td>
                       <a href="javascript:void(0)" class="icon me-3" @click="removeWishlistItem(item)">
@@ -97,27 +99,9 @@
 import { useProductStore } from '~~/store/products'
 import { useCartStore } from '~~/store/cart'
 export default {
-  data(){
-    return{
-      whishItem:[]
-    }
-  },
   computed: {
-
     wishlist() {
-      if(!useProductStore().wishlistItems.length)
-      {
-        if(this.whishItem && Array.isArray(this.whishItem)) {
-          this.whishItem.forEach(item=>{
-            useProductStore().addToWishlist(item)  
-          })
-        }
- 
-  return useProductStore().wishlistItems
-      }
-      else{
-        return useProductStore().wishlistItems
-      }
+      return useProductStore().wishlistItems
     },
     curr() {
       return useProductStore().changeCurrency
@@ -157,10 +141,8 @@ export default {
       addToCart
     }
   },
-  mounted(){
-    const storedWishlist = localStorage.getItem('whish')
-    this.whishItem = storedWishlist ? JSON.parse(storedWishlist) : []
-   
+  async mounted(){
+    try { await useProductStore().fetchWishlist() } catch (e) {}
   }
 }
 </script>

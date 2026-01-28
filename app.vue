@@ -39,16 +39,12 @@ onMounted(async () => {
     await cartStore.fetchCart()
     await productStore.fetchWishlist()
   } else {
-    // ถ้ายังไม่ได้ login ให้โหลดจาก localStorage แบบเดิม
+    // ถ้ายังไม่ได้ login: โหลดตะกร้าจาก localStorage และดึง Wishlist แบบ guest (รวมอัปเดตสต็อกล่าสุด)
     const localStorageProducts = JSON.parse(localStorage.getItem('product'))
     if (localStorageProducts?.length) {
       cartStore.setInitialCart(localStorageProducts)
     }
-    
-    const localstorageWhishlist = JSON.parse(localStorage.getItem('whish'))
-    if (localstorageWhishlist?.length) {
-      productStore.setInitialWhishlist(localstorageWhishlist)
-    }
+    await productStore.fetchWishlist()
   }
 
   // Load Compare (ยังใช้ localStorage)
