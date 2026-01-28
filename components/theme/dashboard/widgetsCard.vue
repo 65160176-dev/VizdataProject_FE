@@ -98,9 +98,14 @@ const myProducts = computed(() => {
     })
 })
 const totalEarnings = computed(() => {
-    return myOrders.value
-        .filter(o => ['completed', 'shipped', 'delivered', 'success'].includes((o.status || '').toLowerCase()))
-        .reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+  return myOrders.value
+    .filter(o => ['completed', 'shipped', 'delivered', 'success'].includes((o.status || '').toLowerCase()))
+    .reduce((sum, o) => {
+      const total = Number(o.total) || 0
+      const shipping = Number(o.shippingCost) || 0
+      const net = total - shipping
+      return sum + (net > 0 ? net : 0)
+    }, 0)
 })
 const totalProducts = computed(() => myProducts.value.length)
 const pendingCount = computed(() => {
