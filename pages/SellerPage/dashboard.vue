@@ -23,9 +23,6 @@
           <BuysellChart />
           <SalesStatus />
 
-          <GoodReturn />
-          <EmployStatus />
-
         </div>
       </Transition>
     </div>

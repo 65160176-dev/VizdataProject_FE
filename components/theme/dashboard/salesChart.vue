@@ -6,8 +6,8 @@
         <h4 class="fw-bolder mb-0">{{ formatCurrency(total7Days) }}</h4>
         <small class="text-muted" style="font-size: 10px;">(ยอดขายเฉพาะร้านคุณ)</small>
       </div>
-      <div class="chart-area mt-2" style="margin-bottom: -15px;">
-        <apexchart type="area" height="100" :options="chartOptions" :series="series"></apexchart>
+      <div class="chart-area mt-3">
+        <apexchart type="bar" height="85" :options="chartOptions" :series="series"></apexchart>
       </div>
     </div>
   </div>
@@ -16,7 +16,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useOrderStore } from '~/store/orders';
-import { useAuthStore } from '~/store/auth'; // ✅ เรียก Auth
+import { useAuthStore } from '~/store/auth';
 
 const orderStore = useOrderStore();
 const authStore = useAuthStore();
@@ -33,22 +33,20 @@ const myOrders = computed(() => {
     })
 })
 
-// 2. คำนวณยอดขาย 7 วัน (Auto-detect Date)
+// 2. คำนวณยอดขาย 7 วัน
 const last7DaysData = computed(() => {
   const data = Array(7).fill(0);
-  const orders = myOrders.value; // ใช้ myOrders แทน allOrders
+  const orders = myOrders.value;
   
   if (orders.length === 0) return data;
 
-  // หา "วันที่ล่าสุด" ของร้านเราที่มีออเดอร์
   const dates = orders.map(o => new Date(o.createdAt || o.date).getTime()).filter(d => !isNaN(d));
   if (dates.length === 0) return data;
   
   const maxDate = new Date(Math.max(...dates));
-  maxDate.setHours(23, 59, 59, 999); // set เป็นจบวัน
+  maxDate.setHours(23, 59, 59, 999);
 
   orders.forEach(order => {
-    // ไม่นับที่ยกเลิก
     if (order.status === 'cancelled' || order.status === 'cancel') return;
     
     const d = new Date(order.createdAt || order.date);
@@ -69,11 +67,29 @@ const total7Days = computed(() => last7DaysData.value.reduce((a,b)=>a+b,0));
 const series = computed(() => [{ name: "Sales", data: last7DaysData.value }]);
 const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits:0 }).format(val);
 
+// ตั้งค่ากราฟแท่ง
 const chartOptions = ref({
-  chart: { type: "area", height: 100, sparkline: { enabled: true } },
-  stroke: { curve: "smooth", width: 2 },
-  fill: { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.0, stops: [0, 100] } },
-  colors: ["#7366ff"], // สีม่วง
-  tooltip: { fixed: { enabled: false }, x: { show: false }, y: { formatter: (val) => formatCurrency(val) } }
+  chart: { 
+      type: "bar",  // เปลี่ยนเป็น bar
+      height: 85, 
+      sparkline: { enabled: true },
+      fontFamily: 'Nunito, sans-serif'
+  },
+  // ปรับแต่งแท่งกราฟ
+  plotOptions: { 
+      bar: { 
+          borderRadius: 4,       // มุมมน
+          columnWidth: '50%',    // ความกว้างของแท่ง
+          distributed: false
+      } 
+  },
+  colors: ["#7366ff"], // สีม่วงเหมือนเดิม
+  tooltip: { 
+      fixed: { enabled: false }, 
+      x: { show: false }, 
+      marker: { show: false },
+      y: { formatter: (val) => formatCurrency(val) } 
+  },
+  grid: { padding: { top: 10, bottom: 10, left: 0, right: 0 } }
 });
 </script>

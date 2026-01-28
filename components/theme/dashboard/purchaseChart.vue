@@ -13,8 +13,8 @@
           </div>
         </div>
       </div>
-      <div class="chart-area mt-2" style="margin-bottom: -15px;">
-        <apexchart type="bar" height="100" :options="chartOptions" :series="series"></apexchart>
+      <div class="chart-area mt-3">
+        <apexchart type="bar" height="85" :options="chartOptions" :series="series"></apexchart>
       </div>
     </div>
   </div>
@@ -23,12 +23,11 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useOrderStore } from '~/store/orders';
-import { useAuthStore } from '~/store/auth'; // ✅ เรียก Auth
+import { useAuthStore } from '~/store/auth';
 
 const orderStore = useOrderStore();
 const authStore = useAuthStore();
 
-// 1. กรองเฉพาะออเดอร์ของร้านเรา
 const myOrders = computed(() => {
     const all = orderStore.allOrders || []
     const myId = authStore.user?._id || authStore.user?.id || ''
@@ -40,14 +39,12 @@ const myOrders = computed(() => {
     })
 })
 
-// 2. นับจำนวนออเดอร์ 7 วัน (Auto-detect Date)
 const last7DaysCount = computed(() => {
   const data = Array(7).fill(0);
-  const orders = myOrders.value; // ใช้ myOrders
+  const orders = myOrders.value;
   
   if (orders.length === 0) return data;
 
-  // หา "วันที่ล่าสุด"
   const dates = orders.map(o => new Date(o.createdAt || o.date).getTime()).filter(d => !isNaN(d));
   if (dates.length === 0) return data;
   const maxDate = new Date(Math.max(...dates));
@@ -62,7 +59,7 @@ const last7DaysCount = computed(() => {
 
     if (diffDays >= 0 && diffDays < 7) {
        const index = 6 - diffDays;
-       data[index] += 1; // นับ +1
+       data[index] += 1;
     }
   });
   return data;
@@ -72,14 +69,17 @@ const totalOrders7Days = computed(() => last7DaysCount.value.reduce((a,b)=>a+b, 
 const series = computed(() => [{ name: "Orders", data: last7DaysCount.value }]);
 
 const chartOptions = ref({
-  chart: { type: "bar", height: 100, sparkline: { enabled: true }, fontFamily: 'Nunito, sans-serif' },
-  colors: ["#544fff"], // สีน้ำเงินเข้ม
+  // ปรับ height เป็น 85
+  chart: { type: "bar", height: 85, sparkline: { enabled: true }, fontFamily: 'Nunito, sans-serif' },
+  colors: ["#544fff"],
   plotOptions: { bar: { borderRadius: 3, columnWidth: '60%', distributed: false } },
   tooltip: { 
       fixed: { enabled: false }, 
       x: { show: false }, 
       marker: { show: false },
       y: { formatter: (val) => `${val} Orders` }
-  }
+  },
+  // เพิ่ม padding
+  grid: { padding: { top: 10, bottom: 10, left: 0, right: 0 } }
 });
 </script>
