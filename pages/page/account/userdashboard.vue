@@ -363,7 +363,26 @@ const activeMainTab = ref('info')
 // ✅ ฟังก์ชันเปลี่ยน Tab ของ Sidebar (อัปเดต URL ด้วย)
 const updateTab = (tabName) => {
   activeMainTab.value = tabName
-  router.replace({ query: { ...route.query, tab: tabName } })
+
+  // 1. คัดลอก query เดิมมาก่อน
+  const newQuery = { ...route.query }
+
+  // 2. อัปเดต tab เป็นค่าใหม่
+  newQuery.tab = tabName
+
+  // 3. ❌ ลบ orderId ทิ้ง เพื่อให้ออกจากหน้ารายละเอียดออเดอร์
+  delete newQuery.orderId
+
+  // 4. (Optional) ถ้าอยากให้เปลี่ยน Tab แล้ว Filter กลับเป็น all ก็เปิดบรรทัดนี้
+  // if (tabName !== 'orders') delete newQuery.filter 
+
+  // 5. สั่งเปลี่ยน URL
+  router.replace({ query: newQuery })
+
+  // 6. เคลียร์ค่า selectedOrder ใน State ด้วย (เพื่อให้หน้าเว็บแสดง List ปกติทันที)
+  if (tabName !== 'orders') {
+    selectedOrder.value = null
+  }
 }
 
 // --- Address Data ---
