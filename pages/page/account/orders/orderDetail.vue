@@ -1,106 +1,85 @@
 <template>
   <div class="pb-5 position-relative">
 
-    <div class="bg-white p-3 mb-3 shadow-sm d-flex justify-content-between align-items-center">
-      <div style="min-width: 0;">
-        <button class="btn btn-link text-dark text-decoration-none p-0 fw-bold" @click="$emit('back')">
-          <i class="fa fa-arrow-left me-2"></i> รายละเอียดคำสั่งซื้อ
-        </button>
-      </div>
-      <div class="text-end" style="min-width: 0;">
-        <div class="d-flex flex-column align-items-end">
-          <span class="badge rounded-pill mb-1 px-3" :class="statusBadgeClass" style="font-size: 0.85rem;">
-            {{ order.status }}
-          </span>
-          <span class="small text-muted fw-bold">{{ order.orderId }}</span>
-          <span class="small text-muted" style="font-size: 0.75rem;">
-            {{ formatDate(order.date || order.createdAt) }}
-          </span>
+    <div class="bg-white shadow-sm rounded-4 p-4 overflow-hidden">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div style="min-width: 0;">
+          <button class="btn btn-link text-dark text-decoration-none p-0 fw-bold" @click="$emit('back')">
+            <i class="fa fa-arrow-left me-2"></i> รายละเอียดคำสั่งซื้อ
+          </button>
         </div>
-      </div>
-    </div>
-
-    <div class="card border-0 shadow-sm mb-3 p-4" v-if="!isCancelled">
-      <div class="stepper-wrapper">
-        <div class="stepper-item" :class="{ completed: step >= 1 }">
-          <div class="step-counter">1</div>
-          <div class="step-name">Pending</div>
-        </div>
-        <div class="stepper-item" :class="{ completed: step >= 2 }">
-          <div class="step-counter">2</div>
-          <div class="step-name">Preparing</div>
-        </div>
-        <div class="stepper-item" :class="{ completed: step >= 3 }">
-          <div class="step-counter">3</div>
-          <div class="step-name">Shipped</div>
-        </div>
-        <div class="stepper-item" :class="{ completed: step >= 4 }">
-          <div class="step-counter">4</div>
-          <div class="step-name">Completed</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="alert shadow-lg border-0"
-      :class="checkStatus(order.status, 'cancelled') ? 'alert-danger' : 'alert-warning'" v-else v-show="showStatusAlert"
-      style="position: fixed; top: 100px; right: 30px; z-index: 9999; max-width: 400px; width: 100%;">
-      <div class="d-flex justify-content-between align-items-start">
-        <div class="d-flex align-items-center">
-          <i class="fa fs-4 me-3" :class="checkStatus(order.status, 'cancelled') ? 'fa-times-circle' : 'fa-clock'"></i>
-          <div>
-            <template v-if="checkStatus(order.status, 'cancelled')">
-              <strong>คำสั่งซื้อถูกยกเลิก/คืนเงิน</strong><br>
-              <small>รายการนี้สิ้นสุดแล้ว</small>
-            </template>
-            <template v-else>
-              <strong>รอตรวจสอบคำขอ</strong><br>
-              <small>คุณได้ส่งคำขอยกเลิกหรือแจ้งปัญหา กรุณารอร้านค้าตรวจสอบ</small>
-            </template>
-            <div v-if="order.note || order.cancelReason" class="mt-1 small text-dark fst-italic">
-              เหตุผล: {{ order.note || order.cancelReason }}
-            </div>
+        <div class="text-end" style="min-width: 0;">
+          <div class="d-flex flex-column align-items-end">
+            <span class="badge rounded-pill mb-1 px-3" :class="statusBadgeClass" style="font-size: 0.85rem;">
+              {{ formatStatus(order.status) }}
+            </span>
+            <span class="small text-muted fw-bold">{{ order.orderId }}</span>
+            <span class="small text-muted" style="font-size: 0.75rem;">
+              {{ formatDate(order.date || order.createdAt) }}
+            </span>
           </div>
         </div>
-        <button type="button" class="btn-close ms-3" aria-label="Close" @click="showStatusAlert = false"></button>
       </div>
-    </div>
 
-    <div class="card border-0 shadow-sm p-4 mb-3">
-      <h6 class="mb-3 border-bottom pb-2 fw-bold text-dark">
-        <i class="fa fa-map-marker-alt me-2 text-primary"></i> ที่อยู่จัดส่ง
-      </h6>
-      <div class="row">
-        <div class="col-md-6 mb-2">
-          <small class="text-muted">ชื่อผู้รับ</small><br>
-          <span class="fw-bold">{{ order.customer }}</span>
-          <div class="small text-muted mt-1">{{ order.email }}</div>
-        </div>
-        <div class="col-md-6">
-          <small class="text-muted">ที่อยู่</small><br>
-          <span>{{ order.address }}</span>
+      <hr class="border-secondary-subtle my-4">
+
+      <div class="mb-4" v-if="!isCancelled">
+        <div class="stepper-wrapper px-3">
+          <div class="stepper-item" :class="{ completed: step >= 1 }">
+            <div class="step-counter">1</div>
+            <div class="step-name">Pending</div>
+          </div>
+          <div class="stepper-item" :class="{ completed: step >= 2 }">
+            <div class="step-counter">2</div>
+            <div class="step-name">Preparing</div>
+          </div>
+          <div class="stepper-item" :class="{ completed: step >= 3 }">
+            <div class="step-counter">3</div>
+            <div class="step-name">Shipped</div>
+          </div>
+          <div class="stepper-item" :class="{ completed: step >= 4 }">
+            <div class="step-counter">4</div>
+            <div class="step-name">Completed</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="card border-0 shadow-sm mb-3">
-      <div class="card-header bg-white border-bottom-0 pt-3">
-        <div class="d-flex align-items-center border-bottom pb-2 mb-2">
-          <i class="fa fa-home me-2 text-primary"></i>
+      <hr class="border-secondary-subtle my-4" v-if="!isCancelled">
+
+      <div class="mb-4">
+        <h6 class="mb-3 fw-bold text-dark">
+          <i class="fa fa-map-marker-alt me-2 text-primary"></i> ที่อยู่จัดส่ง
+        </h6>
+        <div class="row ps-4">
+          <div class="col-md-6 mb-2">
+            <small class="text-muted">ชื่อผู้รับ</small><br>
+            <span class="fw-bold">{{ order.customer }}</span>
+            <div class="small text-muted mt-1">{{ order.email }}</div>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted">ที่อยู่</small><br>
+            <span>{{ order.address }}</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-secondary-subtle my-4">
+
+      <div class="mb-4">
+        <div class="d-flex align-items-center bg-light p-2 rounded mb-3">
+          <i class="fa fa-home me-2 text-primary ms-2"></i>
           <NuxtLink :to="`/seller/${order.shopId || order.items[0]?.productId?.userId?._id || 'official-store'}`"
             class="fw-bold text-dark me-1 text-decoration-none hover-underline">
             {{ order.shopName || 'Official Store' }}
           </NuxtLink>
           <i class="fa fa-angle-right text-muted small"></i>
         </div>
-        <strong>รายการสินค้า ({{ order.items.length }} ชิ้น)</strong>
-      </div>
 
-      <div class="card-body p-0">
-        <div v-for="(item, index) in order.items" :key="index" class="p-3 border-top">
+        <div v-for="(item, index) in order.items" :key="index" class="p-2 mb-2">
           <div class="d-flex">
             <NuxtLink
               :to="`/product/three-column/thumbnail-left?id=${item.productId?._id || item.productId || item.id || '1'}`"
-              class="bg-light rounded d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+              class="bg-light rounded d-flex align-items-center justify-content-center me-3 flex-shrink-0 border"
               style="width: 70px; height: 70px; overflow: hidden; text-decoration: none;">
               <img v-if="item.image" :src="item.image" style="width: 100%; height: 100%; object-fit: cover;">
               <i v-else class="fa fa-box text-secondary fs-4"></i>
@@ -123,10 +102,10 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="card border-0 shadow-sm mb-3">
-      <div class="card-body">
+      <hr class="border-secondary-subtle my-4">
+
+      <div>
         <div class="d-flex justify-content-between align-items-center mb-2">
           <span class="text-muted">ช่องทางชำระเงิน</span>
           <span class="fw-bold">{{ order.paymentMethod || 'PromptPay' }}</span>
@@ -139,49 +118,86 @@
           <span class="text-muted">ค่าจัดส่ง</span>
           <span>฿{{ (order.shippingFee || 0).toLocaleString() }}</span>
         </div>
-        <hr class="my-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
           <span class="fw-bold fs-5">ยอดรวมสุทธิ</span>
           <span class="fw-bold fs-4 text-primary">฿{{ order.total.toLocaleString() }}</span>
         </div>
 
-        <div v-if="checkStatus(order.status, 'pending')" class="border-top pt-3 text-end">
+        <div v-if="order.note" class="mt-3 p-3 bg-light rounded text-start border border-light-subtle">
+          <div class="fw-bold small text-dark mb-1">
+            <i class="fa fa-sticky-note me-1 text-secondary"></i> เหตุผล:
+          </div>
+          <div class="small text-secondary text-break">{{ order.note }}</div>
+        </div>
+
+        <div v-if="checkStatus(order.status, 'pending')" class="mt-4 text-end">
           <button class="btn btn-outline-danger px-4 rounded-pill fw-bold" @click="openCancelModal">
             ยกเลิกคำสั่งซื้อ
           </button>
         </div>
 
         <div v-else-if="checkStatus(order.status, 'cancel requested') || checkStatus(order.status, 'return requested')"
-          class="border-top pt-3 text-center">
-          <span class="text-muted small">กำลังดำเนินการตรวจสอบคำขอ...</span>
+          class="mt-4 text-center p-3 bg-light rounded text-muted small">
+          กำลังดำเนินการตรวจสอบคำขอจากทางร้าน...
         </div>
 
-        <div v-else-if="checkStatus(order.status, 'processing')" class="border-top pt-3 text-end">
+        <div v-else-if="checkStatus(order.status, 'processing')" class="mt-4 text-end">
           <p class="text-muted small mb-2">สินค้าอยู่ระหว่างเตรียมการ หากต้องการยกเลิกต้องรอการอนุมัติ</p>
           <button class="btn btn-outline-warning px-4 rounded-pill fw-bold text-dark" @click="openCancelModal">
             ส่งคำขอยกเลิกออเดอร์
           </button>
         </div>
 
-        <div v-else-if="checkStatus(order.status, 'shipping')" class="border-top pt-3">
-          <p class="text-muted small mb-2 text-center">สินค้าอยู่ระหว่างจัดส่ง กรุณาตรวจสอบสินค้าก่อนกดยืนยัน</p>
-          <div class="d-flex gap-2 w-100">
-            <button class="btn btn-outline-danger rounded-pill fw-bold w-50" @click="openReturnModal">
+        <div v-else-if="checkStatus(order.status, 'shipping')" class="mt-4 text-center">
+          <p class="text-muted small mb-2">สินค้าอยู่ระหว่างจัดส่ง กรุณาตรวจสอบสินค้าก่อนกดยืนยัน</p>
+          <div class="d-flex gap-2 w-100 justify-content-end">
+            <button class="btn btn-outline-danger rounded-pill fw-bold" style="min-width: 120px;"
+              @click="openReturnModal">
               ปฏิเสธ/มีปัญหา
             </button>
-            <button class="btn rounded-pill fw-bold text-white w-50" style="background-color: #28a745; border: none;"
-              @click="handleConfirmReceived">
+
+            <button class="btn rounded-pill fw-bold text-white"
+              style="background-color: #28a745; border: none; min-width: 120px;" @click="handleConfirmReceived">
               ได้รับสินค้าแล้ว
             </button>
           </div>
         </div>
 
-        <div v-else-if="checkStatus(order.status, 'completed')" class="border-top pt-3 text-center text-success">
+        <div v-else-if="checkStatus(order.status, 'completed')"
+          class="mt-4 text-center text-success bg-light p-3 rounded">
           <i class="fa fa-check-circle me-2"></i> รายการสั่งซื้อนี้เสร็จสมบูรณ์แล้ว
         </div>
 
       </div>
+
     </div>
+
+    <!-- <div class="alert shadow-lg border-0"
+      :class="checkStatus(order.status, 'cancelled') ? 'alert-danger' : 'alert-warning'" v-show="shouldShowAlert"
+      style="position: fixed; top: 100px; right: 30px; z-index: 9999; max-width: 400px; width: 100%;">
+
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="d-flex align-items-center">
+          <i class="fa fs-4 me-3" :class="checkStatus(order.status, 'cancelled') ? 'fa-times-circle' : 'fa-clock'"></i>
+          <div>
+            <template v-if="checkStatus(order.status, 'cancelled')">
+              <strong>คำสั่งซื้อถูกยกเลิก/คืนเงิน</strong><br>
+              <small>รายการนี้สิ้นสุดแล้ว</small>
+            </template>
+<template v-else>
+              <strong>รอตรวจสอบคำขอ</strong><br>
+              <small>คุณได้ส่งคำขอยกเลิกหรือแจ้งปัญหา กรุณารอร้านค้าตรวจสอบ</small>
+            </template>
+<div v-if="order.note || order.cancelReason" class="mt-1 small text-dark fst-italic">
+  เหตุผล: {{ order.note || order.cancelReason }}
+</div>
+</div>
+</div>
+<button type="button" class="btn-close ms-3" aria-label="Close" @click="showStatusAlert = false">
+</button>
+</div>
+</div> -->
 
     <cancReqOrderPop v-if="showCancelModal" @close="closeCancelModal" @confirm="submitRequestCancellation" />
     <confirmOrder v-if="showConfirmReceivedModal" @close="showConfirmReceivedModal = false"
@@ -193,9 +209,6 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useNuxtApp, useRuntimeConfig } from '#app'
-
-// Import Popups
-// ❌ ลบ cancelOrderPop ออก
 import cancReqOrderPop from './cancReqOrderPop.vue'
 import confirmOrder from './confirmOrder.vue'
 
@@ -209,7 +222,6 @@ const emit = defineEmits(['back', 'cancel', 'update'])
 const isReturnMode = ref(false)
 const showStatusAlert = ref(true)
 const showCancelModal = ref(false)
-// ❌ showDirectCancelModal ไม่ได้ใช้แล้ว
 const showConfirmReceivedModal = ref(false)
 
 const { $showToast } = useNuxtApp()
@@ -237,6 +249,26 @@ const formatDate = (dateString) => {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
   })
 }
+// ฟังก์ชันแปลงข้อความสถานะ
+const formatStatus = (status) => {
+  if (!status) return ''
+  const s = status.toLowerCase()
+
+  switch (s) {
+    case 'pending': return 'Pending'
+    case 'pending review': return 'Pending Review'
+    case 'processing': return 'Processing'
+    case 'preparing': return 'Preparing'
+    case 'shipped': return 'Shipped'
+    case 'shipping': return 'Shipping'
+    case 'completed': return 'Completed'
+    case 'cancelled': return 'Cancelled'
+    case 'cancel requested': return 'Cancel Requested'
+    case 'return_requested': return 'Cancel Requested'
+    case 'return requested': return 'Cancel Requested'
+    default: return status // กรณีไม่ตรงเงื่อนไข ให้แสดงค่าเดิม
+  }
+}
 
 // Stepper Logic
 const step = computed(() => {
@@ -245,6 +277,18 @@ const step = computed(() => {
   if (checkStatus(props.order.status, 'shipping')) return 3
   if (checkStatus(props.order.status, 'completed')) return 4
   return 1
+})
+
+const shouldShowAlert = computed(() => {
+  // 1. ถ้าผู้ใช้กดปิดไปแล้ว ให้ซ่อนตลอด
+  if (!showStatusAlert.value) return false;
+
+  const s = props.order.status;
+
+  // 2. ให้แสดงเฉพาะสถานะเหล่านี้เท่านั้น (ยกเลิก, ขอคืนเงิน, ขอยกเลิก)
+  return checkStatus(s, 'cancelled') ||
+    checkStatus(s, 'cancel requested') ||
+    checkStatus(s, 'return requested');
 })
 
 const isCancelled = computed(() => {
@@ -266,9 +310,6 @@ const statusBadgeClass = computed(() => {
 
 // --- Action Logic ---
 
-// ❌ ลบ handleDirectCancel และ confirmDirectCancel ออก เพราะใช้ openCancelModal แทน
-
-// 2. Request Cancel / Return
 const openCancelModal = () => {
   isReturnMode.value = false
   showCancelModal.value = true
@@ -283,13 +324,15 @@ const submitRequestCancellation = async (reason) => {
   let statusToSend = 'cancel requested';
   let title = 'ส่งคำขอยกเลิกแล้ว';
 
-  // ✅ ถ้าสถานะเป็น Pending: ให้เป็น Cancelled ทันที (แต่มี Note เหตุผลด้วย)
+  // 1. กรณี Pending -> ยกเลิกทันที
   if (checkStatus(props.order.status, 'pending')) {
     statusToSend = 'Cancelled';
     title = 'ยกเลิกคำสั่งซื้อสำเร็จ';
-  } else if (isReturnMode.value) {
-    statusToSend = 'return_requested';
-    title = 'แจ้งปัญหา/ขอคืนสินค้า';
+  }
+  // 2. ✅✅ แก้ตรงนี้: กรณีปฏิเสธรับสินค้า (Shipped) -> ให้เป็น Cancelled ทันที
+  else if (isReturnMode.value) {
+    statusToSend = 'Cancelled'; // เปลี่ยนจาก 'return_requested' เป็น 'Cancelled'
+    title = 'ปฏิเสธรับสินค้า/ยกเลิกสำเร็จ';
   }
 
   try {
@@ -302,7 +345,8 @@ const submitRequestCancellation = async (reason) => {
       },
       body: {
         status: statusToSend,
-        note: reason, // บันทึกเหตุผล
+        note: reason,
+        // ถ้าเป็น Cancelled แล้ว ไม่ถือว่าเป็น Request
         isCancelRequest: statusToSend === 'cancel requested'
       }
     })
@@ -310,6 +354,7 @@ const submitRequestCancellation = async (reason) => {
     props.order.status = statusToSend
     props.order.note = reason
 
+    // แจ้งเตือน Parent Component
     if (statusToSend === 'Cancelled') {
       emit('cancel', props.order)
     } else {
@@ -325,7 +370,6 @@ const submitRequestCancellation = async (reason) => {
   }
 }
 
-// 3. Confirm Received
 const handleConfirmReceived = () => { showConfirmReceivedModal.value = true }
 
 const submitConfirmReceived = async () => {
@@ -350,7 +394,6 @@ const submitConfirmReceived = async () => {
 </script>
 
 <style scoped>
-/* CSS คงเดิม */
 .stepper-wrapper {
   display: flex;
   justify-content: space-between;
@@ -434,5 +477,9 @@ const submitConfirmReceived = async () => {
 
 .hover-underline:hover {
   text-decoration: underline !important;
+}
+
+.border-dashed {
+  border-style: dashed !important;
 }
 </style>
