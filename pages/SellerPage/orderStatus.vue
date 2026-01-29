@@ -118,18 +118,12 @@
                 </div>
 
                 <div v-if="order.cancelReason" class="bg-light p-2 rounded mb-2 border small text-secondary">
-                  <span class="fw-bold">เหตุผล:</span> {{ order.cancelReason }}
-                </div>
-
-                <div v-if="order.note" class="bg-warning-subtle p-2 rounded mb-2 border border-warning small text-dark">
-                  <span class="fw-bold">
-                    <Icon name="feather:file-text" size="12" /> Note:
-                  </span> {{ order.note }}
+                  <span class="fw-bold">เหตุผลลูกค้า:</span> {{ order.cancelReason }}
                 </div>
 
                 <div class="d-flex gap-2 mt-2">
                   <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill"
-                    @click="handleRequestAction(order._id, 'preparing')">
+                    @click="openRejectModal(order)">
                     ปฏิเสธคำขอ
                   </button>
                   <button class="btn btn-sm btn-success flex-grow-1 rounded-pill text-white fw-bold"
@@ -139,6 +133,59 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="fade">
+      <div v-if="showRejectDialog" class="modal-backdrop-custom" style="z-index: 1060;" @click.self="closeRejectModal">
+        <div class="modal-content-custom p-4 shadow-lg" style="max-width: 400px;">
+          <h5 class="fw-bold mb-3 text-danger">
+            <Icon name="feather:alert-circle" class="me-2"/>ปฏิเสธคำขอ
+          </h5>
+          <p class="text-secondary small mb-3">
+            กรุณาระบุเหตุผลที่ปฏิเสธ เพื่อแจ้งให้ลูกค้าทราบ
+          </p>
+          
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark mb-2">เลือกเหตุผล:</label>
+            <div class="d-flex flex-column gap-2">
+              <div class="form-check" v-for="(option, index) in rejectOptions" :key="index">
+                <input class="form-check-input" type="radio" :name="'rejectReason'" :id="'reason-'+index" 
+                       :value="option" v-model="selectedRejectReason">
+                <label class="form-check-label small" :for="'reason-'+index">
+                  {{ option }}
+                </label>
+              </div>
+              
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="rejectReason" id="reason-other" 
+                       value="other" v-model="selectedRejectReason">
+                <label class="form-check-label small fw-bold" for="reason-other">
+                  อื่นๆ (โปรดระบุ)
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3" v-if="selectedRejectReason === 'other'">
+            <textarea 
+              v-model="rejectNote" 
+              class="form-control bg-light border-0" 
+              rows="3" 
+              placeholder="พิมพ์เหตุผลเพิ่มเติม...">
+            </textarea>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-light flex-grow-1 rounded-pill" @click="closeRejectModal">ยกเลิก</button>
+            <button 
+              class="btn btn-danger flex-grow-1 rounded-pill fw-bold" 
+              :disabled="selectedRejectReason === 'other' && !rejectNote.trim()"
+              @click="submitReject">
+              ยืนยันการปฏิเสธ
+            </button>
           </div>
         </div>
       </div>
@@ -256,6 +303,20 @@ const statuses = [
   { key: 'cancelled', label: 'ยกเลิกแล้ว', icon: 'feather:x-circle' }
 ]
 
+// --- State สำหรับ Reject Modal ---
+const showRejectDialog = ref(false)
+const targetRejectOrderId = ref(null)
+const rejectNote = ref('')
+const selectedRejectReason = ref('')
+
+// ✅ ตัวเลือกเหตุผล
+const rejectOptions = [
+  'สินค้าอยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกได้',
+  'แพ็คสินค้าเรียบร้อยแล้วพร้อมส่ง',
+  'สินค้าไม่เข้าเงื่อนไขการรับประกัน/คืนเงิน',
+  'หลักฐานไม่เพียงพอ'
+]
+
 onMounted(async () => {
   await orderStore.fetchOrders()
 })
@@ -284,10 +345,39 @@ const filteredMyOrders = computed(() => {
   return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === currentStatus.value.toLowerCase())
 })
 
-function countMyOrdersByStatus(statusKey) {
-  return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === statusKey.toLowerCase()).length
+// --- Reject Modal Functions ---
+const openRejectModal = (order) => {
+  targetRejectOrderId.value = order._id
+  selectedRejectReason.value = rejectOptions[0] // เลือกอันแรกเป็น Default
+  rejectNote.value = ''
+  showRejectDialog.value = true
 }
 
+const closeRejectModal = () => {
+  showRejectDialog.value = false
+  targetRejectOrderId.value = null
+}
+
+const submitReject = async () => {
+  if (!targetRejectOrderId.value) return
+
+  // ✅ รวมเหตุผล: ถ้าเลือกช้อยส์ให้ใช้ช้อยส์ ถ้าเลือกอื่นๆ ให้ใช้ข้อความที่พิมพ์
+  let finalReason = selectedRejectReason.value
+  if (selectedRejectReason.value === 'other') {
+    finalReason = rejectNote.value
+  }
+
+  // ส่งสถานะกลับเป็น 'preparing' พร้อมเหตุผล
+  await orderStore.updateStatus(targetRejectOrderId.value, 'preparing', finalReason)
+  
+  closeRejectModal()
+  
+  if (pendingOrders.value.length === 0) {
+    showRequestsModal.value = false
+  }
+}
+
+// --- Standard Functions ---
 async function handleRequestAction(id, action) {
   await orderStore.updateStatus(id, action)
   if (pendingOrders.value.length === 0) {
@@ -298,6 +388,10 @@ async function handleRequestAction(id, action) {
 async function handleUpdate(id, newStatus) {
   await orderStore.updateStatus(id, newStatus)
   closeDetail()
+}
+
+function countMyOrdersByStatus(statusKey) {
+  return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === statusKey.toLowerCase()).length
 }
 
 function getStatusLabel(key) { return statuses.find(s => s.key === key)?.label || key }
@@ -319,114 +413,30 @@ function closeDetail() { showDetail.value = false }
 </script>
 
 <style scoped>
-.header-preparing {
-  background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%);
-}
+/* CSS เดิมทั้งหมด */
+.header-preparing { background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%); }
+.text-status-preparing { color: #0277BD; }
+.header-shipped { background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%); }
+.text-status-shipped { color: #4527A0; }
+.header-completed { background: linear-gradient(135deg, #00897B 0%, #26A69A 100%); }
+.text-status-completed { color: #00695C; }
+.header-cancelled { background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%); }
+.text-status-cancelled { color: #C62828; }
+.header-return_requested { background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%); }
 
-.text-status-preparing {
-  color: #0277BD;
-}
+.active-tab-preparing { background-color: #0288D1 !important; color: white !important; }
+.active-tab-shipped { background-color: #5E35B1 !important; color: white !important; }
+.active-tab-completed { background-color: #00897B !important; color: white !important; }
+.active-tab-cancelled { background-color: #D32F2F !important; color: white !important; }
 
-.header-shipped {
-  background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%);
-}
+.custom-tabs .nav-link { color: #64748b; border-radius: 12px; font-weight: 600; padding: 12px; border: 1px solid transparent; }
+.custom-tabs .nav-link:hover { background-color: #f8fafc; }
+.transition-all { transition: all 0.3s ease; }
+.order-card { cursor: pointer; transition: 0.2s; }
+.order-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important; }
 
-.text-status-shipped {
-  color: #4527A0;
-}
-
-.header-completed {
-  background: linear-gradient(135deg, #00897B 0%, #26A69A 100%);
-}
-
-.text-status-completed {
-  color: #00695C;
-}
-
-.header-cancelled {
-  background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%);
-}
-
-.text-status-cancelled {
-  color: #C62828;
-}
-
-.header-return_requested {
-  background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%);
-}
-
-.active-tab-preparing {
-  background-color: #0288D1 !important;
-  color: white !important;
-}
-
-.active-tab-shipped {
-  background-color: #5E35B1 !important;
-  color: white !important;
-}
-
-.active-tab-completed {
-  background-color: #00897B !important;
-  color: white !important;
-}
-
-.active-tab-cancelled {
-  background-color: #D32F2F !important;
-  color: white !important;
-}
-
-.custom-tabs .nav-link {
-  color: #64748b;
-  border-radius: 12px;
-  font-weight: 600;
-  padding: 12px;
-  border: 1px solid transparent;
-}
-
-.custom-tabs .nav-link:hover {
-  background-color: #f8fafc;
-}
-
-.transition-all {
-  transition: all 0.3s ease;
-}
-
-.order-card {
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.order-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
-}
-
-.modal-backdrop-custom {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
-  padding: 20px;
-}
-
-.modal-content-custom {
-  background: #fff;
-  width: 100%;
-  max-width: 700px;
-  border-radius: 20px;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+.modal-backdrop-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1050; padding: 20px; }
+.modal-content-custom { background: #fff; width: 100%; max-width: 700px; border-radius: 20px; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

@@ -124,13 +124,15 @@
           <span class="fw-bold fs-4 text-primary">฿{{ order.total.toLocaleString() }}</span>
         </div>
 
-        <div v-if="order.note" class="mt-3 p-3 bg-light rounded text-start border border-light-subtle">
-          <div class="fw-bold small text-dark mb-1">
-            <i class="fa fa-sticky-note me-1 text-secondary"></i> เหตุผล:
+        <div v-if="order.note && shouldShowNote(order.status)" class="mt-4 p-3 rounded text-start border border-danger shadow-sm" style="background-color: #ffebee;">
+          <div class="fw-bold text-danger mb-2 d-flex align-items-center border-bottom border-danger-subtle pb-2">
+            <i class="fa fa-exclamation-circle me-2 fs-5"></i> 
+            <span style="font-size: 1rem;">{{ noteHeader }}</span>
           </div>
-          <div class="small text-secondary text-break">{{ order.note }}</div>
+          <div class="text-dark pt-1 ps-1" style="font-size: 0.95rem; line-height: 1.5;">
+            {{ order.note }}
+          </div>
         </div>
-
         <div v-if="checkStatus(order.status, 'pending')" class="mt-4 text-end">
           <button class="btn btn-outline-danger px-4 rounded-pill fw-bold" @click="openCancelModal">
             ยกเลิกคำสั่งซื้อ
@@ -172,32 +174,6 @@
       </div>
 
     </div>
-
-    <!-- <div class="alert shadow-lg border-0"
-      :class="checkStatus(order.status, 'cancelled') ? 'alert-danger' : 'alert-warning'" v-show="shouldShowAlert"
-      style="position: fixed; top: 100px; right: 30px; z-index: 9999; max-width: 400px; width: 100%;">
-
-      <div class="d-flex justify-content-between align-items-start">
-        <div class="d-flex align-items-center">
-          <i class="fa fs-4 me-3" :class="checkStatus(order.status, 'cancelled') ? 'fa-times-circle' : 'fa-clock'"></i>
-          <div>
-            <template v-if="checkStatus(order.status, 'cancelled')">
-              <strong>คำสั่งซื้อถูกยกเลิก/คืนเงิน</strong><br>
-              <small>รายการนี้สิ้นสุดแล้ว</small>
-            </template>
-<template v-else>
-              <strong>รอตรวจสอบคำขอ</strong><br>
-              <small>คุณได้ส่งคำขอยกเลิกหรือแจ้งปัญหา กรุณารอร้านค้าตรวจสอบ</small>
-            </template>
-<div v-if="order.note || order.cancelReason" class="mt-1 small text-dark fst-italic">
-  เหตุผล: {{ order.note || order.cancelReason }}
-</div>
-</div>
-</div>
-<button type="button" class="btn-close ms-3" aria-label="Close" @click="showStatusAlert = false">
-</button>
-</div>
-</div> -->
 
     <cancReqOrderPop v-if="showCancelModal" @close="closeCancelModal" @confirm="submitRequestCancellation" />
     <confirmOrder v-if="showConfirmReceivedModal" @close="showConfirmReceivedModal = false"
@@ -249,7 +225,7 @@ const formatDate = (dateString) => {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
   })
 }
-// ฟังก์ชันแปลงข้อความสถานะ
+
 const formatStatus = (status) => {
   if (!status) return ''
   const s = status.toLowerCase()
@@ -266,9 +242,31 @@ const formatStatus = (status) => {
     case 'cancel requested': return 'Cancel Requested'
     case 'return_requested': return 'Cancel Requested'
     case 'return requested': return 'Cancel Requested'
-    default: return status // กรณีไม่ตรงเงื่อนไข ให้แสดงค่าเดิม
+    default: return status
   }
 }
+
+// ✅✅ ฟังก์ชันเช็คการแสดงผล Note (เหมือนใน Dashboard) ✅✅
+const shouldShowNote = (status) => {
+  const s = (status || '').toLowerCase();
+  // ซ่อนถ้าเป็น Note ของ User (ตอนกดขอ หรือตอน Pending)
+  if (s.includes('request') || s === 'pending') return false;
+  return true;
+}
+
+// ✅✅ Header ของ Note (Dynamic) ✅✅
+const noteHeader = computed(() => {
+  const s = (props.order.status || '').toLowerCase();
+  
+  if (s === 'preparing' || s === 'processing') {
+    return 'ร้านค้าปฏิเสธคำขอ';
+  } 
+  else if (s === 'cancelled' || s === 'cancel') {
+    return 'เหตุผลการยกเลิก';
+  }
+  
+  return 'ข้อความจากร้านค้า';
+})
 
 // Stepper Logic
 const step = computed(() => {
@@ -277,18 +275,6 @@ const step = computed(() => {
   if (checkStatus(props.order.status, 'shipping')) return 3
   if (checkStatus(props.order.status, 'completed')) return 4
   return 1
-})
-
-const shouldShowAlert = computed(() => {
-  // 1. ถ้าผู้ใช้กดปิดไปแล้ว ให้ซ่อนตลอด
-  if (!showStatusAlert.value) return false;
-
-  const s = props.order.status;
-
-  // 2. ให้แสดงเฉพาะสถานะเหล่านี้เท่านั้น (ยกเลิก, ขอคืนเงิน, ขอยกเลิก)
-  return checkStatus(s, 'cancelled') ||
-    checkStatus(s, 'cancel requested') ||
-    checkStatus(s, 'return requested');
 })
 
 const isCancelled = computed(() => {
@@ -324,14 +310,12 @@ const submitRequestCancellation = async (reason) => {
   let statusToSend = 'cancel requested';
   let title = 'ส่งคำขอยกเลิกแล้ว';
 
-  // 1. กรณี Pending -> ยกเลิกทันที
   if (checkStatus(props.order.status, 'pending')) {
     statusToSend = 'Cancelled';
     title = 'ยกเลิกคำสั่งซื้อสำเร็จ';
   }
-  // 2. ✅✅ แก้ตรงนี้: กรณีปฏิเสธรับสินค้า (Shipped) -> ให้เป็น Cancelled ทันที
   else if (isReturnMode.value) {
-    statusToSend = 'Cancelled'; // เปลี่ยนจาก 'return_requested' เป็น 'Cancelled'
+    statusToSend = 'Cancelled';
     title = 'ปฏิเสธรับสินค้า/ยกเลิกสำเร็จ';
   }
 
@@ -346,7 +330,6 @@ const submitRequestCancellation = async (reason) => {
       body: {
         status: statusToSend,
         note: reason,
-        // ถ้าเป็น Cancelled แล้ว ไม่ถือว่าเป็น Request
         isCancelRequest: statusToSend === 'cancel requested'
       }
     })
@@ -354,7 +337,6 @@ const submitRequestCancellation = async (reason) => {
     props.order.status = statusToSend
     props.order.note = reason
 
-    // แจ้งเตือน Parent Component
     if (statusToSend === 'Cancelled') {
       emit('cancel', props.order)
     } else {
