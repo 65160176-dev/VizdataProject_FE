@@ -4,9 +4,7 @@
       <div class="card-header bg-transparent border-0 pb-2">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h5 class="fw-bold mb-0">Latest Orders 📦</h5>
-          <NuxtLink to="/order-status" class="text-primary small text-decoration-none fw-bold">
-            ดูทั้งหมด <Icon name="feather:arrow-right" size="14"/>
-          </NuxtLink>
+          
         </div>
         
         <div class="d-flex gap-2 overflow-auto pb-1 no-scrollbar">

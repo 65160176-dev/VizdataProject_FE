@@ -93,18 +93,23 @@
                 <button class="btn-close" data-bs-dismiss="modal"></button>
               </div>
               <div class="modal-body py-4">
-                <p class="text-muted small mb-3">ติ๊กเพื่อเลือกหมวดหมู่ที่ใช้งานอยู่:</p>
+                <p class="text-muted small mb-3">เลือกหมวดหมู่ที่ร้านของคุณจำหน่าย (ติ๊กถูกเพื่อแสดงในหน้าเพิ่มสินค้า):</p>
                 <div class="category-list-wrapper border rounded-3 p-2 bg-light mb-4" style="max-height: 300px; overflow-y: auto;">
-                  <div v-for="(cat, index) in allCategories" :key="index" class="form-check p-3 mb-2 bg-white rounded-3 shadow-sm d-flex justify-content-between align-items-center transition-all">
+                  
+                  <div v-for="cat in allCategories" :key="cat.id" class="form-check p-3 mb-2 bg-white rounded-3 shadow-sm d-flex justify-content-between align-items-center transition-all">
+                    
                     <div class="d-flex align-items-center w-100" style="cursor: pointer;" @click="toggleCategory(cat)">
-                      <input class="form-check-input me-3 ms-0 mt-0" type="checkbox" :checked="selectedCategories.includes(cat)" style="pointer-events: none;">
-                      <label class="form-check-label fw-bold mb-0 text-dark" style="cursor: pointer;">{{ cat }}</label>
+                      <input class="form-check-input me-3 ms-0 mt-0" type="checkbox" :checked="cat.isSelected" style="pointer-events: none;">
+                      <label class="form-check-label fw-bold mb-0 text-dark" style="cursor: pointer;">{{ cat.name }}</label>
+                      <span v-if="!cat.isSystem" class="badge bg-light text-secondary ms-2 border" style="font-size: 10px;">Custom</span>
                     </div>
-                    <Icon name="feather:trash-2" class="text-danger ms-2" style="cursor: pointer;" @click.stop="openConfirmDelete(index)" />
+                    
+                    <Icon name="feather:trash-2" class="text-danger ms-2" style="cursor: pointer;" @click.stop="openConfirmDelete(cat)" :title="cat.isSystem ? 'ซ่อนหมวดหมู่' : 'ลบถาวร'" />
                   </div>
+
                 </div>
                 <div class="mt-4">
-                  <label class="form-label small fw-bold">เพิ่มหมวดหมู่ใหม่:</label>
+                  <label class="form-label small fw-bold">สร้างหมวดหมู่ใหม่ (เฉพาะร้านคุณ):</label>
                   <div class="input-group">
                     <input type="text" class="form-control rounded-start-pill ps-3" placeholder="ระบุชื่อ..." v-model="newCategoryInput" @keyup.enter="addNewCategoryToSystem">
                     <button class="btn btn-primary rounded-end-pill px-4" @click="addNewCategoryToSystem">เพิ่ม</button>
@@ -122,8 +127,8 @@
             <div class="modal-content border-0 shadow-lg text-center">
               <div class="modal-body pt-5 pb-4">
                 <Icon name="feather:alert-triangle" size="48" class="text-warning mb-3" />
-                <h5 class="fw-bold">ยืนยันการลบ?</h5>
-                <p class="text-muted small">หมวดหมู่ "{{ categoryToDelete?.name }}" จะถูกลบถาวร</p>
+                <h5 class="fw-bold">{{ confirmModalTitle }}</h5>
+                <p class="text-muted small">{{ confirmModalBody }}</p>
                 <div class="d-flex gap-2 mt-4 justify-content-center">
                   <button class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
                   <button class="btn btn-danger rounded-pill px-4" @click="executeDeleteCategory">ยืนยัน</button>
@@ -177,7 +182,12 @@
                           </div>
                         </div>
                       </div>
-                      <div class="form-group mb-3"><label class="small fw-bold">Category :</label><select class="form-select" v-model="newItem.category"><option disabled value="">Select Category</option><option v-for="opt in selectedCategories" :key="opt" :value="opt">{{ opt }}</option></select></div>
+                      <div class="form-group mb-3"><label class="small fw-bold">Category :</label>
+                        <select class="form-select" v-model="newItem.category">
+                          <option disabled value="">Select Category</option>
+                          <option v-for="cat in activeCategories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
+                        </select>
+                      </div>
                       <div class="form-group mb-0"><label class="small fw-bold">Description :</label><textarea class="form-control" rows="3" v-model="newItem.description"></textarea></div>
                     </div>
                   </div>
@@ -230,7 +240,11 @@
                             </div>
                           </div>
                         </div>
-                        <div class="form-group mb-3"><label class="small fw-bold">Category :</label><select class="form-select" v-model="editItem.category"><option v-for="opt in selectedCategories" :key="opt" :value="opt">{{ opt }}</option></select></div>
+                        <div class="form-group mb-3"><label class="small fw-bold">Category :</label>
+                          <select class="form-select" v-model="editItem.category">
+                            <option v-for="cat in activeCategories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
+                          </select>
+                        </div>
                         <div class="form-group mb-3"><label class="small fw-bold">Description :</label><textarea class="form-control" rows="3" v-model="editItem.description"></textarea></div>
                     </div>
                   </div>
@@ -253,7 +267,7 @@
                     <label class="small fw-bold text-muted">Filter by Category :</label>
                     <select class="form-select shadow-none border-secondary-subtle" v-model="stockCategoryFilter">
                       <option value="">All Categories</option>
-                      <option v-for="cat in activeCategories" :key="cat" :value="cat">{{ cat }}</option>
+                      <option v-for="catName in activeProductCategories" :key="catName" :value="catName">{{ catName }}</option>
                     </select>
                   </div>
 
@@ -294,18 +308,16 @@ definePageMeta({ layout: 'seller' })
 const products = ref([])
 const newCategoryInput = ref('')
 
-const defaultCats = [
-  'Fashion (Women)', 'Fashion (Men)', 'Electronics', 'Mobile & Gadgets',
-  'Beauty & Personal Care', 'Health & Wellness', 'Home & Living', 
-  'Home Appliances', 'Shoes', 'Watches & Accessories', 'Jewellery', 
-  'Bags & Luggage', 'Sports & Outdoors', 'Automotive', 'Toys & Games', 
-  'Mom & Baby', 'Pets', 'Food & Beverages', 'Books & Stationery', 
-  'Computers & Laptops', 'Gaming', 'Furniture'
-]
+const allCategories = ref([])
+const categoryToDelete = ref(null)
 
-const allCategories = ref([...defaultCats])
-const selectedCategories = ref([...defaultCats])
-const categoryToDelete = ref({ index: null, name: '' })
+// ✅ ตัวแปรสำหรับ Popup ยืนยันการลบ (เปลี่ยนข้อความได้)
+const confirmModalTitle = ref('')
+const confirmModalBody = ref('')
+
+const activeCategories = computed(() => {
+  return allCategories.value.filter(cat => cat.isSelected)
+})
 
 // --- Toast Logic ---
 const toastMessage = ref('')
@@ -314,47 +326,142 @@ const errorMessage = ref('')
 const showToast = (message) => {
   toastMessage.value = message
   const toastEl = document.getElementById('liveToast')
-  const toast = new bootstrap.Toast(toastEl)
-  toast.show()
+  if(toastEl) new bootstrap.Toast(toastEl).show()
 }
 
 const showError = (message) => {
   errorMessage.value = message
   const toastEl = document.getElementById('errorToast')
-  const toast = new bootstrap.Toast(toastEl)
-  toast.show()
+  if(toastEl) new bootstrap.Toast(toastEl).show()
 }
 
 // --- Category Logic ---
-const toggleCategory = (cat) => {
-  const index = selectedCategories.value.indexOf(cat)
-  if (index > -1) selectedCategories.value.splice(index, 1)
-  else selectedCategories.value.push(cat)
+const fetchCategories = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const res = await $fetch('http://localhost:3001/api/category', { 
+       headers: { 'Authorization': `Bearer ${token}` } 
+    })
+    if (res) allCategories.value = res 
+  } catch (e) { console.error('Error fetching categories:', e) }
 }
 
-const addNewCategoryToSystem = () => {
-  const trimmed = newCategoryInput.value?.trim()
-  if (trimmed && !allCategories.value.includes(trimmed)) {
-    allCategories.value.push(trimmed); selectedCategories.value.push(trimmed); newCategoryInput.value = ''
+// ฟังก์ชันเมื่อกดติ๊ก Checkbox (ยิง API เพื่อ ซ่อน/แสดง)
+const toggleCategory = async (cat) => {
+  const token = localStorage.getItem('token')
+  
+  if (cat.isSelected) {
+    // เดิมติ๊กอยู่ -> จะเอาออก -> ยิง DELETE (เพื่อซ่อน)
+    cat.isSelected = false 
+    try {
+      await $fetch(`http://localhost:3001/api/category/${cat.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      // ถ้าเป็น System มันจะซ่อนให้ (Backend จัดการ) ถ้า Custom มันจะลบจริง
+    } catch (e) {
+      cat.isSelected = true
+      showError('เกิดข้อผิดพลาดในการซ่อนหมวดหมู่')
+    }
+
+  } else {
+    // เดิมไม่ติ๊ก -> จะเอาเข้า -> ยิง POST (เพื่อแสดง/สร้าง)
+    cat.isSelected = true
+    try {
+      await $fetch('http://localhost:3001/api/category', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: { name: cat.name }
+      })
+      fetchCategories()
+    } catch (e) {
+      cat.isSelected = false
+      showError('ไม่สามารถเลือกหมวดหมู่นี้ได้')
+    }
   }
 }
 
-const openConfirmDelete = (index) => {
-  categoryToDelete.value = { index, name: allCategories.value[index] }
+const addNewCategoryToSystem = async () => {
+  const trimmed = newCategoryInput.value?.trim()
+  if (!trimmed) return
+
+  const existing = allCategories.value.find(c => c.name === trimmed)
+  if (existing) {
+     if (!existing.isSelected) {
+       toggleCategory(existing) // ถ้ามีแต่ซ่อนอยู่ ให้เปิดใช้งาน
+       newCategoryInput.value = ''
+       return
+     }
+     showError('หมวดหมู่นี้มีอยู่แล้ว')
+     return
+  }
+
+  try {
+    const token = localStorage.getItem('token')
+    await $fetch('http://localhost:3001/api/category', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: { name: trimmed }
+    })
+    showToast('สร้างหมวดหมู่ใหม่สำเร็จ')
+    newCategoryInput.value = ''
+    fetchCategories() 
+  } catch (e) {
+    console.error(e)
+    showError(e.data?.message || 'สร้างหมวดหมู่ไม่สำเร็จ')
+  }
+}
+
+// ✅ เปิด Modal ยืนยันลบ (ปรับข้อความตามประเภท)
+const openConfirmDelete = (catObj) => {
+  categoryToDelete.value = catObj
+  if (catObj.isSystem) {
+      confirmModalTitle.value = 'ซ่อนหมวดหมู่ระบบ?'
+      confirmModalBody.value = `หมวดหมู่ "${catObj.name}" จะถูกซ่อนจากร้านของคุณ (สามารถเลือกกลับมาใหม่ได้ด้วยการติ๊กถูก)`
+  } else {
+      confirmModalTitle.value = 'ลบหมวดหมู่ถาวร?'
+      confirmModalBody.value = `หมวดหมู่ "${catObj.name}" จะหายไปจากระบบร้านของคุณถาวร`
+  }
   new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show()
 }
 
-const executeDeleteCategory = () => {
-  const { index, name } = categoryToDelete.value
-  if (index !== null) {
-    allCategories.value.splice(index, 1)
-    const selIndex = selectedCategories.value.indexOf(name)
-    if (selIndex > -1) selectedCategories.value.splice(selIndex, 1)
-    bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal')).hide()
+// ✅ ยืนยันการลบ (แยก Logic ตามประเภท)
+const executeDeleteCategory = async () => {
+  const item = categoryToDelete.value
+  if (!item) return
+
+  const modalEl = document.getElementById('confirmDeleteModal')
+  const modalInstance = bootstrap.Modal.getInstance(modalEl)
+
+  // กรณี 1: ของระบบ -> ให้ซ่อน (เรียก toggleCategory เหมือนการติ๊กออก)
+  if (item.isSystem) {
+     if (item.isSelected) {
+         // ฟังก์ชันนี้จัดการยิง API DELETE (ซ่อน) ให้แล้ว
+         await toggleCategory(item) 
+         showToast('ซ่อนหมวดหมู่เรียบร้อย')
+     }
+     if (modalInstance) modalInstance.hide()
+     return
   }
+
+  // กรณี 2: ของตัวเอง -> ลบถาวร
+  try {
+    const token = localStorage.getItem('token')
+    await $fetch(`http://localhost:3001/api/category/${item.id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    showToast('ลบหมวดหมู่ถาวรเรียบร้อย')
+    fetchCategories()
+  } catch (e) {
+    console.error(e)
+    showError(e.data?.message || 'ลบไม่สำเร็จ')
+  }
+  
+  if (modalInstance) modalInstance.hide()
 }
 
-// --- Fetch & Helpers ---
+// --- Fetch Products & Helpers ---
 const fetchProducts = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -363,7 +470,12 @@ const fetchProducts = async () => {
     products.value = res || []
   } catch (e) { console.error(e) }
 }
-onMounted(() => fetchProducts())
+
+onMounted(() => {
+  fetchProducts()
+  fetchCategories()
+})
+
 const refresh = fetchProducts
 
 const getStockStatus = (s) => (s >= 100 ? 'success' : s >= 25 ? 'warning' : 'danger')
@@ -400,7 +512,7 @@ const availableOptionsEdit = ref([])
 const stockForm = ref({ id: '', quantity: '' })
 const stockCategoryFilter = ref('')
 
-const activeCategories = computed(() => {
+const activeProductCategories = computed(() => {
   const used = products.value.map(p => p.category).filter(c => c)
   return [...new Set(used)].sort()
 })
@@ -449,7 +561,6 @@ const validateProductData = (item) => {
 
 // --- SAVE FUNCTIONS ---
 const saveNewItem = async () => {
-  // Validation
   const error = validateProductData(newItem.value)
   if (error) { showError(error); return; }
 
@@ -458,10 +569,11 @@ const saveNewItem = async () => {
   fd.append('name', newItem.value.name); fd.append('stock', newItem.value.stock); fd.append('price', newItem.value.price); fd.append('commission', newItem.value.commission); fd.append('weight', newItem.value.weight); fd.append('shippingCost', newItem.value.shippingCost); fd.append('description', newItem.value.description); fd.append('category', newItem.value.category)
   if (newItem.value.rawFile) fd.append('file', newItem.value.rawFile)
   
-  await $fetch('http://localhost:3001/api/product', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
-  
-  showToast('เพิ่มสินค้าใหม่เรียบร้อยแล้ว')
-  refresh(); resetNewItemForm(); safeCloseModal('addModal')
+  try {
+    await $fetch('http://localhost:3001/api/product', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
+    showToast('เพิ่มสินค้าใหม่เรียบร้อยแล้ว')
+    refresh(); resetNewItemForm(); safeCloseModal('addModal')
+  } catch(e) { console.error(e); showError('เพิ่มสินค้าไม่สำเร็จ'); }
 }
 
 function goEdit(id) {
@@ -474,7 +586,6 @@ function goEdit(id) {
 }
 
 async function saveEdit() {
-  // Validation
   const error = validateProductData(editItem.value)
   if (error) { showError(error); return; }
 
@@ -483,17 +594,17 @@ async function saveEdit() {
   fd.append('name', editItem.value.name); fd.append('stock', editItem.value.stock); fd.append('price', editItem.value.price); fd.append('commission', editItem.value.commission); fd.append('weight', editItem.value.weight); fd.append('shippingCost', editItem.value.shippingCost); fd.append('category', editItem.value.category); fd.append('description', editItem.value.description)
   if (editItem.value.rawFile) fd.append('file', editItem.value.rawFile)
   
-  await $fetch(`http://localhost:3001/api/product/${editItem.value._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
-  
-  showToast('แก้ไขข้อมูลสินค้าเรียบร้อยแล้ว')
-  refresh(); safeCloseModal('editModal')
+  try {
+    await $fetch(`http://localhost:3001/api/product/${editItem.value._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
+    showToast('แก้ไขข้อมูลสินค้าเรีย้อยแล้ว')
+    refresh(); safeCloseModal('editModal')
+  } catch(e) { console.error(e); showError('แก้ไขไม่สำเร็จ'); }
 }
 
 async function deleteItem(id) {
   if (confirm('ลบสินค้า?')) {
     const token = localStorage.getItem('token')
     await $fetch(`http://localhost:3001/api/product/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
-    
     showToast('ลบสินค้าเรียบร้อยแล้ว')
     refresh()
   }

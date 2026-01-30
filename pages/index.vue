@@ -19,20 +19,22 @@
               </div>
 
               <div class="category-list">
-                <div v-for="cat in uniqueCategories" :key="cat" class="form-check mb-2">
+                <div v-for="cat in systemCategories" :key="cat._id" class="form-check mb-2">
                   <input 
                     class="form-check-input" 
                     type="checkbox" 
-                    :value="cat" 
-                    :id="'cat-' + cat" 
+                    :value="cat.name" 
+                    :id="'cat-' + cat._id" 
                     v-model="selectedCategories"
                   >
-                  <label class="form-check-label w-100" :for="'cat-' + cat" style="cursor: pointer; font-size: 14px;">
-                    {{ cat }}
-                    <span class="text-muted small float-end" style="font-size: 11px;">({{ getCategoryCount(cat) }})</span>
+                  <label class="form-check-label w-100" :for="'cat-' + cat._id" style="cursor: pointer; font-size: 14px;">
+                    {{ cat.name }}
+                    <span class="text-muted small float-end" style="font-size: 11px;">({{ getCategoryCount(cat.name) }})</span>
                   </label>
                 </div>
-                <div v-if="uniqueCategories.length === 0" class="text-muted small">ไม่มีหมวดหมู่</div>
+                <div v-if="systemCategories.length === 0" class="text-muted small text-center py-3">
+                  <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -75,7 +77,9 @@
                           <div v-else class="fw-bold">฿{{ product?.price || 0 }}</div>
                         </div>
                         <div>
-                          <button class="btn btn-sm btn-primary" @click="addToCart(product)">เพิ่มสินค้าลงตะกร้า</button>
+                          <button class="btn btn-sm btn-primary" @click="addToCart(product)">
+                            <Icon name="feather:shopping-cart" size="16" />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -83,7 +87,6 @@
                 </div>
               </div>
 
-              <!-- Infinite Scroll Loading Indicator -->
               <div v-if="isLoadingMore && hasMoreProducts" class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
                   <span class="visually-hidden">กำลังโหลดเพิ่มเติม...</span>
@@ -91,12 +94,10 @@
                 <p class="mt-2 text-muted">กำลังโหลดสินค้าเพิ่มเติม...</p>
               </div>
 
-              <!-- End of Products Message -->
               <div v-if="!hasMoreProducts && displayedProducts.length > 0" class="text-center py-4">
                 <p class="text-muted">แสดงสินค้าครบทั้งหมดแล้ว ({{ displayedProducts.length }} ชิ้น)</p>
               </div>
 
-              <!-- Scroll Trigger Element -->
               <div ref="scrollTrigger" class="scroll-trigger"></div>
             </ClientOnly>
           </div>
@@ -116,6 +117,9 @@ import { useProductStore } from '~/store/products'
 
 const q = ref('')
 const selectedCategories = ref([])
+// ✅ เพิ่มตัวแปรเก็บ System Categories
+const systemCategories = ref([]) 
+
 const cart = useCartStore()
 const productStore = useProductStore()
 const scrollTrigger = ref(null)
@@ -128,6 +132,7 @@ let observer = null
 
 onMounted(async () => {
   await productStore.fetchProducts()
+  fetchSystemCategories() // ✅ เรียกดึงหมวดหมู่ระบบ
   setupInfiniteScroll()
 })
 
@@ -137,14 +142,21 @@ onUnmounted(() => {
   }
 })
 
+// ✅ ฟังก์ชันดึงหมวดหมู่ระบบ (Public)
+const fetchSystemCategories = async () => {
+  try {
+    const res = await $fetch('http://localhost:3001/api/category/public/system')
+    if (res) {
+      systemCategories.value = res
+    }
+  } catch (e) {
+    console.error('Error fetching system categories:', e)
+  }
+}
+
 const allProducts = computed(() => productStore.products || [])
 
-// Logic Category
-const uniqueCategories = computed(() => {
-  const cats = allProducts.value.map(p => p.category).filter(c => c && c.trim() !== '')
-  return [...new Set(cats)].sort()
-})
-
+// ✅ นับจำนวนสินค้าในแต่ละหมวด (นับจากสินค้าที่โหลดมาแล้ว)
 const getCategoryCount = (catName) => {
   return allProducts.value.filter(p => p.category === catName).length
 }
@@ -189,7 +201,6 @@ function loadMoreProducts() {
   
   isLoadingMore.value = true
   
-  // จำลองการโหลด (เพื่อให้ดู smooth)
   setTimeout(() => {
     displayedCount.value += itemsPerPage
     isLoadingMore.value = false
@@ -208,7 +219,7 @@ function setupInfiniteScroll() {
       })
     },
     {
-      rootMargin: '200px', // เริ่มโหลดก่อนถึง 200px
+      rootMargin: '200px', 
     }
   )
   
@@ -250,7 +261,6 @@ function addToCart(product) {
 
 .marketplace .card { border:1px solid #eee; border-radius:8px; transition:transform .18s ease, box-shadow .18s ease; overflow:hidden }
 .marketplace .card:hover { transform:translateY(-6px); box-shadow:0 12px 30px rgba(17,24,39,0.08); }
-/* ปรับความสูงรูปเล็กน้อย เพื่อให้สมดุลกับความกว้างที่ลดลง */
 .marketplace .card .card-img-top { background:#f5f5f5; height:200px; object-fit:cover }
 .marketplace .card .card-body { padding:10px; }
 .marketplace .card .card-title { font-size:14px; line-height:1.2; }
@@ -259,7 +269,6 @@ function addToCart(product) {
 .marketplace .btn-sm { padding:6px 10px; border-radius:6px }
 
 /* --- FORCE 5 COLUMNS --- */
-/* บังคับ 5 คอลัมน์สำหรับหน้าจอใหญ่ */
 .product-grid { 
   display:grid; 
   grid-template-columns: repeat(5, 1fr); 
@@ -269,7 +278,6 @@ function addToCart(product) {
 
 /* Responsive Grid Adjustments */
 @media (max-width: 1400px) {
-  /* ถ้าจอเริ่มเล็ก อาจจะต้องยอมลดเหลือ 4 เพื่อไม่ให้การ์ดเบี้ยว (แต่ถ้าอยากบังคับ 5 ตลอด ลบบรรทัดนี้ได้เลย) */
   .product-grid { grid-template-columns: repeat(4, 1fr); }
 }
 @media (max-width: 1100px) {
@@ -285,7 +293,6 @@ function addToCart(product) {
 
 /* Sidebar Styles */
 .category-sidebar {
-  /* เอา Sticky ออกตามที่ขอ */
   /* position: sticky; top: 20px; */ 
 }
 .category-list {
