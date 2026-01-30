@@ -79,7 +79,7 @@
                     <button type="button" class="btn btn-outline-secondary" @click="closeModal">
                         ยกเลิก
                     </button>
-                    <button type="button" class="btn btn-solid bg-primary text-white" @click="submitForm">
+                    <button type="button" class="btn btn-solid btn-sm" @click="submitForm">
                         {{ isEditMode ? 'อัปเดต' : 'บันทึก' }}
                     </button>
                 </div>

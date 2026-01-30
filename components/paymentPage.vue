@@ -184,12 +184,12 @@
                           </span>
 
                           <span class="text-end" style="width: 100px;">
-                            {{ curr.symbol }}{{ (calcPrice(item) * curr.curr * item.quantity).toFixed(2) }}
+                            ฿{{ (calcPrice(item) * curr.curr * item.quantity).toFixed(2) }}
                           </span>
 
                           <span class="ms-3 text-end" style="width: 80px;">
                             <template v-if="item.shippingCost && String(item.shippingCost).toLowerCase() !== 'free'">
-                              {{ curr.symbol }}{{ (Number(item.shippingCost) * curr.curr).toFixed(2) }}
+                              ฿{{ (Number(item.shippingCost) * curr.curr).toFixed(2) }}
                             </template>
                             <template v-else>
                               Free

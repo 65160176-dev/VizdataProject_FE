@@ -95,7 +95,7 @@
                     <h4>{{ item.name || item.title }}</h4>
                   </nuxt-link>
                   <h4>
-                    <span>{{ item.quantity }} x {{ curr.symbol }}{{ (item.price * curr.curr).toFixed(2) }}</span>
+                    <span>{{ item.quantity }} x ฿{{ (item.price * curr.curr).toFixed(2) }}</span>
                   </h4>
                 </div>
               </div>
@@ -174,17 +174,17 @@ export default {
       console.log('===== COMPUTING TOTAL ITEMS =====');
       console.log('Cart:', this.cart);
       console.log('Cart length:', this.cart.length);
-      
+
       if (!this.cart || this.cart.length === 0) {
         console.log('Cart is empty, returning 0');
         return 0;
       }
-      
+
       const total = this.cart.reduce((sum, item) => {
         console.log(`Item: ${item.name}, quantity: ${item.quantity}`);
         return sum + (item.quantity || 0);
       }, 0);
-      
+
       console.log('Total items calculated:', total);
       console.log('=================================');
       return total;

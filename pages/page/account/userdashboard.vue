@@ -83,7 +83,36 @@
                       </div>
                       <p v-else class="text-danger">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</p>
                     </div>
+                    <div class="box-account box-info" v-if="isAuthenticated">
+                      <div class="mt-3">
+                        <div class="box">
+                          <div class="box-title">
+                            <h3>Address Book</h3>
+                            <a href="javascript:void(0)" @click="updateTab('address'); changeTab('address')">Manage
+                              Addresses</a>
+                          </div>
+                          <div class="row">
+                            <div class="col-sm-6">
+                              <h6>Default Billing Address</h6>
+                              <address v-if="defaultAddress">
+                                <strong>{{ defaultAddress.name || defaultAddress.firstName }} {{ defaultAddress.lastName
+                                }}</strong><br>
+                                {{ defaultAddress.address }} <br>
+                                {{ defaultAddress.subDistrict }} {{ defaultAddress.district }}<br>
+                                {{ defaultAddress.province }} {{ defaultAddress.zipCode }}<br>
+                                Phone: {{ defaultAddress.phone }}<br>
+                                <a href="javascript:void(0)" @click="openModal(defaultAddress)">Edit Address</a>
+                              </address>
+                              <address v-else>
+                                You have not set a default billing address.<br />
+                              </address>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
+                  </div>
                 </div>
               </div>
 
@@ -206,8 +235,7 @@
                                       @click.stop>
                                       <img v-if="order.items[0]?.image" :src="order.items[0].image"
                                         class="w-100 h-100 rounded" style="object-fit: cover;">
-                                      <i v-else class="fa fa-shopping-bag text-secondary"
-                                        style="font-size: 24px;"></i>
+                                      <i v-else class="fa fa-shopping-bag text-secondary" style="font-size: 24px;"></i>
                                     </NuxtLink>
                                   </div>
                                   <div class="col-md-6 d-flex flex-column justify-content-center"
@@ -242,7 +270,7 @@
                                         {{ order.note }}
                                       </div>
                                     </div>
-                                    </div>
+                                  </div>
                                   <div class="col-md-4 text-end">
                                     <div class="mb-2 fw-bold text-primary">฿{{ order.total.toLocaleString() }}</div>
                                     <button class="btn btn-outline-secondary btn-sm" style="min-width: 120px;"
@@ -277,8 +305,7 @@
                           </div>
 
                           <div v-else class="text-center py-5">
-                            <i class="fa fa-clipboard-list text-muted mb-3"
-                              style="font-size: 48px; opacity: 0.3;"></i>
+                            <i class="fa fa-clipboard-list text-muted mb-3" style="font-size: 48px; opacity: 0.3;"></i>
                             <p class="text-muted">ไม่มีรายการคำสั่งซื้อในสถานะนี้</p>
                           </div>
                         </div>
@@ -504,12 +531,12 @@ const checkStatus = (orderStatus, tab) => {
 const shouldShowNote = (status) => {
   if (!status) return false;
   const s = status.toLowerCase();
-  
+
   // ถ้าเป็นสถานะ 'คำร้องขอ' (User เป็นคนเขียน Note) -> ซ่อน
   if (s.includes('request') || s === 'pending') {
     return false;
   }
-  
+
   // ถ้าเป็นสถานะ 'Preparing/Processing' ที่มี Note (แปลว่าร้านปฏิเสธ) -> โชว์
   // ถ้าเป็นสถานะ 'Cancelled' (ยกเลิกสำเร็จ) -> โชว์
   return true;
@@ -544,15 +571,59 @@ const closeOrder = () => { selectedOrder.value = null; const newQuery = { ...rou
 </script>
 
 <style scoped>
-.custom-radio input[type="radio"] { accent-color: #28a745; }
-.custom-scrollbar::-webkit-scrollbar { height: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #e9ecef; border-radius: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ced4da; }
-.custom-scrollbar { scrollbar-width: thin; scrollbar-color: #e9ecef transparent; }
-.cursor-pointer { cursor: pointer; transition: all 0.2s; }
-.cursor-pointer:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important; }
-.pagination .page-link { color: #333; border: 1px solid #dee2e6; margin: 0 2px; border-radius: 5px; }
-.pagination .page-item.active .page-link { background-color: #28a745; border-color: #28a745; color: white; }
-.pagination .page-item.disabled .page-link { color: #6c757d; pointer-events: none; background-color: #fff; border-color: #dee2e6; }
-.hover-underline:hover { text-decoration: underline !important; }
+.custom-radio input[type="radio"] {
+  accent-color: #28a745;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e9ecef;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ced4da;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e9ecef transparent;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cursor-pointer:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+}
+
+.pagination .page-link {
+  color: #333;
+  border: 1px solid #dee2e6;
+  margin: 0 2px;
+  border-radius: 5px;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+
+.hover-underline:hover {
+  text-decoration: underline !important;
+}
 </style>
