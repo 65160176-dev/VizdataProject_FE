@@ -709,26 +709,18 @@ export default {
               name: p.name || p.title,
               price: this.calcPrice(p),
               qty: p.quantity,
-              image: p.image || (p.images && p.images[0]?.src) || ''
+              image: p.image || (p.images && p.images[0]?.src) || '',
+              // แนบ affiliate แบบต่อสินค้า หากมี
+              refAffiliateId: this.getAffiliateCodeForProduct(getSafeStringId(p.id) || getSafeStringId(p._id)) || undefined
             }))
           };
-
-          // Affiliate Logic
-          try {
-            const aff = this.getSessionAffiliateId();
-            if (aff) {
-              payload.affiliateId = aff;
-            }
-          } catch (e) {
-            console.error('Error getting affiliate ID:', e);
-          }
           return await this.orderStore.placeOrder(payload);
         });
 
         await Promise.all(orderPromises);
 
         try {
-          this.clearSessionAffiliateId();
+          this.clearAffiliateSession();
         } catch (e) {
           console.error('Error clearing affiliate session:', e);
         }
@@ -812,35 +804,27 @@ export default {
       }
     },
 
-    getSessionAffiliateId() {
+    // อ่าน mapping affiliate ต่อสินค้า
+    getAffiliateMap() {
       try {
-        const affiliateId = sessionStorage.getItem('affiliateId');
-        return affiliateId;
-      } catch (e) {
-        return null;
-      }
+        const raw = sessionStorage.getItem('affiliateProductMap') || '{}';
+        const map = JSON.parse(raw);
+        return (map && typeof map === 'object') ? map : {};
+      } catch (e) { return {}; }
     },
 
-    setSessionAffiliateId(affiliateId) {
-      try {
-        sessionStorage.setItem('affiliateId', affiliateId);
-        sessionStorage.setItem('affiliateStartTime', Date.now().toString());
-      } catch (e) { }
-    },
-
-    clearSessionAffiliateId() {
-      try {
-        sessionStorage.removeItem('affiliateId');
-        sessionStorage.removeItem('affiliateStartTime');
-      } catch (e) { }
+    getAffiliateCodeForProduct(productId) {
+      const map = this.getAffiliateMap();
+      if (!productId) return null;
+      return map[productId] || null;
     },
 
     isValidAffiliateSession() {
       try {
-        const affiliateId = sessionStorage.getItem('affiliateId');
+        const mapRaw = sessionStorage.getItem('affiliateProductMap');
         const startTime = sessionStorage.getItem('affiliateStartTime');
 
-        if (!affiliateId || !startTime) {
+        if (!mapRaw || !startTime) {
           return false;
         }
 
@@ -848,7 +832,7 @@ export default {
         const maxSessionTime = 30 * 60 * 1000;
 
         if (sessionDuration > maxSessionTime) {
-          this.clearSessionAffiliateId();
+          this.clearAffiliateSession();
           return false;
         }
 
@@ -856,6 +840,13 @@ export default {
       } catch (e) {
         return false;
       }
+    },
+
+    clearAffiliateSession() {
+      try {
+        sessionStorage.removeItem('affiliateProductMap');
+        sessionStorage.removeItem('affiliateStartTime');
+      } catch (e) { }
     }
   },
 

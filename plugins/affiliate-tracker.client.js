@@ -6,13 +6,14 @@ export default defineNuxtPlugin((nuxtApp) => {
       try {
         const url = new URL(window.location.href);
         const affiliateParam = url.searchParams.get('ref') || url.searchParams.get('affiliate');
+        const productIdParam = url.searchParams.get('id') || url.searchParams.get('productId');
         
         console.log('🔍 Checking for affiliate parameters in URL:', window.location.href);
         console.log('📋 Found affiliate code:', affiliateParam);
         
         if (affiliateParam) {
           // ตรวจสอบ affiliate code กับ backend
-          verifyAndSetAffiliate(affiliateParam);
+          verifyAndSetAffiliate(affiliateParam, productIdParam);
           
           // ลบ parameter ออกจาก URL เพื่อความสะอาด
           url.searchParams.delete('ref');
@@ -27,7 +28,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       }
     };
 
-    const verifyAndSetAffiliate = async (code) => {
+    const verifyAndSetAffiliate = async (code, productId) => {
       try {
         console.log(`🔄 Verifying affiliate code: ${code}`);
         
@@ -38,13 +39,28 @@ export default defineNuxtPlugin((nuxtApp) => {
         console.log('✅ Affiliate verification response:', response);
         
         if (response && response.valid) {
-          // เก็บ affiliate code แบบ normalize ใน sessionStorage (ชั่วคราวเฉพาะ session นี้)
-          sessionStorage.setItem('affiliateId', normalized);
-          sessionStorage.setItem('affiliateStartTime', Date.now().toString());
+          // เก็บ mapping แบบ productId -> affiliateCode ใน sessionStorage เท่านั้น
+          const mapKey = 'affiliateProductMap';
+          const startKey = 'affiliateStartTime';
+          const now = Date.now().toString();
+          let currentMap = {};
+          try {
+            currentMap = JSON.parse(sessionStorage.getItem(mapKey) || '{}');
+          } catch (_) { currentMap = {}; }
+
+          if (productId) {
+            currentMap[String(productId)] = normalized;
+            console.log(`🧭 Bound affiliate ${normalized} to product ${productId}`);
+          } else {
+            console.log('ℹ️ No product id in URL; will not bind globally');
+          }
+
+          sessionStorage.setItem(mapKey, JSON.stringify(currentMap));
+          sessionStorage.setItem(startKey, now);
           
           console.log(`🎯 Valid affiliate link detected: ${code}`);
           console.log(`👤 Affiliate: ${response.affiliate?.name || 'Unknown'}`);
-          console.log(`💾 Stored in sessionStorage`);
+          console.log(`💾 Stored map in sessionStorage`);
           
           // แสดง notification หรือ toast (optional)
           if (window.$toast) {
