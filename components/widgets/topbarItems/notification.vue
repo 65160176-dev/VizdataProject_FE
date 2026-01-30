@@ -11,9 +11,16 @@
         <div class="notification-dropdown">
             <div class="dropdown-header">
                 <span>การแจ้งเตือน ({{ unreadCount }})</span>
-                <a href="javascript:void(0)" class="mark-all-btn" v-if="unreadCount > 0" @click.stop="markAllRead">
-                    อ่านทั้งหมด
-                </a>
+                <div class="header-actions">
+                    <a href="javascript:void(0)" class="action-link" v-if="unreadCount > 0" @click.stop="markAllRead">
+                        อ่านทั้งหมด
+                    </a>
+                    <span class="divider" v-if="unreadCount > 0 && notifications.length > 0">|</span>
+                    <a href="javascript:void(0)" class="action-link text-danger" v-if="notifications.length > 0"
+                        @click.stop="clearAll">
+                        ลบทั้งหมด
+                    </a>
+                </div>
             </div>
 
             <ul class="notification-list">
@@ -25,6 +32,9 @@
                     :class="{ 'item-unread': !item.isRead, 'item-read': item.isRead }" @mouseenter="markAsRead(item)">
 
                     <div class="notif-box" @click="handleNotificationClick(item)">
+
+                        <div class="notif-dot" :class="{ 'active': !item.isRead }"></div>
+
                         <div class="notif-img">
                             <img v-if="item.image" :src="getImgUrl(item.image)"
                                 @error="$event.target.src = '/images/icon/logo.png'" alt="icon">
@@ -32,11 +42,17 @@
                                 <i class="fa fa-info" aria-hidden="true"></i>
                             </div>
                         </div>
+
                         <div class="notif-content">
                             <div class="notif-title">{{ item.title }}</div>
                             <div class="notif-message">{{ item.message }}</div>
                             <div class="notif-date">{{ formatDate(item.createdAt) }}</div>
                         </div>
+
+                        <div class="delete-action" @click.stop="deleteItem(item._id)">
+                            <i class="fa fa-trash-o" aria-hidden="true" title="ลบการแจ้งเตือน"></i>
+                        </div>
+
                     </div>
                 </li>
             </ul>
@@ -80,22 +96,19 @@ export default {
         markAllRead() {
             this.notiStore.markAllAsRead();
         },
+        clearAll() {
+            this.notiStore.deleteAllNotifications();
+        },
         markAsRead(item) {
             if (!item.isRead) {
                 this.notiStore.markAsRead(item)
             }
         },
-
-        // ✅ 2. เพิ่มฟังก์ชันคลิกแจ้งเตือน
         handleNotificationClick(item) {
-            // อ่านแล้ว
             this.markAsRead(item);
-
-            // ดึง Order ID (รองรับทั้งแบบอยู่ใน data object หรืออยู่ชั้นนอก)
             const orderId = item.data?.orderId || item.orderId;
 
             if (orderId) {
-                // Redirect ไปหน้า Dashboard พร้อมเปิด Order Detail
                 this.$router.push({
                     path: '/page/account/userdashboard',
                     query: {
@@ -104,14 +117,12 @@ export default {
                     }
                 });
             } else {
-                // กรณีไม่มี Order ID ให้ไปหน้า Orders เฉยๆ
                 this.$router.push({
                     path: '/page/account/userdashboard',
                     query: { tab: 'orders' }
                 });
             }
         },
-
         getImgUrl(path) {
             if (!path) return '/images/icon/logo.png';
             if (path.startsWith('http')) return path;
@@ -123,7 +134,14 @@ export default {
             return date.toLocaleString('th-TH', {
                 day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
             });
-        }
+        },
+        async deleteItem(id) {
+            try {
+                await this.notiStore.deleteNotification(id);
+            } catch (error) {
+                console.error("Failed to delete notification:", error);
+            }
+        },
     },
     beforeUnmount() {
         this.notiStore.disconnectSocket();
@@ -187,7 +205,13 @@ export default {
     align-items: center;
 }
 
-.mark-all-btn {
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-link {
     font-size: 12px;
     color: #ff4c3b;
     text-decoration: none;
@@ -195,9 +219,10 @@ export default {
     font-weight: normal;
 }
 
-.mark-all-btn:hover {
+.action-link:hover {
     text-decoration: underline;
 }
+
 
 .notification-list {
     list-style: none;
@@ -209,7 +234,7 @@ export default {
 }
 
 .notification-item {
-    width: 100%;
+    position: relative;
     text-align: left;
     cursor: default !important;
 }
@@ -222,12 +247,12 @@ export default {
     color: #333;
     border-bottom: 1px solid #f1f1f1;
     transition: 0.2s;
-    overflow: hidden;
-    width: 100%;
+
+    width: 90%;
     height: auto;
-    min-height: 90px;
+    min-height: 100px;
     box-sizing: border-box;
-    /* ✅ 3. เพิ่ม cursor pointer */
+
     cursor: pointer;
 }
 
@@ -241,6 +266,22 @@ export default {
 
 .item-read {
     background-color: #ffffff;
+}
+
+/* --- จุดสีแดง (Dot) --- */
+.notif-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: transparent;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.notif-dot.active {
+    background-color: #ff4c3b;
+    /* แสดงสีแดงเมื่อยังไม่อ่าน */
+    box-shadow: 0 0 4px rgba(255, 76, 59, 0.4);
 }
 
 .notif-img {
@@ -272,7 +313,7 @@ export default {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-start !important;
     text-align: left !important;
 }
@@ -310,5 +351,32 @@ export default {
     color: #999;
     text-align: left !important;
     width: 100%;
+}
+
+.delete-action {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff4c3b;
+    /* เปลี่ยนเป็นสีแดงตามรูป */
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    background-color: transparent;
+}
+
+/* เอฟเฟกต์เมื่อ Hover ที่ปุ่มถังขยะ */
+.delete-action:hover {
+    color: #d32f2f;
+    background-color: rgba(255, 76, 59, 0.1);
+    transform: translateY(-50%) scale(1.1);
+    /* ขยายขนาดเล็กน้อย */
 }
 </style>

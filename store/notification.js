@@ -1,6 +1,5 @@
-// store/notification.js
 import { defineStore } from 'pinia'
-import { useAuthStore } from './auth' // เรียกใช้ Auth เพื่อเอา UserID
+import { useAuthStore } from './auth'
 import { io } from "socket.io-client";
 
 export const useNotificationStore = defineStore('notification', {
@@ -12,13 +11,15 @@ export const useNotificationStore = defineStore('notification', {
         unreadCount: (state) => state.notifications.filter(n => !n.isRead).length
     },
     actions: {
-        // Action 1: โหลดข้อมูล
+        // ... (fetchNotifications, markAsRead, initSocket, disconnectSocket, markAllAsRead เดิม) ...
+
         async fetchNotifications() {
             const authStore = useAuthStore()
             const userId = authStore.user?._id || authStore.user?.id
             if (!userId) return
 
             try {
+                // ✅ แก้ไข URL ให้ใช้ตัวแปร config หรือ hardcode ตามเดิม
                 const res = await fetch(`http://localhost:3001/api/notifications/user/${userId}`)
                 if (res.ok) {
                     this.notifications = await res.json()
@@ -28,15 +29,11 @@ export const useNotificationStore = defineStore('notification', {
             }
         },
 
-        // Action 2: อ่านแล้ว
         async markAsRead(item) {
             if (item.isRead) return
-
-            // Update UI ทันที (Optimistic Update)
             const target = this.notifications.find(n => n._id === item._id)
             if (target) target.isRead = true
 
-            // ยิงบอก Backend
             try {
                 await fetch(`http://localhost:3001/api/notifications/${item._id}/read`, { method: 'PATCH' })
             } catch (e) {
@@ -44,17 +41,15 @@ export const useNotificationStore = defineStore('notification', {
             }
         },
 
-        // Action 3: เริ่มระบบ Real-time
         initSocket() {
             const authStore = useAuthStore()
             const userId = authStore.user?._id || authStore.user?.id
             if (!userId || this.socket) return
 
-            // ต่อ Socket ไปที่ Port Backend
             this.socket = io('http://localhost:3001', { query: { userId } })
 
             this.socket.on('receive_notification', (newNoti) => {
-                this.notifications.unshift(newNoti) // แทรกตัวใหม่บนสุด
+                this.notifications.unshift(newNoti)
             })
         },
 
@@ -64,34 +59,84 @@ export const useNotificationStore = defineStore('notification', {
                 this.socket = null
             }
         },
-        // ✅✅ เพิ่มฟังก์ชันนี้
+
         async markAllAsRead() {
             const auth = useAuthStore()
             const userId = auth.user?._id || auth.user?.id
-
             if (!userId) return
 
-            try {
-                // 1. อัปเดต State ฝั่งหน้าเว็บทันที (เพื่อให้ UI เร็ว ไม่ต้องรอ Server)
-                this.notifications.forEach(n => {
-                    n.isRead = true
-                })
+            this.notifications.forEach(n => { n.isRead = true })
 
-                // 2. ยิง API ไปบอก Server
+            try {
+                // ✅ ใช้ fetch แบบเดิมเพื่อความ Consistent
+                await fetch(`http://localhost:3001/api/notifications/read-all/${userId}`, {
+                    method: 'PATCH'
+                })
+            } catch (error) {
+                console.error('Failed to mark all as read:', error)
+            }
+        },
+
+        // ✅✅ เพิ่ม Action สำหรับลบแจ้งเตือน ✅✅
+        async deleteNotification(id) {
+            if (!id) return;
+
+            // 1. จำค่าเดิมไว้เผื่อ error
+            const originalNotifications = [...this.notifications];
+
+            // 2. ลบออกจาก State ทันที (Optimistic UI Update)
+            this.notifications = this.notifications.filter(n => n._id !== id);
+
+            try {
+                // 3. ยิง API ไปลบที่ Backend
+                // (URL นี้ต้องตรงกับ Controller ที่คุณมีใน Backend)
+                const res = await fetch(`http://localhost:3001/api/notifications/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) {
+                    throw new Error('Failed to delete');
+                }
+            } catch (error) {
+                console.error('Delete notification failed:', error);
+                // 4. ถ้า Error ให้คืนค่าเดิมกลับมา
+                this.notifications = originalNotifications;
+            }
+        },
+        async deleteAllNotifications() {
+            const authStore = useAuthStore()
+            const userId = authStore.user?._id || authStore.user?.id
+
+            if (!userId) return
+            if (this.notifications.length === 0) return
+
+            // 1. ถามยืนยันก่อน (Optional)
+            if (!confirm("คุณต้องการลบการแจ้งเตือนทั้งหมดใช่หรือไม่?")) return;
+
+            // 2. จำค่าเดิมไว้เผื่อ Error
+            const originalNotifications = [...this.notifications];
+
+            // 3. ลบออกจากหน้าจอทันที (Optimistic UI)
+            this.notifications = [];
+
+            try {
+                // 4. ยิง API ไปลบที่ Backend
                 const config = useRuntimeConfig()
                 const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
 
-                await $fetch(`${API_BASE_URL}/api/notifications/read-all/${userId}`, {
-                    method: 'PATCH'
-                    // ถ้ามี Token ต้องใส่ headers ด้วย
-                    // headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                })
+                const res = await fetch(`${API_BASE_URL}/api/notifications/delete-all/${userId}`, {
+                    method: 'DELETE',
+                    // ถ้า Backend ต้องใช้ Token ให้เปิด comment ด้านล่าง
+                    // headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } 
+                });
+
+                if (!res.ok) throw new Error('Failed to delete all');
 
             } catch (error) {
-                console.error('Failed to mark all as read:', error)
-                // ถ้า Error อาจจะโหลดข้อมูลใหม่มาทับเพื่อคืนค่าเดิม
-                // this.fetchNotifications() 
+                console.error("Delete all failed:", error);
+                // 5. ถ้าพัง คืนค่าเดิมกลับมา
+                this.notifications = originalNotifications;
             }
-        }
+        },
     }
 })

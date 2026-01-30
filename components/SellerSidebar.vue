@@ -44,22 +44,36 @@
             <div class="noti-dropdown" v-if="isNotiOpen">
               <div class="noti-header">
                 <span>การแจ้งเตือน ({{ unreadCount }})</span>
-                <button class="mark-read-btn" @click="markAllRead">อ่านทั้งหมด</button>
+
+                <div class="header-actions">
+                  <button class="action-link" @click="markAllRead" v-if="unreadCount > 0">อ่านทั้งหมด</button>
+                  <span class="divider" v-if="unreadCount > 0 && notifications.length > 0">|</span>
+                  <button class="action-link text-danger" @click="clearAll"
+                    v-if="notifications.length > 0">ลบทั้งหมด</button>
+                </div>
               </div>
 
               <div class="noti-list">
                 <div v-for="item in notifications" :key="item._id" class="noti-item" :class="{ 'unread': !item.isRead }"
                   @click="handleNotificationClick(item)">
+
                   <div class="noti-dot"></div>
+
                   <div class="noti-img-wrapper" v-if="item.image">
                     <img :src="getImgUrl(item.image)" class="noti-img"
                       @error="$event.target.src = '/images/icon/logo.png'">
                   </div>
+
                   <div class="noti-content">
                     <div class="noti-title">{{ item.title }}</div>
                     <p class="noti-text">{{ item.message }}</p>
                     <span class="noti-time">{{ formatDate(item.createdAt) }}</span>
                   </div>
+
+                  <div class="noti-delete" @click.stop="deleteItem(item._id)">
+                    <i class="fa fa-trash-o" aria-hidden="true"></i>
+                  </div>
+
                 </div>
                 <div v-if="notifications.length === 0" class="noti-empty">ไม่มีการแจ้งเตือน</div>
               </div>
@@ -158,7 +172,9 @@ const fileInputRef = ref(null)
 const isUploading = ref(false)
 const triggerFileInput = () => { if (!isUploading.value) fileInputRef.value.click() }
 const handleImageError = (e) => { e.target.src = '/images/avtar.jpg' }
-
+function clearAll() {
+  notiStore.deleteAllNotifications();
+}
 const handleFileUpload = async (event) => {
   const file = event.target.files[0]
   if (!file) return
@@ -250,6 +266,17 @@ const getImgUrl = (path) => {
 const formatDate = (dateString) => {
   if (!dateString) return '';
   return new Date(dateString).toLocaleString('th-TH', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+const deleteItem = async (id) => {
+  // (Optional) อาจจะใส่ confirm หรือไม่ก็ได้
+  // if (!confirm("ต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?")) return;
+
+  try {
+    // เรียก action ใน store (ต้องมั่นใจว่าใน notiStore มี action นี้)
+    await notiStore.deleteNotification(id);
+  } catch (error) {
+    console.error("Failed to delete notification:", error);
+  }
 }
 
 function isActive(path) { try { return route.path === path || route.path.startsWith(path + '/') } catch (e) { return false } }
@@ -613,6 +640,10 @@ function logout() {
   cursor: pointer !important;
   transition: background 0.2s;
   align-items: flex-start;
+  /* ✅✅ 1. เพิ่ม position: relative เพื่อเป็นจุดอ้างอิง */
+  position: relative;
+  /* ✅✅ 2. เพิ่ม padding-right เพื่อเว้นที่ให้ปุ่มถังขยะ */
+  padding-right: 40px;
 }
 
 .noti-item:hover {
@@ -688,6 +719,45 @@ function logout() {
   text-align: center;
   color: #999;
   font-size: 13px;
+}
+
+/* ✅✅ 3. เพิ่ม CSS สำหรับปุ่มถังขยะ ✅✅ */
+.noti-delete {
+  position: absolute;
+  /* ลอยอยู่เหนือเนื้อหา */
+  right: 10px;
+  /* ชิดขวา 10px */
+  top: 50%;
+  /* กึ่งกลางแนวตั้ง */
+  transform: translateY(-50%);
+  /* จัดกึ่งกลางเป๊ะๆ */
+
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #999;
+  transition: all 0.2s;
+  z-index: 5;
+  /* ให้อยู่ชั้นบนสุด */
+}
+
+.noti-delete:hover {
+  color: #ff4757;
+  /* เปลี่ยนสีแดงเมื่อชี้ */
+  background-color: rgba(255, 71, 87, 0.1);
+}
+
+/* Dark Mode สำหรับปุ่มลบ */
+:global(body.dark) .noti-delete {
+  color: #666;
+}
+
+:global(body.dark) .noti-delete:hover {
+  color: #ff4757;
+  background-color: rgba(255, 71, 87, 0.2);
 }
 
 .fade-enter-active,
@@ -836,5 +906,34 @@ function logout() {
 
 :global(body.dark) .noti-item.unread {
   background: rgba(255, 71, 87, 0.1);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-link {
+  background: none;
+  border: none;
+  color: #ff9900;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.action-link:hover {
+  text-decoration: underline;
+}
+
+.action-link.text-danger {
+  color: #ff4757;
+  /* สีแดงสำหรับปุ่มลบ */
+}
+
+.divider {
+  color: #ccc;
+  font-size: 12px;
 }
 </style>
