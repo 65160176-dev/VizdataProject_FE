@@ -80,7 +80,7 @@
           <i class="fa fa-money-bill-wave"></i>
         </div>
         <div class="stat-content">
-          <h3 class="stat-value">{{ formatCurrency(summary?.totalCommission || 0) }}</h3>
+          <h3 class="stat-value">{{ formatCurrency(totalIncome || 0) }}</h3>
           <p class="stat-label">รายได้ทั้งหมด</p>
         </div>
       </div>
@@ -116,6 +116,42 @@
       </div>
     </div>
 
+    <!-- Insights Section -->
+    <div class="insights-section">
+      <div class="section-header">
+        <h3><i class="fa fa-chart-line me-2"></i>สรุปค่าคอมยอดนิยม</h3>
+      </div>
+      <div class="insights-grid">
+        <div class="insight-card">
+          <div class="insight-header">
+            <i class="fa fa-store"></i>
+            <span>ร้านที่ได้ค่าคอมรวมทั้งหมดมากสุด (Top 5)</span>
+          </div>
+          <ul class="insight-list" v-if="topShopsLifetime.length">
+            <li v-for="shop in topShopsLifetime" :key="shop.id" class="insight-item">
+              <span class="insight-name">{{ shop.name }}</span>
+              <span class="insight-value">{{ formatCurrency(shop.amount) }}</span>
+            </li>
+          </ul>
+          <div v-else class="empty-insight">ไม่มีข้อมูล</div>
+        </div>
+
+        <div class="insight-card">
+          <div class="insight-header">
+            <i class="fa fa-box"></i>
+            <span>สินค้าที่ให้ค่าคอมสูงสุด (Top 5)</span>
+          </div>
+          <ul class="insight-list" v-if="topProducts.length">
+            <li v-for="p in topProducts" :key="p.id" class="insight-item">
+              <span class="insight-name">{{ p.name }}</span>
+              <span class="insight-value">{{ formatCurrency(p.amount) }}</span>
+            </li>
+          </ul>
+          <div v-else class="empty-insight">ไม่มีข้อมูล</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Date Filter -->
     <div class="filter-section">
       <div class="filter-content">
@@ -142,6 +178,14 @@
             <i class="fa fa-times"></i>
             Clear
           </button>
+        </div>
+
+        <div class="status-filters">
+          <span class="status-filter-label">สถานะ:</span>
+          <button :class="['status-chip', statusFilter === 'all' ? 'active' : '']" @click="statusFilter = 'all'">ทั้งหมด</button>
+          <button :class="['status-chip', statusFilter === 'pending' ? 'active' : '']" @click="statusFilter = 'pending'">รอดำเนินการ</button>
+          <button :class="['status-chip', statusFilter === 'paid' ? 'active' : '']" @click="statusFilter = 'paid'">จ่ายแล้ว</button>
+          <button :class="['status-chip', statusFilter === 'cancelled' ? 'active' : '']" @click="statusFilter = 'cancelled'">ยกเลิก</button>
         </div>
       </div>
     </div>
@@ -231,6 +275,10 @@ const router = useRouter()
 
 const affiliateData = ref([])
 const affiliateInfo = ref(null)
+const rawOrders = ref([]) // เก็บข้อมูล AffiliateOrder ต้นฉบับ
+const orderDetailsMap = ref(new Map()) // orderId -> order detail (มี seller)
+const sellersMap = ref(new Map()) // sellerId -> display_name
+const productMap = ref(new Map()) // productId -> {name, commission}
 const summary = ref({
   totalOrders: 0,
   totalCommission: 0,
@@ -242,9 +290,11 @@ const loading = ref(true)
 // 1. สร้างตัวแปรเก็บวันที่
 const startDate = ref('')
 const endDate = ref('')
+const statusFilter = ref('all')
 
 // 2. ฟังก์ชันกรองข้อมูล (Computed)
-const filteredAffiliateData = computed(() => {
+// กรองตามวัน (สำหรับข้อมูลสรุป และใช้เป็นฐานให้ตาราง)
+const dateOnlyAffiliateData = computed(() => {
   return affiliateData.value.filter(item => {
     // ถ้ายังไม่ได้เลือกวันที่เลย ให้แสดงทั้งหมด
     if (!startDate.value && !endDate.value) return true
@@ -266,10 +316,18 @@ const filteredAffiliateData = computed(() => {
   })
 })
 
-// 3. คำนวณรายได้ (แก้ให้คำนวณจากข้อมูลที่กรองแล้ว)
+// ตารางใช้ตัวกรองวัน + สถานะ
+const filteredAffiliateData = computed(() => {
+  const base = dateOnlyAffiliateData.value
+  if (statusFilter.value === 'all') return base
+  return base.filter(it => (it.status || '').toLowerCase() === statusFilter.value)
+})
+
+// 3. คำนวณรายได้ (รวม "จ่ายแล้ว" + "รอดำเนินการ" ไม่รวม "ยกเลิก")
+// ไม่เปลี่ยนตามตัวกรองสถานะด้านล่าง ใช้เฉพาะตัวกรองวันที่
 const totalIncome = computed(() => {
-  return filteredAffiliateData.value
-    .filter(item => item.status === 'paid') 
+  return dateOnlyAffiliateData.value
+    .filter(item => (item.status || '').toLowerCase() !== 'cancelled')
     .reduce((sum, item) => sum + Number(item.commissionAmount || 0), 0)
 })
 
@@ -330,9 +388,10 @@ const fetchDashboard = async () => {
     const data = await affiliateService.getDashboard(userId)
     affiliateInfo.value = data.affiliate
     summary.value = data.summary
+    rawOrders.value = data.orders || []
     
     // แปลงข้อมูล orders เป็น format ที่ใช้แสดงผล
-    affiliateData.value = data.orders.map(o => ({
+    affiliateData.value = rawOrders.value.map(o => ({
       orderId: o.order?.orderId || '-',
       createdAt: o.createdAt,
       productName: o.items?.map(i => i.name).join(', ') || '-',
@@ -341,6 +400,9 @@ const fetchDashboard = async () => {
       commissionAmount: o.commissionAmount || 0,
       status: o.status
     }))
+
+    // ดึงข้อมูลเสริมสำหรับ Insight
+    await enrichInsights()
   } catch (error) {
     console.error('Failed to load affiliate dashboard:', error)
     if (useNuxtApp().$showToast) {
@@ -350,6 +412,95 @@ const fetchDashboard = async () => {
     loading.value = false
   }
 }
+
+// ดึงข้อมูลเพื่อคำนวณ Top Shops / Top Products
+const enrichInsights = async () => {
+  try {
+    // 1) ดึงรายละเอียด Order เพื่อหาตัว seller
+    const ids = rawOrders.value.map((o) => o.order?._id || o.order)
+      .filter(Boolean)
+    const uniqueIds = Array.from(new Set(ids))
+    const details = await Promise.all(uniqueIds.map(async (id) => {
+      try {
+        const res = await $fetch(`http://localhost:3001/api/order/${id}`)
+        return res
+      } catch (e) { return null }
+    }))
+    details.filter(Boolean).forEach((od) => {
+      const key = od.orderId || od._id
+      orderDetailsMap.value.set(key, od)
+    })
+
+    // 2) ดึงรายชื่อร้านค้าทั้งหมดไว้ Map
+    try {
+      const sellersRes = await $fetch('http://localhost:3001/api/sellers')
+      const list = sellersRes?.data || sellersRes || []
+      list.forEach((s) => {
+        const name = s.display_name || s.name || 'ร้านค้า'
+        const sid = s._id || s.id
+        const uid = s.userId
+        if (sid) sellersMap.value.set(String(sid), name)
+        if (uid) sellersMap.value.set(String(uid), name)
+      })
+    } catch {}
+
+    // 3) ดึงข้อมูลสินค้าเพื่อรู้ค่าคอมต่อชิ้น
+    const productIds = rawOrders.value.flatMap((o) => (o.items || []).map((it) => it.productId)).filter(Boolean)
+    const uniqueProductIds = Array.from(new Set(productIds))
+    const productDetails = await Promise.all(uniqueProductIds.map(async (pid) => {
+      try { return await $fetch(`http://localhost:3001/api/product/${pid}`) } catch { return null }
+    }))
+    productDetails.filter(Boolean).forEach((p) => {
+      productMap.value.set(p._id || p.id, { name: p.name, commission: Number(p.commission || 0) })
+    })
+  } catch (e) {
+    console.warn('enrichInsights error:', e)
+  }
+}
+
+// Top Shops Lifetime (รวมทั้งหมดที่เคยแชร์ลิงก์ และจ่ายแล้วเท่านั้น)
+const topShopsLifetime = computed(() => {
+  const byShop = new Map()
+  rawOrders.value.forEach((r) => {
+    if ((r.status || '').toLowerCase() !== 'paid') return
+    const keyById = r.order?._id || r.order
+    const keyByOrderId = r.order?.orderId
+    const od = orderDetailsMap.value.get(keyById) || orderDetailsMap.value.get(keyByOrderId)
+    if (!od) return
+    const sellerId = String(od.seller)
+    const name = sellersMap.value.get(sellerId) || 'ร้านค้า'
+    const prev = byShop.get(name) || 0
+    byShop.set(name, prev + Number(r.commissionAmount || 0))
+  })
+  return Array.from(byShop.entries())
+    .map(([name, amount]) => ({ id: name, name, amount }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 5)
+})
+
+// Top Products (เฉพาะออเดอร์จ่ายแล้ว) รวมค่าคอมต่อสินค้า = commission/unit * qty
+const topProducts = computed(() => {
+  const totals = new Map()
+  // map orderId -> raw order
+  const rawByOrderId = new Map(rawOrders.value.map((r) => [r.order?.orderId || '-', r]))
+  dateOnlyAffiliateData.value.forEach((v) => {
+    if ((v.status || '').toLowerCase() !== 'paid') return
+    const raw = rawByOrderId.get(v.orderId)
+    if (!raw) return
+    (raw.items || []).forEach((it) => {
+      const info = productMap.value.get(it.productId)
+      const perUnit = info?.commission || 0
+      const qty = Number(it.qty || 1)
+      const amount = perUnit * qty
+      const key = it.productId
+      const prev = totals.get(key) || { id: key, name: info?.name || it.name || 'สินค้า', amount: 0 }
+      prev.amount += amount
+      prev.name = info?.name || prev.name
+      totals.set(key, prev)
+    })
+  })
+  return Array.from(totals.values()).sort((a, b) => b.amount - a.amount).slice(0, 5)
+})
 
 // คัดลอก Affiliate Link
 const copyAffiliateLink = () => {
@@ -828,6 +979,25 @@ onMounted(() => {
   background: #ffc5c5;
 }
 
+.status-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.status-filter-label { color: #777; font-size: 0.9rem; margin-right: 8px; }
+.status-chip {
+  background: #f1f5f4;
+  border: 1px solid #e2e8f0;
+  color: #334;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.status-chip.active { background: #ffefe9; border-color: #ff6b3b; color: #c24; }
+
 /* Orders Section */
 .orders-section {
   background: white;
@@ -836,6 +1006,17 @@ onMounted(() => {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   border: 1px solid #f1f5f4;
 }
+
+/* Insights Section */
+.insights-section { background: white; border-radius: 16px; padding: 24px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #f1f5f4; }
+.insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.insight-card { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 16px; }
+.insight-header { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #333; margin-bottom: 10px; }
+.insight-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.insight-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px 12px; }
+.insight-name { color: #333; font-weight: 600; }
+.insight-value { color: #00695C; font-weight: 800; }
+.empty-insight { color: #777; font-size: 0.9rem; }
 
 .section-header {
   display: flex;

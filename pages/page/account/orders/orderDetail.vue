@@ -307,17 +307,9 @@ const openReturnModal = () => {
 const closeCancelModal = () => { showCancelModal.value = false }
 
 const submitRequestCancellation = async (reason) => {
-  let statusToSend = 'cancel requested';
-  let title = 'ส่งคำขอยกเลิกแล้ว';
-
-  if (checkStatus(props.order.status, 'pending')) {
-    statusToSend = 'Cancelled';
-    title = 'ยกเลิกคำสั่งซื้อสำเร็จ';
-  }
-  else if (isReturnMode.value) {
-    statusToSend = 'Cancelled';
-    title = 'ปฏิเสธรับสินค้า/ยกเลิกสำเร็จ';
-  }
+  // ส่งคำขอให้ร้านตรวจสอบเสมอ ไม่เปลี่ยนเป็นยกเลิกทันที
+  const statusToSend = 'cancel requested'
+  const title = 'ส่งคำขอยกเลิกแล้ว'
 
   try {
     const token = localStorage.getItem('token')
@@ -330,18 +322,15 @@ const submitRequestCancellation = async (reason) => {
       body: {
         status: statusToSend,
         note: reason,
-        isCancelRequest: statusToSend === 'cancel requested'
+        isCancelRequest: true
       }
     })
 
     props.order.status = statusToSend
     props.order.note = reason
 
-    if (statusToSend === 'Cancelled') {
-      emit('cancel', props.order)
-    } else {
-      emit('update', props.order)
-    }
+    // แจ้งให้ parent อัปเดตสถานะ (ยังไม่ยกเลิกจนกว่าร้านจะอนุมัติ)
+    emit('update', props.order)
 
     closeCancelModal()
     $showToast({ msg: title, type: 'success' })
