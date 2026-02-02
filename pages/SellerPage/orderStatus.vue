@@ -80,6 +80,8 @@
       </div>
     </div>
 
+    <OrderDetailModal v-if="showDetail" :order="selectedOrder" @close="closeDetail" @updated="handleOrderUpdated" />
+
     <Transition name="fade">
       <div v-if="showRequestsModal" class="modal-backdrop-custom" @click.self="showRequestsModal = false">
         <div class="modal-content-custom p-0 overflow-hidden shadow-lg" style="max-width: 600px;">
@@ -117,8 +119,18 @@
                   <div class="fw-bold text-primary">{{ formatCurrency(calculateTotal(order)) }}</div>
                 </div>
 
-                <div v-if="order.cancelReason" class="bg-light p-2 rounded mb-2 border small text-secondary">
-                  <span class="fw-bold">เหตุผลลูกค้า:</span> {{ order.cancelReason }}
+                <div v-if="order.cancelReason"
+                  class="bg-warning-subtle p-2 rounded mb-2 border border-warning-subtle small text-dark">
+                  <span class="fw-bold">
+                    <Icon name="feather:alert-triangle" size="12" /> เหตุผลที่ขอคืน/ยกเลิก:
+                  </span> {{ order.cancelReason }}
+                </div>
+
+                <div v-if="order.note" class="bg-light p-2 rounded mb-2 border small text-secondary">
+                  <span class="fw-bold text-dark">
+                    <Icon name="feather:message-square" size="12" /> หมายเหตุจากลูกค้า:
+                  </span>
+                  <span class="fst-italic text-danger">"{{ order.note }}"</span>
                 </div>
 
                 <div class="d-flex gap-2 mt-2">
@@ -142,26 +154,26 @@
       <div v-if="showRejectDialog" class="modal-backdrop-custom" style="z-index: 1060;" @click.self="closeRejectModal">
         <div class="modal-content-custom p-4 shadow-lg" style="max-width: 400px;">
           <h5 class="fw-bold mb-3 text-danger">
-            <Icon name="feather:alert-circle" class="me-2"/>ปฏิเสธคำขอ
+            <Icon name="feather:alert-circle" class="me-2" />ปฏิเสธคำขอ
           </h5>
           <p class="text-secondary small mb-3">
             กรุณาระบุเหตุผลที่ปฏิเสธ เพื่อแจ้งให้ลูกค้าทราบ
           </p>
-          
+
           <div class="mb-3">
             <label class="form-label small fw-bold text-dark mb-2">เลือกเหตุผล:</label>
             <div class="d-flex flex-column gap-2">
               <div class="form-check" v-for="(option, index) in rejectOptions" :key="index">
-                <input class="form-check-input" type="radio" :name="'rejectReason'" :id="'reason-'+index" 
-                       :value="option" v-model="selectedRejectReason">
-                <label class="form-check-label small" :for="'reason-'+index">
+                <input class="form-check-input" type="radio" :name="'rejectReason'" :id="'reason-' + index"
+                  :value="option" v-model="selectedRejectReason">
+                <label class="form-check-label small" :for="'reason-' + index">
                   {{ option }}
                 </label>
               </div>
-              
+
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="rejectReason" id="reason-other" 
-                       value="other" v-model="selectedRejectReason">
+                <input class="form-check-input" type="radio" name="rejectReason" id="reason-other" value="other"
+                  v-model="selectedRejectReason">
                 <label class="form-check-label small fw-bold" for="reason-other">
                   อื่นๆ (โปรดระบุ)
                 </label>
@@ -170,20 +182,15 @@
           </div>
 
           <div class="mb-3" v-if="selectedRejectReason === 'other'">
-            <textarea 
-              v-model="rejectNote" 
-              class="form-control bg-light border-0" 
-              rows="3" 
+            <textarea v-model="rejectNote" class="form-control bg-light border-0" rows="3"
               placeholder="พิมพ์เหตุผลเพิ่มเติม...">
             </textarea>
           </div>
 
           <div class="d-flex gap-2 mt-4">
             <button class="btn btn-light flex-grow-1 rounded-pill" @click="closeRejectModal">ยกเลิก</button>
-            <button 
-              class="btn btn-danger flex-grow-1 rounded-pill fw-bold" 
-              :disabled="selectedRejectReason === 'other' && !rejectNote.trim()"
-              @click="submitReject">
+            <button class="btn btn-danger flex-grow-1 rounded-pill fw-bold"
+              :disabled="selectedRejectReason === 'other' && !rejectNote.trim()" @click="submitReject">
               ยืนยันการปฏิเสธ
             </button>
           </div>
@@ -191,96 +198,6 @@
       </div>
     </Transition>
 
-    <Transition name="fade">
-      <div v-if="showDetail" class="modal-backdrop-custom" @click.self="closeDetail">
-        <div class="modal-content-custom p-0 overflow-hidden shadow-lg">
-          <div
-            :class="['px-4 py-3 d-flex justify-content-between align-items-center text-white', 'header-' + selectedOrder.status]">
-            <div>
-              <h5 class="fw-bold mb-0">Order Detail</h5>
-              <small class="opacity-90">สถานะ: {{ selectedOrder.status }}</small>
-            </div>
-            <button class="btn btn-icon btn-white-glass rounded-circle text-white" @click="closeDetail">
-              <Icon name="feather:x" size="20" />
-            </button>
-          </div>
-
-          <div class="p-4 bg-white">
-            <div class="row mb-4 g-3">
-              <div class="col-md-6">
-                <div class="p-3 bg-light rounded-3 h-100">
-                  <h6 class="text-muted small mb-2 fw-bold text-uppercase">ที่อยู่จัดส่ง</h6>
-                  <div class="fw-bold mb-1">{{ selectedOrder.customer }}</div>
-                  <div class="small text-secondary">{{ selectedOrder.address }}</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="p-3 bg-light rounded-3 h-100">
-                  <h6 class="text-muted small mb-2 fw-bold text-uppercase">ข้อมูลคำสั่งซื้อ</h6>
-                  <div class="d-flex justify-content-between small mb-1">
-                    <span>Email:</span> <span class="fw-bold">{{ selectedOrder.email }}</span>
-                  </div>
-                  <div class="d-flex justify-content-between small">
-                    <span>Date:</span> <span class="fw-bold">{{ formatDate(selectedOrder) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <h6 class="fw-bold mb-3">รายการสินค้า</h6>
-            <div class="table-responsive mb-4 border rounded-3">
-              <table class="table table-borderless align-middle mb-0">
-                <thead class="bg-light small">
-                  <tr>
-                    <th>Product</th>
-                    <th class="text-end">Price</th>
-                    <th class="text-end">Qty</th>
-                    <th class="text-end">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(it, idx) in getItems(selectedOrder)" :key="idx" class="border-bottom">
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <img :src="it.image || '/images/dashboard/default.png'" class="rounded border me-2"
-                          style="width: 40px; height: 40px; object-fit: cover;">
-                        <div class="small fw-bold text-wrap">{{ it.name }}</div>
-                      </div>
-                    </td>
-                    <td class="text-end small">{{ formatCurrency(it.price) }}</td>
-                    <td class="text-end small">x{{ it.qty }}</td>
-                    <td class="text-end fw-bold">{{ formatCurrency(it.price * it.qty) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-              <div>
-                <span class="text-secondary small">ยอดรวมทั้งหมด</span>
-                <h3 class="fw-bolder m-0" :class="getTextClass(selectedOrder.status)">{{
-                  formatCurrency(calculateTotal(selectedOrder)) }}</h3>
-              </div>
-
-              <div>
-                <button v-if="selectedOrder.status === 'preparing'" class="btn btn-primary rounded-pill px-4 shadow-sm"
-                  @click="handleUpdate(selectedOrder._id, 'shipped')">
-                  ส่งสินค้าแล้ว
-                  <Icon name="feather:truck" class="ms-1" />
-                </button>
-
-                <button v-if="['cancel requested', 'return_requested'].includes(selectedOrder.status)"
-                  class="btn btn-danger rounded-pill px-4 shadow-sm text-white"
-                  @click="handleUpdate(selectedOrder._id, 'cancelled')">
-                  อนุมัติยกเลิก
-                  <Icon name="feather:x-circle" class="ms-1" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
   </div>
 </template>
 
@@ -288,6 +205,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useOrderStore } from '~/store/orders'
 import { useAuthStore } from '~/store/auth'
+// ✅ Import Modal
+import OrderDetailModal from '~/pages/SellerPage/components/orderDetailModal.vue'
 
 definePageMeta({ layout: 'seller' })
 
@@ -303,13 +222,11 @@ const statuses = [
   { key: 'cancelled', label: 'ยกเลิกแล้ว', icon: 'feather:x-circle' }
 ]
 
-// --- State สำหรับ Reject Modal ---
 const showRejectDialog = ref(false)
 const targetRejectOrderId = ref(null)
 const rejectNote = ref('')
 const selectedRejectReason = ref('')
 
-// ✅ ตัวเลือกเหตุผล
 const rejectOptions = [
   'สินค้าอยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกได้',
   'แพ็คสินค้าเรียบร้อยแล้วพร้อมส่ง',
@@ -345,10 +262,10 @@ const filteredMyOrders = computed(() => {
   return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === currentStatus.value.toLowerCase())
 })
 
-// --- Reject Modal Functions ---
+// --- Modal Functions ---
 const openRejectModal = (order) => {
   targetRejectOrderId.value = order._id
-  selectedRejectReason.value = rejectOptions[0] // เลือกอันแรกเป็น Default
+  selectedRejectReason.value = rejectOptions[0]
   rejectNote.value = ''
   showRejectDialog.value = true
 }
@@ -360,24 +277,17 @@ const closeRejectModal = () => {
 
 const submitReject = async () => {
   if (!targetRejectOrderId.value) return
-
-  // ✅ รวมเหตุผล: ถ้าเลือกช้อยส์ให้ใช้ช้อยส์ ถ้าเลือกอื่นๆ ให้ใช้ข้อความที่พิมพ์
   let finalReason = selectedRejectReason.value
   if (selectedRejectReason.value === 'other') {
     finalReason = rejectNote.value
   }
-
-  // ส่งสถานะกลับเป็น 'preparing' พร้อมเหตุผล
   await orderStore.updateStatus(targetRejectOrderId.value, 'preparing', finalReason)
-  
   closeRejectModal()
-  
   if (pendingOrders.value.length === 0) {
     showRequestsModal.value = false
   }
 }
 
-// --- Standard Functions ---
 async function handleRequestAction(id, action) {
   await orderStore.updateStatus(id, action)
   if (pendingOrders.value.length === 0) {
@@ -385,21 +295,17 @@ async function handleRequestAction(id, action) {
   }
 }
 
-async function handleUpdate(id, newStatus) {
-  await orderStore.updateStatus(id, newStatus)
+// ✅ Handle Event from Modal
+async function handleOrderUpdated() {
+  await orderStore.fetchOrders()
   closeDetail()
 }
 
-function countMyOrdersByStatus(statusKey) {
-  return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === statusKey.toLowerCase()).length
-}
-
+// Helper Functions
+function countMyOrdersByStatus(statusKey) { return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === statusKey.toLowerCase()).length }
 function getStatusLabel(key) { return statuses.find(s => s.key === key)?.label || key }
 function getItems(o) { return o.item || o.items || [] }
-function calculateTotal(o) {
-  const items = getItems(o)
-  return items.length > 0 ? items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0) : (o.total || 0)
-}
+function calculateTotal(o) { const items = getItems(o); return items.length > 0 ? items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0) : (o.total || 0) }
 function getItemName(o) { const items = getItems(o); return items.length > 0 ? items[0].name : 'No Items' }
 function getItemImage(o) { const items = getItems(o); return (items.length > 0 && items[0].image) ? items[0].image : '/images/dashboard/default.png' }
 function formatDate(o) { if (!o) return ''; const d = o.updatedAt || o.date; return d ? new Date(d).toLocaleDateString('th-TH') : 'N/A' }
@@ -414,29 +320,114 @@ function closeDetail() { showDetail.value = false }
 
 <style scoped>
 /* CSS เดิมทั้งหมด */
-.header-preparing { background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%); }
-.text-status-preparing { color: #0277BD; }
-.header-shipped { background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%); }
-.text-status-shipped { color: #4527A0; }
-.header-completed { background: linear-gradient(135deg, #00897B 0%, #26A69A 100%); }
-.text-status-completed { color: #00695C; }
-.header-cancelled { background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%); }
-.text-status-cancelled { color: #C62828; }
-.header-return_requested { background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%); }
+.header-preparing {
+  background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%);
+}
 
-.active-tab-preparing { background-color: #0288D1 !important; color: white !important; }
-.active-tab-shipped { background-color: #5E35B1 !important; color: white !important; }
-.active-tab-completed { background-color: #00897B !important; color: white !important; }
-.active-tab-cancelled { background-color: #D32F2F !important; color: white !important; }
+.text-status-preparing {
+  color: #0277BD;
+}
 
-.custom-tabs .nav-link { color: #64748b; border-radius: 12px; font-weight: 600; padding: 12px; border: 1px solid transparent; }
-.custom-tabs .nav-link:hover { background-color: #f8fafc; }
-.transition-all { transition: all 0.3s ease; }
-.order-card { cursor: pointer; transition: 0.2s; }
-.order-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important; }
+.header-shipped {
+  background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%);
+}
 
-.modal-backdrop-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1050; padding: 20px; }
-.modal-content-custom { background: #fff; width: 100%; max-width: 700px; border-radius: 20px; }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.text-status-shipped {
+  color: #4527A0;
+}
+
+.header-completed {
+  background: linear-gradient(135deg, #00897B 0%, #26A69A 100%);
+}
+
+.text-status-completed {
+  color: #00695C;
+}
+
+.header-cancelled {
+  background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%);
+}
+
+.text-status-cancelled {
+  color: #C62828;
+}
+
+.header-return_requested {
+  background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%);
+}
+
+.active-tab-preparing {
+  background-color: #0288D1 !important;
+  color: white !important;
+}
+
+.active-tab-shipped {
+  background-color: #5E35B1 !important;
+  color: white !important;
+}
+
+.active-tab-completed {
+  background-color: #00897B !important;
+  color: white !important;
+}
+
+.active-tab-cancelled {
+  background-color: #D32F2F !important;
+  color: white !important;
+}
+
+.custom-tabs .nav-link {
+  color: #64748b;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 12px;
+  border: 1px solid transparent;
+}
+
+.custom-tabs .nav-link:hover {
+  background-color: #f8fafc;
+}
+
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+.order-card {
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 20px;
+}
+
+.modal-content-custom {
+  background: #fff;
+  width: 100%;
+  max-width: 700px;
+  border-radius: 20px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

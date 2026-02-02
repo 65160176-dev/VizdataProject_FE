@@ -7,7 +7,7 @@
                     :class="['px-4 py-3 d-flex justify-content-between align-items-center text-white', 'header-' + (order.status || 'default').toLowerCase()]">
                     <div>
                         <h5 class="fw-bold mb-0">Order Detail</h5>
-                        <small class="opacity-90" v-if="order.isCancelRequest || checkStatus(order.status, 'request')">
+                        <small class="opacity-90" v-if="checkStatus(order.status, 'request')">
                             ⚠️ ลูกค้าขอคืนสินค้า/ยกเลิก
                         </small>
                         <small class="opacity-90" v-else>สถานะ: {{ order.status }}</small>
@@ -21,10 +21,23 @@
                     <div class="row mb-4 g-3">
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-3 h-100 border border-light">
-                                <h6 class="text-muted small mb-2 fw-bold text-uppercase">ที่อยู่จัดส่ง</h6>
-                                <div class="fw-bold mb-1 text-dark">{{ order.customer?.firstName || order.customer ||
-                                    'Unknown' }}</div>
-                                <div class="small text-secondary">{{ order.address }}</div>
+                                <h6 class="text-muted small mb-2 fw-bold text-uppercase">ข้อมูลลูกค้า & การจัดส่ง</h6>
+
+                                <div class="fw-bold mb-2 text-dark d-flex align-items-center">
+                                    <Icon name="feather:user" size="14" class="me-2 text-secondary" />
+                                    {{ order.customer?.firstName || order.customer || 'Unknown' }}
+                                </div>
+
+                                <div class="small text-secondary mb-2 d-flex align-items-center">
+                                    <Icon name="feather:mail" size="14" class="me-2 text-secondary" />
+                                    {{ order.email || '-' }}
+                                </div>
+
+                                <div class="small text-secondary d-flex align-items-start">
+                                    <Icon name="feather:map-pin" size="14"
+                                        class="me-2 mt-1 text-secondary flex-shrink-0" />
+                                    <span>{{ order.address }}</span>
+                                </div>
 
                                 <div v-if="order.note" class="mt-3 pt-2 border-top border-secondary-subtle">
                                     <h6 class="text-muted small mb-1 fw-bold text-uppercase">หมายเหตุ</h6>
@@ -32,16 +45,18 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-3 h-100 border border-light">
                                 <h6 class="text-muted small mb-2 fw-bold text-uppercase">ข้อมูลคำสั่งซื้อ</h6>
                                 <div class="d-flex justify-content-between small mb-1">
-                                    <span class="text-secondary">Order ID:</span> <span class="fw-bold text-dark">{{
-                                        order.orderId }}</span>
+                                    <span class="text-secondary">Order ID:</span>
+                                    <span class="fw-bold text-dark">{{ order.orderId || order._id }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between small mb-1">
-                                    <span class="text-secondary">Date:</span> <span class="fw-bold text-dark">{{
-                                        formatDate(order.createdAt || order.date) }}</span>
+                                    <span class="text-secondary">Date:</span>
+                                    <span class="fw-bold text-dark">{{ formatDate(order.createdAt || order.date)
+                                        }}</span>
                                 </div>
 
                                 <div class="d-flex justify-content-between small mb-1">
@@ -90,13 +105,13 @@
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                         <div>
                             <span class="text-secondary small">ยอดรวมทั้งหมด</span>
-                            <h3 class="fw-bolder m-0" :class="getTextClass(order.status)">{{
-                                formatCurrency(calculateTotal(order)) }}</h3>
+                            <h3 class="fw-bolder m-0" :class="getTextClass(order.status)">
+                                {{ formatCurrency(calculateTotal(order)) }}
+                            </h3>
                         </div>
 
                         <div class="d-flex gap-2">
-
-                            <template v-if="checkStatus(order.status, 'request') || order.isCancelRequest">
+                            <template v-if="checkStatus(order.status, 'request')">
                                 <button class="btn btn-outline-secondary rounded-pill px-4 shadow-sm fw-bold"
                                     @click="handleAction('preparing')">
                                     ปฏิเสธคำขอ
@@ -108,7 +123,7 @@
                                 </button>
                             </template>
 
-                            <button v-if="checkStatus(order.status, 'preparing') && !order.isCancelRequest"
+                            <button v-if="checkStatus(order.status, 'preparing')"
                                 class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold"
                                 @click="handleAction('shipped')">
                                 ส่งสินค้าแล้ว
@@ -119,9 +134,8 @@
                                 <button class="btn btn-outline-danger rounded-pill px-4"
                                     @click="handleAction('cancelled')">Reject</button>
                                 <button class="btn btn-success text-white rounded-pill px-4 shadow-sm fw-bold"
-                                    @click="handleAction('preparing')">Accept</button>
+                                    @click="handleAction('preparing')">Accept Order</button>
                             </template>
-
                         </div>
                     </div>
                 </div>
@@ -144,7 +158,6 @@ const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
 const orderStore = useOrderStore()
 const { $showToast } = useNuxtApp()
 
-// --- Helper Functions ---
 const getImgUrl = (path) => {
     if (!path) return '/images/dashboard/default.png';
     if (path.startsWith('http')) return path;
@@ -178,7 +191,7 @@ const getTextClass = (s) => 'text-status-' + (s || '').toLowerCase()
 const getStatusClass = (status) => {
     switch (status?.toLowerCase()) {
         case 'pending': return 'bg-warning text-dark';
-        case 'preparing': return 'bg-info text-white';
+        case 'preparing': case 'processing': return 'bg-info text-white';
         case 'shipped': return 'bg-primary text-white';
         case 'completed': return 'bg-success text-white';
         case 'cancelled': return 'bg-danger text-white';
@@ -194,7 +207,6 @@ const checkStatus = (status, type) => {
     return false;
 }
 
-// --- Action Logic ---
 const handleAction = async (newStatus) => {
     if (!props.order._id) return;
     try {
@@ -210,6 +222,7 @@ const handleAction = async (newStatus) => {
 </script>
 
 <style scoped>
+/* รวม CSS Gradient ทั้งหมด */
 .header-preparing,
 .header-processing,
 .header-confirmed {
@@ -241,6 +254,7 @@ const handleAction = async (newStatus) => {
     background: #6c757d;
 }
 
+/* รวม Text Colors */
 .text-status-preparing,
 .text-status-processing {
     color: #0277BD;
