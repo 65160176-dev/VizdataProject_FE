@@ -1,23 +1,14 @@
 <template>
   <div class="affiliate-dashboard">
     
-    <!-- Hero Section -->
-    <div class="hero-section">
-      <div class="hero-content">
-        <button @click="goBack" class="back-btn">
-          <i class="fa fa-arrow-left"></i>
-        </button>
-        
-        <div class="hero-text">
-          <h1 class="hero-title">💼 Affiliate Dashboard</h1>
-          <p class="hero-subtitle">จัดการและติดตามรายได้จากการแชร์สินค้าของคุณ</p>
-        </div>
-      </div>
-      
-      <div class="hero-decoration">
-        <div class="circle circle-1"></div>
-        <div class="circle circle-2"></div>
-        <div class="circle circle-3"></div>
+    <!-- Header Section -->
+    <div class="page-header">
+      <button @click="goBack" class="back-btn">
+        <i class="fa fa-arrow-left"></i>
+      </button>
+      <div class="header-content">
+        <h1 class="page-title">AFFILIATE DASHBOARD</h1>
+        <p class="page-subtitle">จัดการและติดตามรายได้จากการแชร์สินค้าของคุณ</p>
       </div>
     </div>
 
@@ -75,9 +66,9 @@
 
     <!-- Stats Cards -->
     <div class="stats-grid">
-      <div class="stat-card primary">
+      <div class="stat-card stat-total">
         <div class="stat-icon">
-          <i class="fa fa-money-bill-wave"></i>
+          <i class="fa fa-wallet"></i>
         </div>
         <div class="stat-content">
           <h3 class="stat-value">{{ formatCurrency(totalIncome || 0) }}</h3>
@@ -85,7 +76,7 @@
         </div>
       </div>
       
-      <div class="stat-card success">
+      <div class="stat-card stat-paid">
         <div class="stat-icon">
           <i class="fa fa-check-circle"></i>
         </div>
@@ -95,7 +86,7 @@
         </div>
       </div>
       
-      <div class="stat-card warning">
+      <div class="stat-card stat-pending">
         <div class="stat-icon">
           <i class="fa fa-clock"></i>
         </div>
@@ -105,9 +96,9 @@
         </div>
       </div>
       
-      <div class="stat-card info">
+      <div class="stat-card stat-orders">
         <div class="stat-icon">
-          <i class="fa fa-shopping-bag"></i>
+          <i class="fa fa-shopping-cart"></i>
         </div>
         <div class="stat-content">
           <h3 class="stat-value">{{ summary?.totalOrders || 0 }}</h3>
@@ -119,7 +110,7 @@
     <!-- Insights Section -->
     <div class="insights-section">
       <div class="section-header">
-        <h3><i class="fa fa-chart-line me-2"></i>สรุปค่าคอมยอดนิยม</h3>
+        <h3><i class="fa fa-chart-bar me-2"></i>สรุปค่าคอมยอดนิยม</h3>
       </div>
       <div class="insights-grid">
         <div class="insight-card">
@@ -156,7 +147,7 @@
     <div class="filter-section">
       <div class="filter-content">
         <div class="filter-header">
-          <h4><i class="fa fa-calendar-alt me-2"></i>กรองตามช่วงวันที่</h4>
+          <h4><i class="fa fa-filter me-2"></i>กรองตามช่วงวันที่</h4>
         </div>
         
         <div class="date-inputs">
@@ -176,7 +167,7 @@
           
           <button v-if="startDate || endDate" @click="clearDate" class="clear-btn">
             <i class="fa fa-times"></i>
-            Clear
+            ล้าง
           </button>
         </div>
 
@@ -193,64 +184,56 @@
     <!-- Orders Table -->
     <div class="orders-section">
       <div class="section-header">
-        <h3><i class="fa fa-list-alt me-2"></i>รายการคำสั่งซื้อ</h3>
+        <h3><i class="fa fa-list me-2"></i>รายการคำสั่งซื้อ</h3>
         <div class="header-actions">
           <span class="order-count">{{ filteredAffiliateData.length }} รายการ</span>
         </div>
       </div>
       
+      <!-- Table Header -->
+      <div class="orders-table-header" v-if="filteredAffiliateData.length > 0">
+        <div class="th-order">รหัสออเดอร์</div>
+        <div class="th-date">วันที่</div>
+        <div class="th-product">สินค้า</div>
+        <div class="th-price">ราคา</div>
+        <div class="th-commission">คอมมิชชั่น</div>
+        <div class="th-status">สถานะ</div>
+      </div>
+      
       <div class="orders-container" v-if="filteredAffiliateData.length > 0">
-        <div class="order-item" v-for="(item, index) in filteredAffiliateData" :key="index">
-          <div class="order-main">
-            <div class="order-info">
-              <div class="order-id">
-                <i class="fa fa-hashtag"></i>
-                <span>{{ item.orderId }}</span>
-              </div>
-              <div class="order-date">
-                <i class="fa fa-calendar"></i>
-                <span>{{ formatDate(item.createdAt) }}</span>
-              </div>
-            </div>
-            
-            <div class="product-info">
-              <h5 class="product-name">{{ item.productName }}</h5>
-              <div class="product-details">
-                <span class="category-tag">{{ item.category || 'ไม่ระบุหมวดหมู่' }}</span>
-                <span class="price">{{ formatCurrency(item.price) }}</span>
-              </div>
-            </div>
+        <div class="order-row" v-for="(item, index) in filteredAffiliateData" :key="index">
+          <div class="td-order">
+            <span class="order-id-text">#{{ item.orderId }}</span>
           </div>
-          
-          <div class="order-stats">
-            <div class="commission">
-              <span class="commission-label">คอมมิชชั่น</span>
-              <span class="commission-value">{{ formatCurrency(item.commissionAmount) }}</span>
-            </div>
-            
-            <div class="status">
-              <span 
-                :class="[
-                  'status-badge', 
-                  item.status === 'paid' ? 'status-paid' : 
-                  item.status === 'pending' ? 'status-pending' : 'status-cancelled'
-                ]"
-              >
-                <i :class="[
-                  'fa', 
-                  item.status === 'paid' ? 'fa-check-circle' : 
-                  item.status === 'pending' ? 'fa-clock' : 'fa-times-circle'
-                ]"></i>
-                {{ translateStatus(item.status) }}
-              </span>
-            </div>
+          <div class="td-date">
+            <span>{{ formatDate(item.createdAt) }}</span>
+          </div>
+          <div class="td-product">
+            <span class="product-name-text">{{ item.productName }}</span>
+          </div>
+          <div class="td-price">
+            <span>{{ formatCurrency(item.price) }}</span>
+          </div>
+          <div class="td-commission">
+            <span class="commission-value">{{ formatCurrency(item.commissionAmount) }}</span>
+          </div>
+          <div class="td-status">
+            <span 
+              :class="[
+                'status-badge', 
+                item.status === 'paid' ? 'status-paid' : 
+                item.status === 'pending' ? 'status-pending' : 'status-cancelled'
+              ]"
+            >
+              {{ translateStatus(item.status) }}
+            </span>
           </div>
         </div>
       </div>
       
       <div class="empty-state" v-else>
         <div class="empty-icon">
-          <i class="fa fa-shopping-bag"></i>
+          <i class="fa fa-inbox"></i>
         </div>
         <h4>ยังไม่มีรายการขาย</h4>
         <p>เมื่อมีลูกค้าซื้อสินค้าผ่านลิงก์ Affiliate ของคุณ จะแสดงที่นี่</p>
@@ -563,149 +546,118 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Base Styles */
 .affiliate-dashboard {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 15px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background: #f8f9fa;
+  min-height: 100vh;
 }
 
-/* Hero Section */
-.hero-section {
+/* Page Header */
+.page-header {
+  background: linear-gradient(135deg, #e64a19 0%, #ff5722 50%, #ff7043 100%);
+  padding: 40px 40px;
+  margin-bottom: 24px;
   position: relative;
-  background: linear-gradient(135deg, #ff4c3b 0%, #ff6b3b 100%);
-  border-radius: 24px;
-  padding: 60px 40px;
-  margin-bottom: 40px;
-  overflow: hidden;
-  color: white;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
-.hero-content {
-  position: relative;
-  z-index: 2;
+/* Content wrapper for cards */
+.affiliate-code-card,
+.stats-grid,
+.insights-section,
+.filter-section,
+.orders-section {
+  margin-left: 24px;
+  margin-right: 24px;
 }
 
 .back-btn {
-  position: absolute;
-  top: -40px;
-  left: -20px;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  width: 40px;
+  height: 40px;
   color: white;
   font-size: 16px;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .back-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.25);
 }
 
-.hero-text {
+.header-content {
+  flex: 1;
   text-align: center;
 }
 
-.hero-title {
-  font-size: 3rem;
+.page-title {
+  font-size: 2.5rem;
   font-weight: 800;
-  margin-bottom: 16px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  color: white;
+  margin: 0 0 8px 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
-.hero-subtitle {
-  font-size: 1.2rem;
-  opacity: 0.9;
+.page-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1rem;
   margin: 0;
-}
-
-.hero-decoration {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.circle-1 {
-  width: 200px;
-  height: 200px;
-  top: -100px;
-  right: -100px;
-}
-
-.circle-2 {
-  width: 150px;
-  height: 150px;
-  bottom: -75px;
-  right: 50px;
-}
-
-.circle-3 {
-  width: 100px;
-  height: 100px;
-  top: 50%;
-  right: -50px;
 }
 
 /* Affiliate Code Card */
 .affiliate-code-card {
   background: white;
-  border-radius: 20px;
-  padding: 30px;
-  margin-bottom: 30px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f1f5f4;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 25px;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .header-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #ff4c3b, #ff6b3b);
-  border-radius: 16px;
+  width: 50px;
+  height: 50px;
+  background: #ff5722;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .header-text h3 {
-  margin: 0 0 8px 0;
-  font-size: 1.5rem;
+  margin: 0 0 4px 0;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #333333;
+  color: #ff5722;
 }
 
 .header-text p {
   margin: 0;
-  color: #777777;
-  font-size: 0.95rem;
+  color: #718096;
+  font-size: 0.9rem;
 }
 
 .code-section {
   display: flex;
-  align-items: end;
-  gap: 20px;
-  margin-bottom: 20px;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .code-display {
@@ -714,50 +666,46 @@ onMounted(() => {
 
 .code-label {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #777777;
-  margin-bottom: 8px;
+  color: #718096;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .code-value {
-  background: #f9f9f9;
-  border: 2px solid #dddddd;
-  border-radius: 12px;
-  padding: 16px 20px;
+  background: #fff3e0;
+  border: 2px solid #ff5722;
+  padding: 14px 20px;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #ff4c3b;
-  letter-spacing: 3px;
+  color: #ff5722;
+  letter-spacing: 4px;
   text-align: center;
   font-family: 'Courier New', monospace;
 }
 
 .action-buttons {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .copy-btn, .share-btn {
-  background: linear-gradient(135deg, #ff4c3b, #ff6b3b);
+  background: #ff5722;
   border: none;
   color: white;
-  padding: 16px 24px;
-  border-radius: 12px;
+  padding: 14px 20px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 140px;
-  justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .copy-btn:hover, .share-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 76, 59, 0.4);
+  background: #e64a19;
 }
 
 .share-dropdown {
@@ -769,16 +717,14 @@ onMounted(() => {
   top: 100%;
   right: 0;
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   min-width: 150px;
-  overflow: hidden;
   z-index: 1000;
   transform: translateY(8px);
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .share-dropdown:hover .share-menu {
@@ -797,109 +743,93 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: background-color 0.2s ease;
-  color: #333;
+  color: #2d3748;
   font-weight: 500;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.share-option:last-child {
+  border-bottom: none;
 }
 
 .share-option:hover {
-  background-color: #f8f9fa;
-}
-
-.share-option i {
-  width: 20px;
-  text-align: center;
+  background: #f7fafc;
 }
 
 .usage-info {
-  padding: 16px 20px;
-  background: #f7f7f7;
-  border-radius: 12px;
-  border-left: 4px solid #ff4c3b;
+  padding: 12px 16px;
+  background: #fff3e0;
+  border-left: 4px solid #ff5722;
 }
 
 .info-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #333333;
+  color: #e64a19;
   font-size: 0.9rem;
 }
 
 .info-item code {
-  background: #eeeeee;
-  color: #ff4c3b;
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: #ff5722;
+  color: white;
+  padding: 2px 8px;
   font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
 }
 
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
   background: white;
-  border-radius: 16px;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f1f5f4;
-  transition: all 0.3s ease;
+  gap: 16px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 14px;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 20px;
   color: white;
 }
 
-.stat-card.primary .stat-icon {
-  background: linear-gradient(135deg, #ff4c3b, #ff6b3b);
-}
-
-.stat-card.success .stat-icon {
-  background: linear-gradient(135deg, #28a745, #20c997);
-}
-
-.stat-card.warning .stat-icon {
-  background: linear-gradient(135deg, #ffa200, #fd7e14);
-}
-
-.stat-card.info .stat-icon {
-  background: linear-gradient(135deg, #17a2b8, #6f42c1);
-}
+.stat-total .stat-icon { background: #e53e3e; }
+.stat-paid .stat-icon { background: #38a169; }
+.stat-pending .stat-icon { background: #d69e2e; }
+.stat-orders .stat-icon { background: #3182ce; }
 
 .stat-content {
   flex: 1;
 }
 
 .stat-value {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  margin: 0 0 4px 0;
-  color: #333333;
+  margin: 0 0 2px 0;
+  color: #1a202c;
 }
 
 .stat-label {
-  font-size: 0.9rem;
-  color: #777777;
+  font-size: 0.85rem;
+  color: #718096;
   margin: 0;
   font-weight: 500;
 }
@@ -907,76 +837,72 @@ onMounted(() => {
 /* Filter Section */
 .filter-section {
   background: white;
-  border-radius: 16px;
   padding: 24px;
-  margin-bottom: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f1f5f4;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
 }
 
 .filter-header h4 {
-  margin: 0 0 20px 0;
-  color: #333333;
+  margin: 0 0 16px 0;
+  color: #e64a19;
   font-weight: 700;
 }
 
 .date-inputs {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   gap: 16px;
   flex-wrap: wrap;
 }
 
 .date-input {
   flex: 1;
-  min-width: 200px;
+  min-width: 180px;
 }
 
 .date-input label {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #777777;
+  color: #718096;
   margin-bottom: 6px;
+  text-transform: uppercase;
 }
 
 .date-field {
-  border: 2px solid #dddddd;
-  border-radius: 10px;
-  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  padding: 10px 14px;
   font-size: 0.95rem;
   width: 100%;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.2s ease;
 }
 
 .date-field:focus {
-  border-color: #ff4c3b;
+  border-color: #ff5722;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 76, 59, 0.1);
 }
 
 .date-separator {
-  padding-bottom: 12px;
-  color: #a1a1a1;
-  font-size: 1.2rem;
+  padding-bottom: 10px;
+  color: #a0aec0;
+  font-size: 1rem;
 }
 
 .clear-btn {
   background: #fed7d7;
-  color: #dc3545;
+  color: #c53030;
   border: none;
-  padding: 12px 20px;
-  border-radius: 10px;
+  padding: 10px 16px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
+  gap: 6px;
+  transition: all 0.2s ease;
 }
 
 .clear-btn:hover {
-  background: #ffc5c5;
+  background: #feb2b2;
 }
 
 .status-filters {
@@ -986,186 +912,232 @@ onMounted(() => {
   margin-top: 16px;
   flex-wrap: wrap;
 }
-.status-filter-label { color: #777; font-size: 0.9rem; margin-right: 8px; }
+
+.status-filter-label {
+  color: #718096;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
 .status-chip {
-  background: #f1f5f4;
+  background: #edf2f7;
   border: 1px solid #e2e8f0;
-  color: #334;
-  padding: 8px 12px;
-  border-radius: 20px;
+  color: #4a5568;
+  padding: 8px 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
-.status-chip.active { background: #ffefe9; border-color: #ff6b3b; color: #c24; }
 
-/* Orders Section */
-.orders-section {
-  background: white;
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f1f5f4;
+.status-chip:hover {
+  background: #e2e8f0;
+}
+
+.status-chip.active {
+  background: #ff5722;
+  border-color: #ff5722;
+  color: white;
 }
 
 /* Insights Section */
-.insights-section { background: white; border-radius: 16px; padding: 24px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #f1f5f4; }
-.insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-.insight-card { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 16px; }
-.insight-header { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #333; margin-bottom: 10px; }
-.insight-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-.insight-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px 12px; }
-.insight-name { color: #333; font-weight: 600; }
-.insight-value { color: #00695C; font-weight: 800; }
-.empty-insight { color: #777; font-size: 0.9rem; }
+.insights-section {
+  background: white;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+}
 
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.insight-card {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: #e64a19;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.insight-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insight-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 10px 12px;
+}
+
+.insight-name {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.insight-value {
+  color: #38a169;
+  font-weight: 700;
+}
+
+.empty-insight {
+  color: #a0aec0;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Section Header */
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #f9f9f9;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .section-header h3 {
   margin: 0;
-  color: #333333;
+  color: #e64a19;
   font-weight: 700;
+  font-size: 1.1rem;
 }
 
 .order-count {
-  background: #eeeeee;
-  color: #333333;
-  padding: 6px 12px;
-  border-radius: 20px;
+  background: #ff5722;
+  color: white;
+  padding: 6px 14px;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+/* Orders Section */
+.orders-section {
+  background: white;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.orders-table-header {
+  display: grid;
+  grid-template-columns: 120px 100px 1fr 100px 120px 100px;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #e64a19;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
 }
 
 .orders-container {
   display: flex;
   flex-direction: column;
+}
+
+.order-row {
+  display: grid;
+  grid-template-columns: 120px 100px 1fr 100px 120px 100px;
   gap: 16px;
-}
-
-.order-item {
-  background: #f9f9f9;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #e2e8f0;
   align-items: center;
-  transition: all 0.3s ease;
-  border: 1px solid #dddddd;
+  transition: all 0.2s ease;
 }
 
-.order-item:hover {
-  background: #f5f2f2;
-  transform: translateX(4px);
-  border-color: #ff4c3b;
+.order-row:hover {
+  background: #f7fafc;
 }
 
-.order-main {
-  display: flex;
-  gap: 20px;
-  flex: 1;
+.order-row:last-child {
+  border-bottom: none;
 }
 
-.order-info {
+.order-id-text {
+  font-weight: 600;
+  color: #ff5722;
+  font-size: 0.9rem;
+}
+
+.td-date {
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+.td-product {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 120px;
+  gap: 4px;
 }
 
-.order-id,
-.order-date {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: #777777;
-}
-
-.product-info {
-  flex: 1;
-}
-
-.product-name {
-  font-size: 1.1rem;
+.product-name-text {
   font-weight: 600;
-  color: #333333;
-  margin: 0 0 8px 0;
-}
-
-.product-details {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+  color: #2d3748;
+  font-size: 0.95rem;
 }
 
 .category-tag {
-  background: #eeeeee;
-  color: #333333;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  display: inline-block;
+  background: #edf2f7;
+  color: #4a5568;
+  padding: 2px 8px;
+  font-size: 0.75rem;
   font-weight: 500;
+  width: fit-content;
 }
 
-.price {
+.td-price {
   font-weight: 600;
-  color: #333333;
+  color: #2d3748;
 }
 
-.order-stats {
-  display: flex;
-  flex-direction: column;
-  align-items: end;
-  gap: 12px;
-  min-width: 150px;
-}
-
-.commission {
-  text-align: right;
-}
-
-.commission-label {
-  display: block;
-  font-size: 0.8rem;
-  color: #777777;
-  margin-bottom: 4px;
-}
-
-.commission-value {
-  font-size: 1.2rem;
+.td-commission .commission-value {
   font-weight: 700;
-  color: #28a745;
+  color: #38a169;
+  font-size: 1rem;
 }
 
 .status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
+  display: inline-block;
+  padding: 6px 12px;
+  font-size: 0.8rem;
   font-weight: 600;
+  text-align: center;
 }
 
 .status-paid {
-  background: #d4edda;
-  color: #155724;
+  background: #c6f6d5;
+  color: #276749;
 }
 
 .status-pending {
-  background: #fff3cd;
-  color: #856404;
+  background: #fefcbf;
+  color: #975a16;
 }
 
 .status-cancelled {
-  background: #f8d7da;
-  color: #721c24;
+  background: #fed7d7;
+  color: #c53030;
 }
 
 /* Empty State */
@@ -1175,73 +1147,112 @@ onMounted(() => {
 }
 
 .empty-icon {
-  width: 80px;
-  height: 80px;
-  background: #f7f7f7;
-  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  background: #edf2f7;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20px auto;
-  font-size: 32px;
-  color: #a1a1a1;
+  margin: 0 auto 16px auto;
+  font-size: 28px;
+  color: #a0aec0;
 }
 
 .empty-state h4 {
-  color: #333333;
-  margin-bottom: 12px;
+  color: #2d3748;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .empty-state p {
-  color: #777777;
+  color: #718096;
   margin: 0;
   font-size: 0.95rem;
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .orders-table-header {
+    display: none;
+  }
+  
+  .order-row {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 12px;
+  }
+  
+  .td-order, .td-date {
+    width: 50%;
+  }
+  
+  .td-product {
+    width: 100%;
+    margin: 8px 0;
+  }
+  
+  .td-price, .td-commission, .td-status {
+    width: 33.33%;
+  }
+}
+
 @media (max-width: 768px) {
   .affiliate-dashboard {
-    padding: 0 10px;
+    padding: 10px;
   }
 
-  .hero-section {
-    padding: 40px 20px;
-    margin-bottom: 20px;
+  .page-header {
+    padding: 30px 20px;
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .hero-title {
-    font-size: 2rem;
+  .back-btn {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+  }
+
+  .page-title {
+    font-size: 1.75rem;
   }
 
   .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .order-item {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .order-main {
-    flex-direction: column;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
-
-  .order-stats {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+  
+  .stat-card {
+    padding: 16px;
+  }
+  
+  .stat-value {
+    font-size: 1.25rem;
   }
 
   .code-section {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
-  .copy-btn {
+  .action-buttons {
     width: 100%;
+    justify-content: stretch;
+  }
+  
+  .copy-btn, .share-btn {
+    flex: 1;
+    justify-content: center;
   }
 
   .date-inputs {
@@ -1251,6 +1262,27 @@ onMounted(() => {
 
   .date-input {
     min-width: auto;
+    width: 100%;
+  }
+  
+  .date-separator {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .status-filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .status-chip {
+    width: 100%;
+    text-align: center;
   }
 }
 </style>
