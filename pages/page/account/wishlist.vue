@@ -3,7 +3,7 @@
   <div>
     <WidgetsBreadcrumbs title="wishlist" />
     <section class="wishlist-section section-b-space">
-      <div class="container">
+      <div class="container-fluid px-4">
         <div class="mb-3">
           <!-- <button @click="$router.back()" class="btn btn-sm btn-outline-secondary">
             <i class="ti-arrow-left"></i> Back

@@ -98,8 +98,8 @@
                           <div v-else class="fw-bold">฿{{ product?.price || 0 }}</div>
                         </div>
                         <div>
-                          <button class="btn btn-sm btn-primary" @click="addToCart(product)">
-                            <Icon name="feather:shopping-cart" size="16" />
+                          <button class="btn-cart" @click="addToCart(product)" title="เพิ่มลงตะกร้า">
+                            <Icon name="feather:shopping-cart" size="18" />
                           </button>
                         </div>
                       </div>
@@ -367,6 +367,29 @@ function addToCart(product) {
 .marketplace .card .fw-bold { color:#111827; font-size:16px }
 .marketplace .card .text-muted { color:#6b7280 }
 .marketplace .btn-sm { padding:6px 10px; border-radius:6px }
+
+/* Cart Button Styles */
+.btn-cart {
+  background: #ff4c3b;
+  padding: 8px 14px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ff4c3b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  box-shadow: 0 2px 6px rgba(255, 76, 59, 0.3);
+}
+
+.btn-cart:hover {
+  background: white;
+  color: #ff4c3b;
+  border-color: #ff4c3b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 76, 59, 0.3);
+}
 
 /* --- FORCE 5 COLUMNS --- */
 .product-grid { 
