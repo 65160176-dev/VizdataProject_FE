@@ -173,10 +173,10 @@
 
         <div class="status-filters">
           <span class="status-filter-label">สถานะ:</span>
-          <button :class="['status-chip', statusFilter === 'all' ? 'active' : '']" @click="statusFilter = 'all'">ทั้งหมด</button>
-          <button :class="['status-chip', statusFilter === 'pending' ? 'active' : '']" @click="statusFilter = 'pending'">รอดำเนินการ</button>
-          <button :class="['status-chip', statusFilter === 'paid' ? 'active' : '']" @click="statusFilter = 'paid'">จ่ายแล้ว</button>
-          <button :class="['status-chip', statusFilter === 'cancelled' ? 'active' : '']" @click="statusFilter = 'cancelled'">ยกเลิก</button>
+          <button :class="['status-chip', 'chip-all', statusFilter === 'all' ? 'active' : '']" @click="statusFilter = 'all'">ทั้งหมด</button>
+          <button :class="['status-chip', 'chip-pending', statusFilter === 'pending' ? 'active' : '']" @click="statusFilter = 'pending'">รอดำเนินการ</button>
+          <button :class="['status-chip', 'chip-paid', statusFilter === 'paid' ? 'active' : '']" @click="statusFilter = 'paid'">จ่ายแล้ว</button>
+          <button :class="['status-chip', 'chip-cancelled', statusFilter === 'cancelled' ? 'active' : '']" @click="statusFilter = 'cancelled'">ยกเลิก</button>
         </div>
       </div>
     </div>
@@ -680,7 +680,7 @@ onMounted(() => {
   padding: 14px 20px;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #ff5722;
+  color: #000000;
   letter-spacing: 4px;
   text-align: center;
   font-family: 'Courier New', monospace;
@@ -766,7 +766,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #e64a19;
+  color: #000000;
   font-size: 0.9rem;
 }
 
@@ -934,9 +934,31 @@ onMounted(() => {
   background: #e2e8f0;
 }
 
-.status-chip.active {
+/* สีปุ่มทั้งหมด */
+.status-chip.chip-all.active {
   background: #ff5722;
   border-color: #ff5722;
+  color: white;
+}
+
+/* สีปุ่มรอดำเนินการ - เหลือง */
+.status-chip.chip-pending.active {
+  background: #f6e05e;
+  border-color: #d69e2e;
+  color: #744210;
+}
+
+/* สีปุ่มจ่ายแล้ว - เขียว */
+.status-chip.chip-paid.active {
+  background: #48bb78;
+  border-color: #38a169;
+  color: white;
+}
+
+/* สีปุ่มยกเลิก - แดง */
+.status-chip.chip-cancelled.active {
+  background: #f56565;
+  border-color: #e53e3e;
   color: white;
 }
 
@@ -1018,7 +1040,7 @@ onMounted(() => {
 
 .section-header h3 {
   margin: 0;
-  color: #e64a19;
+  color: #000000;
   font-weight: 700;
   font-size: 1.1rem;
 }

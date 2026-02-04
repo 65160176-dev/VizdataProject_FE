@@ -3,8 +3,29 @@
     <Header />
 
     <section class="marketplace py-4">
-      <div class="container-fluid px-4"> <div class="hero position-relative mb-4">
-          <img src="/assets/images/Banner.png" alt="banner" />
+      <div class="container-fluid px-4">
+        <!-- Banner Swiper -->
+        <div class="hero-swiper mb-4">
+          <ClientOnly>
+            <Swiper
+              :modules="[SwiperAutoplay, SwiperNavigation, SwiperPagination]"
+              :slides-per-view="1"
+              :loop="true"
+              :autoplay="{
+                delay: 4000,
+                disableOnInteraction: false,
+              }"
+              :navigation="true"
+              :pagination="{ clickable: true }"
+              class="banner-swiper"
+            >
+              <SwiperSlide v-for="(banner, index) in banners" :key="index">
+                <div class="banner-slide">
+                  <img :src="banner.image" :alt="banner.alt" />
+                </div>
+              </SwiperSlide>
+            </Swiper>
+          </ClientOnly>
         </div>
 
         <div class="row">
@@ -54,7 +75,7 @@
               </div>
 
               <div v-else-if="!productStore.loading && filteredProducts.length === 0" class="text-center py-5">
-                <p class="text-muted">ไม่พบสินค้าในหมวดหมู่นี้</p>
+                <p class="text-muted">ไม่พบสินค้าในระบบ</p>
                 <button v-if="selectedCategories.length > 0" class="btn btn-primary btn-sm" @click="selectedCategories = []">ดูสินค้าทั้งหมด</button>
               </div>
 
@@ -114,11 +135,23 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useCartStore } from '~/store/cart'
 import { useProductStore } from '~/store/products'
+import { Swiper, SwiperSlide } from 'swiper/vue'
+import { Autoplay as SwiperAutoplay, Navigation as SwiperNavigation, Pagination as SwiperPagination } from 'swiper'
+import 'swiper/css'
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
 
 const q = ref('')
 const selectedCategories = ref([])
 // ✅ เพิ่มตัวแปรเก็บ System Categories
-const systemCategories = ref([]) 
+const systemCategories = ref([])
+
+// Banner slides
+const banners = ref([
+  { image: new URL('~/assets/images/Banner.png', import.meta.url).href, alt: 'Banner 1' },
+  { image: new URL('~/assets/images/Banner.png', import.meta.url).href, alt: 'Banner 2' },
+  { image: new URL('~/assets/images/Banner.png', import.meta.url).href, alt: 'Banner 3' },
+]) 
 
 const cart = useCartStore()
 const productStore = useProductStore()
@@ -254,8 +287,75 @@ function addToCart(product) {
 <style scoped>
 /* CSS เดิม */
 .marketplace { background:#fafafa; }
-.marketplace .hero { display:flex; align-items:center; justify-content:center; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.06); margin-bottom:22px; position:relative }
-.marketplace .hero img { width:100%; height:480px; object-fit:cover; display:block; }
+
+/* Banner Swiper Styles */
+.hero-swiper {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.banner-swiper {
+  width: 100%;
+  height: 480px;
+  border-radius: 8px;
+}
+
+.banner-slide {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.banner-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Swiper Navigation Buttons */
+.banner-swiper :deep(.swiper-button-next),
+.banner-swiper :deep(.swiper-button-prev) {
+  color: white;
+  background: rgba(0, 0, 0, 0.5);
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.banner-swiper :deep(.swiper-button-next):hover,
+.banner-swiper :deep(.swiper-button-prev):hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+.banner-swiper :deep(.swiper-button-next)::after,
+.banner-swiper :deep(.swiper-button-prev)::after {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Swiper Pagination */
+.banner-swiper :deep(.swiper-pagination) {
+  bottom: 20px;
+}
+
+.banner-swiper :deep(.swiper-pagination-bullet) {
+  width: 12px;
+  height: 12px;
+  background: white;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.banner-swiper :deep(.swiper-pagination-bullet-active) {
+  opacity: 1;
+  background: #ff5722;
+  width: 30px;
+  border-radius: 6px;
+}
 
 .marketplace input.form-control { height:48px; border-radius:6px; padding:0 16px; border:1px solid #e6e6e6; }
 
@@ -285,7 +385,16 @@ function addToCart(product) {
 }
 @media (max-width: 767px) {
   .product-grid { grid-template-columns: repeat(2, 1fr); }
-  .marketplace .hero img { height:260px }
+  .banner-swiper { height: 260px; }
+  .banner-swiper :deep(.swiper-button-next),
+  .banner-swiper :deep(.swiper-button-prev) {
+    width: 35px;
+    height: 35px;
+  }
+  .banner-swiper :deep(.swiper-button-next)::after,
+  .banner-swiper :deep(.swiper-button-prev)::after {
+    font-size: 16px;
+  }
 }
 @media (max-width: 480px) {
   .product-grid { grid-template-columns: repeat(1, 1fr); }
