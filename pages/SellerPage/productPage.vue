@@ -1,63 +1,70 @@
 <template>
   <div class="col-sm-12">
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 overflow-hidden">
       
-      <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
-        <h5 class="fw-bold mb-0">Products Management 📦</h5>
+      <div class="card-header d-flex justify-content-between align-items-center py-3 bg-gradient-orange text-white">
+        <h5 class="fw-bold mb-0 text-white" style="text-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+          Products Management 📦
+        </h5>
+        
         <div>
-          <button type="button" class="btn btn-outline-secondary me-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#categoryModal">
+          <button type="button" class="btn btn-outline-light me-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#categoryModal">
             <Icon name="feather:list" size="16" class="me-1" style="margin-bottom:2px;"/> Category
           </button>
-          <button type="button" class="btn btn-success me-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#addStockModal">
+          
+          <button type="button" class="btn btn-success me-2 shadow-sm border border-white" data-bs-toggle="modal" data-bs-target="#addStockModal">
             <Icon name="feather:box" size="16" class="me-1" style="margin-bottom:2px;"/> Add Stock
           </button>
-          <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+          
+          <button type="button" class="btn btn-light text-orange fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
             <Icon name="feather:plus" size="16" class="me-1" style="margin-bottom:2px;"/> Add Product
           </button>
         </div>
       </div>
 
-      <div class="card-body">
+      <div class="card-body p-0">
         <div class="product-physical table-responsive">
-          <table class="table table-striped text-center align-middle">
-            <thead class="table-light">
+          <table class="table table-hover text-center align-middle mb-0">
+            <thead class="bg-light text-secondary">
               <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Stock</th>
-                <th>Price</th>
-                <th>Commission (%)</th>
-                <th>Weight (kg)</th>
-                <th>Shipping Option</th>
-                <th>Status</th>
-                <th>Category</th>
-                <th>Actions</th>
+                <th class="border-0 py-3 ps-4">Image</th>
+                <th class="border-0 py-3 text-start">Name</th>
+                <th class="border-0 py-3">Stock</th>
+                <th class="border-0 py-3">Price</th>
+                <th class="border-0 py-3">Commission (%)</th>
+                <th class="border-0 py-3">Weight (kg)</th>
+                <th class="border-0 py-3">Shipping Option</th>
+                <th class="border-0 py-3">Status</th>
+                <th class="border-0 py-3">Category</th>
+                <th class="border-0 py-3 pe-4">Actions</th>
               </tr>
             </thead>
             
             <tbody v-if="products && products.length > 0">
-              <tr v-for="item in products" :key="item._id">
-                <td><img class="img-40 me-2" :src="item.image || 'https://placehold.co/400'"></td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.stock }}</td>
-                <td>{{ item.price }}</td>
+              <tr v-for="item in products" :key="item._id" class="border-bottom">
+                <td class="ps-4"><img class="img-40 me-2 shadow-sm" :src="item.image || 'https://placehold.co/400'" style="border-radius:8px;"></td>
+                <td class="fw-bold text-dark text-start">{{ item.name }}</td>
+                <td>
+                  <span class="badge bg-light text-dark border fw-normal px-2 py-1">{{ item.stock }}</span>
+                </td>
+                <td class="text-orange fw-bold">{{ item.price }}</td>
                 <td>{{ item.commission }}</td>
                 <td>{{ item.weight || 0 }}</td>
                 <td>
-                  <span class="badge border text-dark" :class="getBadgeColor(item.shippingCost)" style="font-weight: normal; font-size: 13px;">
+                  <span class="badge border" :class="getBadgeColor(item.shippingCost)" style="font-weight: 500; font-size: 11px; padding: 6px 12px; border-radius: 6px;">
                     {{ formatShippingCost(item.shippingCost) }}
                   </span>
                 </td>
-                <td><i class="fa fa-circle f-12" :class="'font-' + getStockStatus(item.stock)"></i></td>
-                <td>{{ item.category }}</td>
-                <td>
-                  <Icon name="feather:edit" style="height:20px; cursor:pointer; margin-right:8px;" @click="goEdit(item._id)" />
-                  <Icon name="feather:trash" style="height:20px; cursor:pointer; color:red;" @click="deleteItem(item._id)" />
+                <td><i class="fa fa-circle f-10" :class="'font-' + getStockStatus(item.stock)"></i></td>
+                <td><span class="badge bg-orange-subtle text-orange border-0 px-3 py-2" style="border-radius: 20px;">{{ item.category }}</span></td>
+                <td class="pe-4">
+                  <button class="btn btn-sm btn-light text-secondary me-1" @click="goEdit(item._id)" title="Edit"><Icon name="feather:edit-2" size="16"/></button>
+                  <button class="btn btn-sm btn-light text-danger" @click="deleteItem(item._id)" title="Delete"><Icon name="feather:trash-2" size="16"/></button>
                 </td>
               </tr>
             </tbody>
             <tbody v-else>
-              <tr><td colspan="10" class="text-center py-4 text-muted">No products found.</td></tr>
+              <tr><td colspan="10" class="text-center py-5 text-muted">No products found.</td></tr>
             </tbody>
           </table>
         </div>
@@ -89,29 +96,44 @@
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
               <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">จัดการหมวดหมู่สินค้า</h5>
+                <h5 class="modal-title fw-bold text-orange">จัดการหมวดหมู่สินค้า</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
               </div>
               <div class="modal-body py-4">
-                <p class="text-muted small mb-3">เลือกหมวดหมู่ที่ร้านของคุณจำหน่าย (ติ๊กถูกเพื่อแสดงในหน้าเพิ่มสินค้า):</p>
+                
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                   <p class="text-muted small mb-0">หมวดหมู่ที่คุณเลือกใช้งาน:</p>
+                   <button class="btn btn-sm btn-link text-decoration-none p-0 fw-bold text-orange" @click="showAllCategories = !showAllCategories" style="font-size: 13px;">
+                     {{ showAllCategories ? 'ซ่อนหมวดหมู่ที่ไม่ใช้' : '+ แสดงหมวดหมู่ทั้งหมด' }}
+                   </button>
+                </div>
+
                 <div class="category-list-wrapper border rounded-3 p-2 bg-light mb-4" style="max-height: 300px; overflow-y: auto;">
                   
-                  <div v-for="cat in allCategories" :key="cat.id" class="form-check p-3 mb-2 bg-white rounded-3 shadow-sm d-flex justify-content-between align-items-center transition-all">
+                  <div v-if="displayModalCategories.length === 0" class="text-center text-muted py-5 small">
+                     <Icon name="feather:inbox" size="32" class="mb-2 opacity-50"/>
+                     <br>ยังไม่มีหมวดหมู่ที่เลือก
+                     <br><span class="text-orange cursor-pointer" @click="showAllCategories = true">กดเพื่อเลือกหมวดหมู่จากระบบ</span>
+                  </div>
+
+                  <div v-for="cat in displayModalCategories" :key="cat.id" 
+                       class="form-check p-3 mb-2 bg-white rounded-3 shadow-sm d-flex justify-content-between align-items-center transition-all"
+                       :class="{'border-orange': cat.isSelected}">
                     
                     <div class="d-flex align-items-center w-100" style="cursor: pointer;" @click="toggleCategory(cat)">
                       <input class="form-check-input me-3 ms-0 mt-0" type="checkbox" :checked="cat.isSelected" style="pointer-events: none;">
                       <label class="form-check-label fw-bold mb-0 text-dark" style="cursor: pointer;">{{ cat.name }}</label>
-                      <span v-if="!cat.isSystem" class="badge bg-light text-secondary ms-2 border" style="font-size: 10px;">Custom</span>
                     </div>
                     
-                    <Icon name="feather:trash-2" class="text-danger ms-2" style="cursor: pointer;" @click.stop="openConfirmDelete(cat)" :title="cat.isSystem ? 'ซ่อนหมวดหมู่' : 'ลบถาวร'" />
+                    <Icon v-if="!cat.isSystem" name="feather:trash-2" class="text-danger ms-2" style="cursor: pointer;" @click.stop="openConfirmDelete(cat)" title="ลบถาวร" />
                   </div>
 
                 </div>
+
                 <div class="mt-4">
-                  <label class="form-label small fw-bold">สร้างหมวดหมู่ใหม่ (เฉพาะร้านคุณ):</label>
+                  <label class="form-label small fw-bold">สร้างหมวดหมู่ใหม่:</label>
                   <div class="input-group">
-                    <input type="text" class="form-control rounded-start-pill ps-3" placeholder="ระบุชื่อ..." v-model="newCategoryInput" @keyup.enter="addNewCategoryToSystem">
+                    <input type="text" class="form-control rounded-start-pill ps-3 border-orange-focus" placeholder="ชื่อหมวดหมู่..." v-model="newCategoryInput" @keyup.enter="addNewCategoryToSystem">
                     <button class="btn btn-primary rounded-end-pill px-4" @click="addNewCategoryToSystem">เพิ่ม</button>
                   </div>
                 </div>
@@ -127,8 +149,8 @@
             <div class="modal-content border-0 shadow-lg text-center">
               <div class="modal-body pt-5 pb-4">
                 <Icon name="feather:alert-triangle" size="48" class="text-warning mb-3" />
-                <h5 class="fw-bold">{{ confirmModalTitle }}</h5>
-                <p class="text-muted small">{{ confirmModalBody }}</p>
+                <h5 class="fw-bold">ลบหมวดหมู่ถาวร?</h5>
+                <p class="text-muted small">หมวดหมู่ "{{ categoryToDelete?.name }}" จะหายไปจากระบบถาวร</p>
                 <div class="d-flex gap-2 mt-4 justify-content-center">
                   <button class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
                   <button class="btn btn-danger rounded-pill px-4" @click="executeDeleteCategory">ยืนยัน</button>
@@ -143,7 +165,10 @@
         <div class="modal fade" id="addModal" tabindex="-1">
           <div class="modal-dialog modal-lg border-0">
             <div class="modal-content border-0 shadow">
-              <div class="modal-header border-0 shadow-sm"><h5 class="modal-title fw-bold">Add Product</h5><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+              <div class="modal-header border-0 shadow-sm">
+                <h5 class="modal-title fw-bold text-orange">Add Product</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+              </div>
               <div class="modal-body py-4">
                 <form>
                   <div class="row">
@@ -151,7 +176,7 @@
                       <div class="upload-box" @click="triggerFileInput('add')">
                         <img v-if="newItem.previewImage" :src="newItem.previewImage" class="img-preview" />
                         <div v-else class="text-center text-muted">
-                          <Icon name="feather:image" size="48" />
+                          <Icon name="feather:image" size="48" class="text-orange-subtle"/>
                           <p class="mb-0 mt-2 small">Click to Upload</p>
                         </div>
                         <input type="file" id="addFileInput" class="d-none" @change="(e) => onFileChange(e, 'add')" accept="image/*">
@@ -163,11 +188,12 @@
                         <div class="col-6 form-group mb-3"><label class="small fw-bold">Stock :</label><input class="form-control" v-model="newItem.stock" type="number" min="0"></div>
                         <div class="col-6 form-group mb-3"><label class="small fw-bold">Price :</label><input class="form-control" v-model="newItem.price" type="number" min="1"></div>
                       </div>
+
                       <div class="row">
                         <div class="col-6 form-group mb-3"><label class="small fw-bold">Commission (%) :</label><input class="form-control" v-model="newItem.commission" type="number" min="0.1" step="0.1"></div>
                         <div class="col-6 form-group mb-3">
-                          <label class="text-primary fw-bold small">Weight (kg) :</label>
-                          <input class="form-control border-primary" v-model="newItem.weight" type="number" min="0" step="0.1">
+                          <label class="text-orange fw-bold small">Weight (kg) :</label>
+                          <input class="form-control border-orange" v-model="newItem.weight" type="number" min="0" step="0.1">
                           
                           <div class="mt-2" v-if="newItem.weight >= 0">
                              <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
@@ -182,18 +208,24 @@
                           </div>
                         </div>
                       </div>
+                      
                       <div class="form-group mb-3"><label class="small fw-bold">Category :</label>
                         <select class="form-select" v-model="newItem.category">
                           <option disabled value="">Select Category</option>
                           <option v-for="cat in activeCategories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
                         </select>
+                         <div v-if="activeCategories.length === 0" class="text-danger small mt-1">* กรุณาไปเลือกหมวดหมู่ที่ปุ่ม Category ก่อน</div>
                       </div>
+
                       <div class="form-group mb-0"><label class="small fw-bold">Description :</label><textarea class="form-control" rows="3" v-model="newItem.description"></textarea></div>
                     </div>
                   </div>
                 </form>
               </div>
-              <div class="modal-footer border-0"><button class="btn btn-primary px-4 shadow-sm" @click="saveNewItem">Save</button><button class="btn btn-secondary px-4 shadow-sm" data-bs-dismiss="modal" @click="resetNewItemForm">Close</button></div>
+              <div class="modal-footer border-0">
+                <button class="btn btn-primary px-4 shadow-sm" @click="saveNewItem">Save</button>
+                <button class="btn btn-light px-4 shadow-sm text-secondary" data-bs-dismiss="modal" @click="resetNewItemForm">Close</button>
+              </div>
             </div>
           </div>
         </div>
@@ -203,7 +235,10 @@
         <div class="modal fade" id="editModal" tabindex="-1">
           <div class="modal-dialog modal-lg border-0">
             <div class="modal-content border-0 shadow">
-              <div class="modal-header border-0 shadow-sm"><h5 class="modal-title fw-bold">Edit Product</h5><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+              <div class="modal-header border-0 shadow-sm">
+                <h5 class="modal-title fw-bold text-orange">Edit Product</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+              </div>
               <div class="modal-body py-4">
                 <form>
                   <div class="row">
@@ -211,7 +246,7 @@
                       <div class="upload-box" @click="triggerFileInput('edit')">
                         <img v-if="editItem.previewImage" :src="editItem.previewImage" class="img-preview" />
                         <img v-else-if="editItem.image" :src="editItem.image" class="img-preview" />
-                        <div v-else class="text-center text-muted"><Icon name="feather:image" size="48" /></div>
+                        <div v-else class="text-center text-muted"><Icon name="feather:image" size="48" class="text-orange-subtle"/></div>
                         <input type="file" id="editFileInput" class="d-none" @change="(e) => onFileChange(e, 'edit')" accept="image/*">
                       </div>
                     </div>
@@ -221,11 +256,12 @@
                           <div class="col-6 form-group mb-3"><label class="small fw-bold">Stock :</label><input class="form-control" v-model="editItem.stock" type="number" min="0"></div>
                           <div class="col-6 form-group mb-3"><label class="small fw-bold">Price :</label><input class="form-control" v-model="editItem.price" type="number" min="1"></div>
                         </div>
+
                         <div class="row">
                           <div class="col-6 form-group mb-3"><label class="small fw-bold">Commission (%) :</label><input class="form-control" v-model="editItem.commission" type="number" min="0.1" step="0.1"></div>
                           <div class="col-6 form-group mb-3">
-                            <label class="text-primary fw-bold small">Weight (kg) :</label>
-                            <input class="form-control border-primary" v-model="editItem.weight" type="number" min="0" step="0.1">
+                            <label class="text-orange fw-bold small">Weight (kg) :</label>
+                            <input class="form-control border-orange" v-model="editItem.weight" type="number" min="0" step="0.1">
                             
                             <div class="mt-2" v-if="editItem.weight >= 0">
                                 <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
@@ -240,6 +276,7 @@
                             </div>
                           </div>
                         </div>
+
                         <div class="form-group mb-3"><label class="small fw-bold">Category :</label>
                           <select class="form-select" v-model="editItem.category">
                             <option v-for="cat in activeCategories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
@@ -250,17 +287,20 @@
                   </div>
                 </form>
               </div>
-              <div class="modal-footer border-0"><button class="btn btn-primary px-4 shadow-sm" @click="saveEdit">Save Changes</button><button class="btn btn-secondary px-4 shadow-sm" data-bs-dismiss="modal">Close</button></div>
+              <div class="modal-footer border-0">
+                <button class="btn btn-primary px-4 shadow-sm" @click="saveEdit">Save Changes</button>
+                <button class="btn btn-light px-4 shadow-sm text-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
             </div>
           </div>
         </div>
       </ClientOnly>
 
-      <ClientOnly>
+       <ClientOnly>
         <div class="modal fade" id="addStockModal" tabindex="-1">
           <div class="modal-dialog border-0">
             <div class="modal-content border-0 shadow">
-              <div class="modal-header border-0"><h5 class="modal-title fw-bold">Add Stock</h5><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+              <div class="modal-header border-0"><h5 class="modal-title fw-bold text-success">Add Stock</h5><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
               <div class="modal-body py-4">
                 <form>
                   <div class="form-group mb-3">
@@ -288,7 +328,7 @@
               </div>
               <div class="modal-footer border-0">
                 <button class="btn btn-success px-4" @click="saveAddStock" :disabled="!stockForm.id || !stockForm.quantity">Update</button>
-                <button class="btn btn-secondary px-4 shadow-sm" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-light px-4 shadow-sm text-secondary" data-bs-dismiss="modal">Close</button>
               </div>
             </div>
           </div>
@@ -307,16 +347,28 @@ definePageMeta({ layout: 'seller' })
 
 const products = ref([])
 const newCategoryInput = ref('')
-
 const allCategories = ref([])
 const categoryToDelete = ref(null)
 
-// ✅ ตัวแปรสำหรับ Popup ยืนยันการลบ (เปลี่ยนข้อความได้)
-const confirmModalTitle = ref('')
-const confirmModalBody = ref('')
+// ✅ Toggle Logic
+const showAllCategories = ref(false)
+
+// --- Computed ---
 
 const activeCategories = computed(() => {
   return allCategories.value.filter(cat => cat.isSelected)
+})
+
+const displayModalCategories = computed(() => {
+  let list = allCategories.value
+  if (!showAllCategories.value) {
+     list = list.filter(cat => cat.isSelected)
+  }
+  return [...list].sort((a, b) => {
+    if (a.isSelected !== b.isSelected) return b.isSelected ? 1 : -1;
+    if (a.isSystem !== b.isSystem) return a.isSystem ? 1 : -1;
+    return a.name.localeCompare(b.name);
+  })
 })
 
 // --- Toast Logic ---
@@ -346,118 +398,74 @@ const fetchCategories = async () => {
   } catch (e) { console.error('Error fetching categories:', e) }
 }
 
-// ฟังก์ชันเมื่อกดติ๊ก Checkbox (ยิง API เพื่อ ซ่อน/แสดง)
+// ✅ เช็คว่ามีสินค้าในหมวดหมู่นี้ไหม
+const checkIsCategoryUsed = (categoryName) => {
+  const found = products.value.find(p => p.category === categoryName)
+  return !!found 
+}
+
+// ✅ Toggle Category with Validation
 const toggleCategory = async (cat) => {
   const token = localStorage.getItem('token')
-  
   if (cat.isSelected) {
-    // เดิมติ๊กอยู่ -> จะเอาออก -> ยิง DELETE (เพื่อซ่อน)
-    cat.isSelected = false 
-    try {
-      await $fetch(`http://localhost:3001/api/category/${cat.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      // ถ้าเป็น System มันจะซ่อนให้ (Backend จัดการ) ถ้า Custom มันจะลบจริง
-    } catch (e) {
-      cat.isSelected = true
-      showError('เกิดข้อผิดพลาดในการซ่อนหมวดหมู่')
+    // 🔴 เช็คก่อนเอาออก
+    if (checkIsCategoryUsed(cat.name)) {
+      showError(`ไม่สามารถซ่อนหมวดหมู่ "${cat.name}" ได้ เนื่องจากยังมีสินค้าในหมวดหมู่นี้`)
+      return 
     }
 
+    cat.isSelected = false 
+    try {
+      await $fetch(`http://localhost:3001/api/category/${cat.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+    } catch (e) { cat.isSelected = true; showError('เกิดข้อผิดพลาดในการยกเลิกหมวดหมู่') }
   } else {
-    // เดิมไม่ติ๊ก -> จะเอาเข้า -> ยิง POST (เพื่อแสดง/สร้าง)
     cat.isSelected = true
     try {
-      await $fetch('http://localhost:3001/api/category', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: { name: cat.name }
-      })
-      fetchCategories()
-    } catch (e) {
-      cat.isSelected = false
-      showError('ไม่สามารถเลือกหมวดหมู่นี้ได้')
-    }
+      await $fetch('http://localhost:3001/api/category', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: { name: cat.name } })
+      if(!cat.isSystem) fetchCategories() 
+    } catch (e) { cat.isSelected = false; showError('ไม่สามารถเลือกหมวดหมู่นี้ได้') }
   }
 }
 
 const addNewCategoryToSystem = async () => {
   const trimmed = newCategoryInput.value?.trim()
   if (!trimmed) return
-
   const existing = allCategories.value.find(c => c.name === trimmed)
   if (existing) {
-     if (!existing.isSelected) {
-       toggleCategory(existing) // ถ้ามีแต่ซ่อนอยู่ ให้เปิดใช้งาน
-       newCategoryInput.value = ''
-       return
-     }
-     showError('หมวดหมู่นี้มีอยู่แล้ว')
-     return
+     if (!existing.isSelected) { toggleCategory(existing); newCategoryInput.value = ''; showToast('เพิ่มหมวดหมู่เรียบร้อย'); return }
+     showError('หมวดหมู่นี้มีอยู่แล้ว'); return
   }
-
   try {
     const token = localStorage.getItem('token')
-    await $fetch('http://localhost:3001/api/category', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: { name: trimmed }
-    })
-    showToast('สร้างหมวดหมู่ใหม่สำเร็จ')
-    newCategoryInput.value = ''
-    fetchCategories() 
-  } catch (e) {
-    console.error(e)
-    showError(e.data?.message || 'สร้างหมวดหมู่ไม่สำเร็จ')
-  }
+    await $fetch('http://localhost:3001/api/category', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: { name: trimmed } })
+    showToast('สร้างหมวดหมู่ใหม่สำเร็จ'); newCategoryInput.value = ''; fetchCategories() 
+  } catch (e) { console.error(e); showError(e.data?.message || 'สร้างหมวดหมู่ไม่สำเร็จ') }
 }
 
-// ✅ เปิด Modal ยืนยันลบ (ปรับข้อความตามประเภท)
+// ✅ Open Delete with Validation
 const openConfirmDelete = (catObj) => {
-  categoryToDelete.value = catObj
-  if (catObj.isSystem) {
-      confirmModalTitle.value = 'ซ่อนหมวดหมู่ระบบ?'
-      confirmModalBody.value = `หมวดหมู่ "${catObj.name}" จะถูกซ่อนจากร้านของคุณ (สามารถเลือกกลับมาใหม่ได้ด้วยการติ๊กถูก)`
-  } else {
-      confirmModalTitle.value = 'ลบหมวดหมู่ถาวร?'
-      confirmModalBody.value = `หมวดหมู่ "${catObj.name}" จะหายไปจากระบบร้านของคุณถาวร`
+  if (catObj.isSystem) return
+  
+  // 🔴 เช็คก่อนลบ
+  if (checkIsCategoryUsed(catObj.name)) {
+      showError(`ไม่สามารถลบหมวดหมู่ "${catObj.name}" ได้ เนื่องจากยังมีสินค้าอยู่`)
+      return 
   }
+
+  categoryToDelete.value = catObj
   new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show()
 }
 
-// ✅ ยืนยันการลบ (แยก Logic ตามประเภท)
 const executeDeleteCategory = async () => {
   const item = categoryToDelete.value
   if (!item) return
-
-  const modalEl = document.getElementById('confirmDeleteModal')
-  const modalInstance = bootstrap.Modal.getInstance(modalEl)
-
-  // กรณี 1: ของระบบ -> ให้ซ่อน (เรียก toggleCategory เหมือนการติ๊กออก)
-  if (item.isSystem) {
-     if (item.isSelected) {
-         // ฟังก์ชันนี้จัดการยิง API DELETE (ซ่อน) ให้แล้ว
-         await toggleCategory(item) 
-         showToast('ซ่อนหมวดหมู่เรียบร้อย')
-     }
-     if (modalInstance) modalInstance.hide()
-     return
-  }
-
-  // กรณี 2: ของตัวเอง -> ลบถาวร
+  const modalInstance = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'))
+  const token = localStorage.getItem('token')
   try {
-    const token = localStorage.getItem('token')
-    await $fetch(`http://localhost:3001/api/category/${item.id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
+    await $fetch(`http://localhost:3001/api/category/${item.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+    allCategories.value = allCategories.value.filter(c => c.id !== item.id)
     showToast('ลบหมวดหมู่ถาวรเรียบร้อย')
-    fetchCategories()
-  } catch (e) {
-    console.error(e)
-    showError(e.data?.message || 'ลบไม่สำเร็จ')
-  }
-  
+  } catch (e) { console.error(e); showError(e.data?.message || 'ลบไม่สำเร็จ') }
   if (modalInstance) modalInstance.hide()
 }
 
@@ -481,10 +489,10 @@ const refresh = fetchProducts
 const getStockStatus = (s) => (s >= 100 ? 'success' : s >= 25 ? 'warning' : 'danger')
 const getBadgeColor = (c) => {
   const cost = parseInt(c)
-  if (cost === 0) return 'bg-success text-white'
-  if (cost <= 40) return 'bg-info text-dark'
-  if (cost <= 80) return 'bg-warning text-dark'
-  return 'bg-danger text-white'
+  if (cost === 0) return 'bg-success-light text-success border-success'
+  if (cost <= 40) return 'bg-info-light text-info border-info'
+  if (cost <= 80) return 'bg-warning-light text-warning border-warning'
+  return 'bg-danger-light text-danger border-danger'
 }
 const formatShippingCost = (c) => (parseInt(c) === 0 ? 'Free' : `${c} บ.`)
 const calculateOptions = (w) => {
@@ -495,48 +503,6 @@ const calculateOptions = (w) => {
   if (weight >= 20) options.push({ value: 120, text: '120 บ.', colorName: 'danger' })
   return options
 }
-const safeCloseModal = (id) => {
-  const el = document.getElementById(id)
-  if (el) (bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el)).hide()
-  document.querySelectorAll('.modal-backdrop').forEach(b => b.remove())
-}
-
-// --- CRUD ---
-const newItem = ref({ name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, description: '', category: '', previewImage: null, rawFile: null })
-const editItem = ref({ _id: null, name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null })
-
-const availableOptionsAdd = ref([])
-const availableOptionsEdit = ref([])
-
-// --- Stock Logic (Active Filter) ---
-const stockForm = ref({ id: '', quantity: '' })
-const stockCategoryFilter = ref('')
-
-const activeProductCategories = computed(() => {
-  const used = products.value.map(p => p.category).filter(c => c)
-  return [...new Set(used)].sort()
-})
-
-const filteredStockProducts = computed(() => {
-  if (!stockCategoryFilter.value) {
-    return products.value
-  }
-  return products.value.filter(p => p.category === stockCategoryFilter.value)
-})
-
-watch(stockCategoryFilter, () => {
-  stockForm.value.id = '' 
-})
-
-// --- Watchers ---
-watch(() => newItem.value.weight, (v) => {
-  availableOptionsAdd.value = calculateOptions(v)
-  if (availableOptionsAdd.value.length > 0) newItem.value.shippingCost = availableOptionsAdd.value[availableOptionsAdd.value.length - 1].value
-})
-
-watch(() => editItem.value.weight, (v) => {
-  availableOptionsEdit.value = calculateOptions(v)
-})
 
 const triggerFileInput = (m) => document.getElementById(`${m}FileInput`).click()
 const onFileChange = (e, m) => {
@@ -548,25 +514,38 @@ const onFileChange = (e, m) => {
   }
 }
 
-const resetNewItemForm = () => { newItem.value = { name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null } }
+// --- CRUD ---
+const newItem = ref({ name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null })
+const editItem = ref({ _id: null, name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null })
 
-// --- VALIDATION HELPER ---
-const validateProductData = (item) => {
-  if (item.price <= 0) return 'Price ห้ามน้อยกว่า 1 บาท'
-  if (item.commission <= 0) return 'Commission must be greater than 0.'
-  if (item.stock < 0) return 'stock ไม่สามารถใส่สินค้าติดลบได้'
-  if (item.weight < 0) return 'Weight cannot be negative.'
-  return null
+const availableOptionsAdd = ref([])
+const availableOptionsEdit = ref([])
+
+watch(() => newItem.value.weight, (v) => {
+  availableOptionsAdd.value = calculateOptions(v)
+  if (availableOptionsAdd.value.length > 0) newItem.value.shippingCost = availableOptionsAdd.value[availableOptionsAdd.value.length - 1].value
+})
+
+watch(() => editItem.value.weight, (v) => {
+  availableOptionsEdit.value = calculateOptions(v)
+})
+
+const safeCloseModal = (id) => {
+  const el = document.getElementById(id)
+  if (el) (bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el)).hide()
+  document.querySelectorAll('.modal-backdrop').forEach(b => b.remove())
 }
 
-// --- SAVE FUNCTIONS ---
-const saveNewItem = async () => {
-  const error = validateProductData(newItem.value)
-  if (error) { showError(error); return; }
+const resetNewItemForm = () => { newItem.value = { name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null } }
 
+const saveNewItem = async () => {
+  if (!newItem.value.category) { showError('กรุณาเลือกหมวดหมู่'); return; }
+  
   const token = localStorage.getItem('token')
   const fd = new FormData()
-  fd.append('name', newItem.value.name); fd.append('stock', newItem.value.stock); fd.append('price', newItem.value.price); fd.append('commission', newItem.value.commission); fd.append('weight', newItem.value.weight); fd.append('shippingCost', newItem.value.shippingCost); fd.append('description', newItem.value.description); fd.append('category', newItem.value.category)
+  fd.append('name', newItem.value.name); fd.append('stock', newItem.value.stock); fd.append('price', newItem.value.price); 
+  fd.append('commission', newItem.value.commission); fd.append('weight', newItem.value.weight); fd.append('shippingCost', newItem.value.shippingCost); 
+  fd.append('description', newItem.value.description); fd.append('category', newItem.value.category)
   if (newItem.value.rawFile) fd.append('file', newItem.value.rawFile)
   
   try {
@@ -580,18 +559,17 @@ function goEdit(id) {
   const f = products.value.find(x => x._id === id)
   if (f) {
     editItem.value = { ...f, previewImage: null, rawFile: null }
-    availableOptionsEdit.value = calculateOptions(editItem.value.weight)
+    availableOptionsEdit.value = calculateOptions(editItem.value.weight) 
     new bootstrap.Modal(document.getElementById('editModal')).show()
   }
 }
 
 async function saveEdit() {
-  const error = validateProductData(editItem.value)
-  if (error) { showError(error); return; }
-
   const token = localStorage.getItem('token')
   const fd = new FormData()
-  fd.append('name', editItem.value.name); fd.append('stock', editItem.value.stock); fd.append('price', editItem.value.price); fd.append('commission', editItem.value.commission); fd.append('weight', editItem.value.weight); fd.append('shippingCost', editItem.value.shippingCost); fd.append('category', editItem.value.category); fd.append('description', editItem.value.description)
+  fd.append('name', editItem.value.name); fd.append('stock', editItem.value.stock); fd.append('price', editItem.value.price); 
+  fd.append('commission', editItem.value.commission); fd.append('weight', editItem.value.weight); fd.append('shippingCost', editItem.value.shippingCost);
+  fd.append('category', editItem.value.category); fd.append('description', editItem.value.description)
   if (editItem.value.rawFile) fd.append('file', editItem.value.rawFile)
   
   try {
@@ -610,41 +588,106 @@ async function deleteItem(id) {
   }
 }
 
+// --- Stock Logic ---
+const stockForm = ref({ id: '', quantity: '' })
+const stockCategoryFilter = ref('')
+
+const activeProductCategories = computed(() => {
+  const used = products.value.map(p => p.category).filter(c => c)
+  return [...new Set(used)].sort()
+})
+
+const filteredStockProducts = computed(() => {
+  if (!stockCategoryFilter.value) { return products.value }
+  return products.value.filter(p => p.category === stockCategoryFilter.value)
+})
+
+watch(stockCategoryFilter, () => { stockForm.value.id = '' })
+
 async function saveAddStock() {
   const t = products.value.find(p => p._id === stockForm.value.id)
   if (t) {
-    const qtyToAdd = parseInt(stockForm.value.quantity)
-    if (qtyToAdd < 1) { showError('Quantity must be at least 1'); return; }
-
-    const n = parseInt(t.stock) + qtyToAdd
+    const n = parseInt(t.stock) + parseInt(stockForm.value.quantity)
     const token = localStorage.getItem('token')
-    const fd = new FormData()
-    fd.append('stock', n)
-    
-    await $fetch(`http://localhost:3001/api/product/${t._id}`, { 
-      method: 'PUT', 
-      headers: { 'Authorization': `Bearer ${token}` }, 
-      body: fd 
-    })
-    
-    showToast('เพิ่มสต็อกเรียบร้อยแล้ว')
-    refresh(); safeCloseModal('addStockModal')
-    stockForm.value = { id: '', quantity: '' }
+    const fd = new FormData(); fd.append('stock', n)
+    await $fetch(`http://localhost:3001/api/product/${t._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
+    showToast('เพิ่มสต็อกเรียบร้อยแล้ว'); refresh(); safeCloseModal('addStockModal'); stockForm.value = { id: '', quantity: '' }
   }
 }
 </script>
 
 <style scoped>
-.btn-primary { background-color: #0d6efd !important; border-color: #0d6efd !important; color: white !important; }
-.form-check-input:checked { background-color: #0d6efd !important; border-color: #0d6efd !important; }
-.badge-btn { border-radius: 20px; padding: 4px 12px; font-size: 12px; transition: all 0.2s; display: flex; align-items: center; gap: 4px; border: 1px solid #dee2e6; }
-.active-badge { box-shadow: 0 0 0 2px rgba(0,0,0,0.1); font-weight: bold; color: white !important; border: none; }
-.img-40 { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
-.upload-box { width: 100%; height: 220px; border: 2px dashed #dee2e6; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fbfbfb; overflow: hidden; }
+/* 🟠 Orange Gradient Header */
+.bg-gradient-orange {
+  background: linear-gradient(135deg, #ff9f43 0%, #fd7e14 100%);
+  border-bottom: 1px solid #e67e22;
+}
+
+/* 🟠 Orange Theme Variables & Overrides */
+:deep(.text-orange) { color: #fd7e14 !important; }
+:deep(.text-orange-subtle) { color: #fcc495; }
+:deep(.bg-orange-subtle) { background-color: #fff4e6 !important; }
+:deep(.border-orange) { border-color: #fd7e14 !important; }
+:deep(.border-orange-focus:focus) { border-color: #fd7e14 !important; box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25); }
+
+/* Override Primary Button to Orange */
+.btn-primary { 
+  background-color: #fd7e14 !important; 
+  border-color: #fd7e14 !important; 
+  color: white !important; 
+  font-weight: 500;
+}
+.btn-primary:hover { 
+  background-color: #e36a0d !important; 
+  border-color: #e36a0d !important; 
+}
+
+/* Outline Orange Button */
+.btn-outline-orange {
+  color: #fd7e14;
+  border-color: #fd7e14;
+  background-color: transparent;
+}
+.btn-outline-orange:hover {
+  background-color: #fd7e14;
+  color: white;
+}
+
+/* General UI Improvements */
+.img-40 { width: 40px; height: 40px; object-fit: cover; }
+.upload-box { width: 100%; height: 220px; border: 2px dashed #fcc495; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fffcf9; overflow: hidden; transition: 0.3s;}
+.upload-box:hover { background-color: #fff4e6; border-color: #fd7e14; }
 .img-preview { width: 100%; height: 100%; object-fit: contain; }
+
 .rounded-start-pill { border-top-left-radius: 50px !important; border-bottom-left-radius: 50px !important; }
 .rounded-end-pill { border-top-right-radius: 50px !important; border-bottom-right-radius: 50px !important; }
-.category-list-wrapper { border: 1px solid #eee !important; }
-.form-check { border: 1px solid #f0f0f0; transition: all 0.2s; cursor: pointer; }
+
+/* Badge Refinements */
+.badge-btn { border-radius: 50px; padding: 4px 12px; font-size: 12px; transition: all 0.2s; display: flex; align-items: center; gap: 4px; border: 1px solid #dee2e6; background: white;}
+.active-badge { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); font-weight: bold; color: white !important; border: none; }
+
+/* Status Colors (Clean Pastel) */
+.bg-success-light { background-color: #e8f9ee !important; }
+.bg-info-light { background-color: #e6f6ff !important; }
+.bg-warning-light { background-color: #fff9e6 !important; }
+.bg-danger-light { background-color: #ffe6e6 !important; }
+
+/* Font Colors */
 .font-success { color: #28c76f; } .font-warning { color: #ff9f43; } .font-danger { color: #ea5455; }
+.f-10 { font-size: 10px; }
+
+/* Form Controls */
+.form-control:focus, .form-select:focus {
+  border-color: #fd7e14;
+  box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25);
+}
+.form-check-input:checked { 
+  background-color: #fd7e14 !important; 
+  border-color: #fd7e14 !important; 
+}
+.form-check.border-orange { border: 1px solid #fd7e14 !important; background-color: #fff9f5 !important;}
+
+/* Scrollbar */
+.table-responsive::-webkit-scrollbar { height: 6px; }
+.table-responsive::-webkit-scrollbar-thumb { background: #eee; border-radius: 4px; }
 </style>

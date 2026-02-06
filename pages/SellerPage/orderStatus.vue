@@ -53,7 +53,7 @@
       <div class="col-xl-4 col-md-6" v-for="order in filteredMyOrders" :key="order._id">
         <div class="card h-100 order-card border-0 shadow-sm rounded-4 overflow-hidden" @click="openDetail(order)">
           <div
-            :class="['card-header border-0 py-3 d-flex justify-content-between align-items-center text-white', 'header-' + order.status]">
+            :class="['card-header border-0 py-3 d-flex justify-content-between align-items-center text-white', getModalHeaderClass(order.status)]">
             <span class="fw-bold">Order #{{ order.orderId || (order._id ? order._id.substr(-6) : 'N/A') }}</span>
             <small class="bg-white-glass px-2 py-1 rounded">
               <Icon name="feather:calendar" size="12" /> {{ formatDate(order) }}
@@ -67,7 +67,7 @@
                 <h6 class="fw-bold mb-1 text-dark">{{ order.customer || 'Unknown' }}</h6>
                 <p class="text-muted small mb-0 text-truncate">{{ getItemName(order) }}</p>
                 <div class="mt-2 small fw-bold" :class="getTextClass(order.status)">
-                  ● {{ order.status.toUpperCase() }}
+                  ● {{ order.status ? order.status.toUpperCase() : '' }}
                 </div>
               </div>
             </div>
@@ -198,6 +198,96 @@
       </div>
     </Transition>
 
+    <Transition name="fade">
+      <div v-if="showDetail" class="modal-backdrop-custom" @click.self="closeDetail">
+        <div class="modal-content-custom p-0 overflow-hidden shadow-lg">
+          <div
+            :class="['px-4 py-3 d-flex justify-content-between align-items-center text-white', 'header-' + selectedOrder.status]">
+            <div>
+              <h5 class="fw-bold mb-0">Order Detail</h5>
+              <small class="opacity-90">สถานะ: {{ selectedOrder.status }}</small>
+            </div>
+            <button class="btn btn-icon btn-white-glass rounded-circle text-white" @click="closeDetail">
+              <Icon name="feather:x" size="20" />
+            </button>
+          </div>
+
+          <div class="p-4 bg-white">
+            <div class="row mb-4 g-3">
+              <div class="col-md-6">
+                <div class="p-3 bg-light rounded-3 h-100">
+                  <h6 class="text-muted small mb-2 fw-bold text-uppercase">ที่อยู่จัดส่ง</h6>
+                  <div class="fw-bold mb-1">{{ selectedOrder.customer }}</div>
+                  <div class="small text-secondary">{{ selectedOrder.address }}</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="p-3 bg-light rounded-3 h-100">
+                  <h6 class="text-muted small mb-2 fw-bold text-uppercase">ข้อมูลคำสั่งซื้อ</h6>
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span>Email:</span> <span class="fw-bold">{{ selectedOrder.email }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between small">
+                    <span>Date:</span> <span class="fw-bold">{{ formatDate(selectedOrder) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h6 class="fw-bold mb-3">รายการสินค้า</h6>
+            <div class="table-responsive mb-4 border rounded-3">
+              <table class="table table-borderless align-middle mb-0">
+                <thead class="bg-light small">
+                  <tr>
+                    <th>Product</th>
+                    <th class="text-end">Price</th>
+                    <th class="text-end">Qty</th>
+                    <th class="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(it, idx) in getItems(selectedOrder)" :key="idx" class="border-bottom">
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <img :src="it.image || '/images/dashboard/default.png'" class="rounded border me-2"
+                          style="width: 40px; height: 40px; object-fit: cover;">
+                        <div class="small fw-bold text-wrap">{{ it.name }}</div>
+                      </div>
+                    </td>
+                    <td class="text-end small">{{ formatCurrency(it.price) }}</td>
+                    <td class="text-end small">x{{ it.qty }}</td>
+                    <td class="text-end fw-bold">{{ formatCurrency(it.price * it.qty) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+              <div>
+                <span class="text-secondary small">ยอดรวมทั้งหมด</span>
+                <h3 class="fw-bolder m-0" :class="getTextClass(selectedOrder.status)">{{
+                  formatCurrency(calculateTotal(selectedOrder)) }}</h3>
+              </div>
+
+              <div>
+                <button v-if="selectedOrder.status === 'preparing'" class="btn btn-primary rounded-pill px-4 shadow-sm"
+                  @click="handleUpdate(selectedOrder._id, 'shipped')">
+                  ส่งสินค้าแล้ว
+                  <Icon name="feather:truck" class="ms-1" />
+                </button>
+
+                <button v-if="['cancel requested', 'return_requested'].includes(selectedOrder.status)"
+                  class="btn btn-danger rounded-pill px-4 shadow-sm text-white"
+                  @click="handleUpdate(selectedOrder._id, 'cancelled')">
+                  อนุมัติยกเลิก
+                  <Icon name="feather:x-circle" class="ms-1" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -205,21 +295,20 @@
 import { ref, computed, onMounted } from 'vue'
 import { useOrderStore } from '~/store/orders'
 import { useAuthStore } from '~/store/auth'
-// ✅ Import Modal
-import OrderDetailModal from '~/pages/SellerPage/components/orderDetailModal.vue'
 
 definePageMeta({ layout: 'seller' })
 
 const orderStore = useOrderStore()
 const authStore = useAuthStore()
+const route = useRoute()
 const currentStatus = ref('preparing')
 const showRequestsModal = ref(false)
 
 const statuses = [
   { key: 'preparing', label: 'กำลังเตรียม', icon: 'feather:package' },
   { key: 'shipped', label: 'กำลังส่ง', icon: 'feather:truck' },
-  { key: 'completed', label: 'สำเร็จแล้ว', icon: 'feather:check-circle' },
-  { key: 'cancelled', label: 'ยกเลิกแล้ว', icon: 'feather:x-circle' }
+  { key: 'completed', label: 'สำเร็จ', icon: 'feather:check-circle' },
+  { key: 'cancelled', label: 'ยกเลิก', icon: 'feather:x-circle' }
 ]
 
 const showRejectDialog = ref(false)
@@ -236,7 +325,35 @@ const rejectOptions = [
 
 onMounted(async () => {
   await orderStore.fetchOrders()
+
+  // 1. Logic เลือก Tab
+  const queryTab = route.query.tab
+  if (queryTab && statuses.some(s => s.key === queryTab)) {
+    currentStatus.value = queryTab
+  }
+
+  // 2. Logic เปิด Detail Modal
+  const queryId = route.query.id
+  if (queryId) {
+    const targetOrder = orderStore.allOrders.find(o => o._id === queryId)
+    if (targetOrder) {
+      openDetail(targetOrder)
+    }
+  }
 })
+
+// ✅ ฟังก์ชันใหม่: แปลง Status เป็นชื่อ Class CSS ให้ถูกต้อง
+const getModalHeaderClass = (status) => {
+  const s = (status || '').toLowerCase()
+  
+  if (['pending', 'preparing', 'confirm'].includes(s)) return 'header-preparing'
+  if (['shipped', 'shipping'].includes(s)) return 'header-shipped'
+  if (['completed', 'success', 'delivered'].includes(s)) return 'header-completed'
+  if (['cancelled', 'cancel', 'cancel requested', 'rejected'].includes(s)) return 'header-cancelled'
+  if (['return_requested', 'returned'].includes(s)) return 'header-return_requested'
+  
+  return 'header-preparing' // Default
+}
 
 const myAllOrders = computed(() => {
   const all = orderStore.allOrders || []
@@ -262,7 +379,7 @@ const filteredMyOrders = computed(() => {
   return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === currentStatus.value.toLowerCase())
 })
 
-// --- Modal Functions ---
+// --- Reject Modal Functions ---
 const openRejectModal = (order) => {
   targetRejectOrderId.value = order._id
   selectedRejectReason.value = rejectOptions[0]
@@ -277,10 +394,14 @@ const closeRejectModal = () => {
 
 const submitReject = async () => {
   if (!targetRejectOrderId.value) return
+
+  // ✅ รวมเหตุผล: ถ้าเลือกช้อยส์ให้ใช้ช้อยส์ ถ้าเลือกอื่นๆ ให้ใช้ข้อความที่พิมพ์
   let finalReason = selectedRejectReason.value
   if (selectedRejectReason.value === 'other') {
     finalReason = rejectNote.value
   }
+
+  // ส่งสถานะกลับเป็น 'preparing' พร้อมเหตุผล
   await orderStore.updateStatus(targetRejectOrderId.value, 'preparing', finalReason)
   closeRejectModal()
   if (pendingOrders.value.length === 0) {
@@ -320,41 +441,15 @@ function closeDetail() { showDetail.value = false }
 
 <style scoped>
 /* CSS เดิมทั้งหมด */
-.header-preparing {
-  background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%);
-}
-
-.text-status-preparing {
-  color: #0277BD;
-}
-
-.header-shipped {
-  background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%);
-}
-
-.text-status-shipped {
-  color: #4527A0;
-}
-
-.header-completed {
-  background: linear-gradient(135deg, #00897B 0%, #26A69A 100%);
-}
-
-.text-status-completed {
-  color: #00695C;
-}
-
-.header-cancelled {
-  background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%);
-}
-
-.text-status-cancelled {
-  color: #C62828;
-}
-
-.header-return_requested {
-  background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%);
-}
+.header-preparing { background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%); }
+.text-status-preparing { color: #0277BD; }
+.header-shipped { background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%); }
+.text-status-shipped { color: #4527A0; }
+.header-completed { background: linear-gradient(135deg, #00897B 0%, #26A69A 100%); }
+.text-status-completed { color: #00695C; }
+.header-cancelled { background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%); }
+.text-status-cancelled { color: #C62828; }
+.header-return_requested { background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%); }
 
 .active-tab-preparing {
   background-color: #0288D1 !important;
