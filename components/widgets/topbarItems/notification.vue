@@ -203,6 +203,8 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background-color: #ff4c3b;
+    color: #ffffff;
 }
 
 .header-actions {
@@ -211,16 +213,27 @@ export default {
     gap: 8px;
 }
 
+.header-actions .divider {
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 5px;
+}
+
+.header-actions .text-danger {
+    color: #ffe6e6 !important;
+}
+
 .action-link {
     font-size: 12px;
-    color: #ff4c3b;
+    color: #ffffff !important;
     text-decoration: none;
     cursor: pointer;
     font-weight: normal;
+    opacity: 0.9;
 }
 
 .action-link:hover {
     text-decoration: underline;
+    opacity: 1;
 }
 
 

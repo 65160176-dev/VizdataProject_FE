@@ -1,6 +1,7 @@
 <template>
     <Transition name="fade">
         <div class="modal-backdrop-custom" @click.self="$emit('close')">
+
             <div class="modal-content-custom p-0 overflow-hidden shadow-lg">
 
                 <div
@@ -22,17 +23,14 @@
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-3 h-100 border border-light">
                                 <h6 class="text-muted small mb-2 fw-bold text-uppercase">ข้อมูลลูกค้า & การจัดส่ง</h6>
-
                                 <div class="fw-bold mb-2 text-dark d-flex align-items-center">
                                     <Icon name="feather:user" size="14" class="me-2 text-secondary" />
                                     {{ order.customer?.firstName || order.customer || 'Unknown' }}
                                 </div>
-
                                 <div class="small text-secondary mb-2 d-flex align-items-center">
                                     <Icon name="feather:mail" size="14" class="me-2 text-secondary" />
                                     {{ order.email || '-' }}
                                 </div>
-
                                 <div class="small text-secondary d-flex align-items-start">
                                     <Icon name="feather:map-pin" size="14"
                                         class="me-2 mt-1 text-secondary flex-shrink-0" />
@@ -45,7 +43,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-3 h-100 border border-light">
                                 <h6 class="text-muted small mb-2 fw-bold text-uppercase">ข้อมูลคำสั่งซื้อ</h6>
@@ -58,13 +55,11 @@
                                     <span class="fw-bold text-dark">{{ formatDate(order.createdAt || order.date)
                                         }}</span>
                                 </div>
-
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span class="text-secondary">Payment:</span>
                                     <span class="badge bg-secondary text-white">{{ order.paymentMethod || 'N/A'
                                         }}</span>
                                 </div>
-
                                 <div class="d-flex justify-content-between small">
                                     <span class="text-secondary">Status:</span>
                                     <span class="badge" :class="getStatusClass(order.status)">{{ order.status }}</span>
@@ -113,7 +108,7 @@
                         <div class="d-flex gap-2">
                             <template v-if="checkStatus(order.status, 'request')">
                                 <button class="btn btn-outline-secondary rounded-pill px-4 shadow-sm fw-bold"
-                                    @click="handleAction('preparing')">
+                                    @click="openRejectModal">
                                     ปฏิเสธคำขอ
                                 </button>
                                 <button class="btn btn-danger rounded-pill px-4 shadow-sm text-white fw-bold"
@@ -140,11 +135,63 @@
                     </div>
                 </div>
             </div>
+
+            <Transition name="fade">
+                <div v-if="showRejectDialog" class="modal-backdrop-custom" style="z-index: 3000;"
+                    @click.stop="closeRejectModal">
+                    <div class="modal-content-custom p-4 shadow-lg" style="max-width: 400px;" @click.stop>
+                        <h5 class="fw-bold mb-3 text-danger">
+                            <Icon name="feather:alert-circle" class="me-2" />ปฏิเสธคำขอ
+                        </h5>
+                        <p class="text-secondary small mb-3">
+                            กรุณาระบุเหตุผลที่ปฏิเสธ เพื่อแจ้งให้ลูกค้าทราบ
+                        </p>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark mb-2">เลือกเหตุผล:</label>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="form-check" v-for="(option, index) in rejectOptions" :key="index">
+                                    <input class="form-check-input" type="radio" :name="'rejectReason'"
+                                        :id="'reason-' + index" :value="option" v-model="selectedRejectReason">
+                                    <label class="form-check-label small" :for="'reason-' + index">
+                                        {{ option }}
+                                    </label>
+                                </div>
+
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="rejectReason" id="reason-other"
+                                        value="other" v-model="selectedRejectReason">
+                                    <label class="form-check-label small fw-bold" for="reason-other">
+                                        อื่นๆ (โปรดระบุ)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" v-if="selectedRejectReason === 'other'">
+                            <textarea v-model="rejectNote" class="form-control bg-light border-0" rows="3"
+                                placeholder="พิมพ์เหตุผลเพิ่มเติม...">
+                </textarea>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button class="btn btn-light flex-grow-1 rounded-pill"
+                                @click="closeRejectModal">ยกเลิก</button>
+                            <button class="btn btn-danger flex-grow-1 rounded-pill fw-bold"
+                                :disabled="selectedRejectReason === 'other' && !rejectNote.trim()"
+                                @click="submitReject">
+                                ยืนยันการปฏิเสธ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
         </div>
     </Transition>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRuntimeConfig, useNuxtApp } from '#app'
 import { useOrderStore } from '~/store/orders'
 
@@ -158,6 +205,52 @@ const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
 const orderStore = useOrderStore()
 const { $showToast } = useNuxtApp()
 
+// --- Logic สำหรับ Reject Modal ---
+const showRejectDialog = ref(false)
+const rejectNote = ref('')
+const selectedRejectReason = ref('')
+const rejectOptions = [
+    'สินค้าอยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกได้',
+    'แพ็คสินค้าเรียบร้อยแล้วพร้อมส่ง',
+    'สินค้าไม่เข้าเงื่อนไขการรับประกัน/คืนเงิน',
+    'หลักฐานไม่เพียงพอ'
+]
+
+const openRejectModal = () => {
+    selectedRejectReason.value = rejectOptions[0]
+    rejectNote.value = ''
+    showRejectDialog.value = true
+}
+
+const closeRejectModal = () => {
+    showRejectDialog.value = false
+}
+
+const submitReject = async () => {
+    let finalReason = selectedRejectReason.value
+    if (selectedRejectReason.value === 'other') {
+        finalReason = rejectNote.value
+    }
+    // ยิง API กลับไปสถานะ preparing พร้อมเหตุผล
+    await handleAction('preparing', finalReason)
+    closeRejectModal()
+}
+
+// --- Action Logic ---
+const handleAction = async (newStatus, reason = null) => {
+    if (!props.order._id) return;
+    try {
+        await orderStore.updateStatus(props.order._id, newStatus, reason)
+        try { $showToast({ msg: `ดำเนินการเรียบร้อย`, type: 'success' }) } catch (e) { }
+        emit('updated')
+        emit('close')
+    } catch (error) {
+        console.error(error)
+        try { $showToast({ msg: 'เกิดข้อผิดพลาด', type: 'error' }) } catch (e) { }
+    }
+}
+
+// --- Helper Functions ---
 const getImgUrl = (path) => {
     if (!path) return '/images/dashboard/default.png';
     if (path.startsWith('http')) return path;
@@ -206,23 +299,10 @@ const checkStatus = (status, type) => {
     if (type === 'pending') return s === 'pending';
     return false;
 }
-
-const handleAction = async (newStatus) => {
-    if (!props.order._id) return;
-    try {
-        await orderStore.updateStatus(props.order._id, newStatus)
-        try { $showToast({ msg: `ดำเนินการเรียบร้อย`, type: 'success' }) } catch (e) { }
-        emit('updated')
-        emit('close')
-    } catch (error) {
-        console.error(error)
-        try { $showToast({ msg: 'เกิดข้อผิดพลาด', type: 'error' }) } catch (e) { }
-    }
-}
 </script>
 
 <style scoped>
-/* รวม CSS Gradient ทั้งหมด */
+/* CSS Gradient & Colors */
 .header-preparing,
 .header-processing,
 .header-confirmed {
@@ -254,7 +334,6 @@ const handleAction = async (newStatus) => {
     background: #6c757d;
 }
 
-/* รวม Text Colors */
 .text-status-preparing,
 .text-status-processing {
     color: #0277BD;
