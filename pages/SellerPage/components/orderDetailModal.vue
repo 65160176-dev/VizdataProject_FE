@@ -97,15 +97,36 @@
                         </table>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                        <div>
-                            <span class="text-secondary small">ยอดรวมทั้งหมด</span>
-                            <h3 class="fw-bolder m-0" :class="getTextClass(order.status)">
-                                {{ formatCurrency(calculateTotal(order)) }}
-                            </h3>
+                    <div class="pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-secondary small">ราคาสินค้า (Subtotal)</span>
+                            <span class="fw-bold text-dark">{{ formatCurrency(calculateTotal(order)) }}</span>
                         </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-secondary small">ค่าจัดส่ง</span>
+                            <span class="fw-bold text-dark">{{ formatCurrency(order.shippingCost || 0) }}</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-danger small">ค่าแพลตฟอร์ม (3%)</span>
+                            <span class="fw-bold text-danger">-{{ formatCurrency(order.platformFee || 0) }}</span>
+                        </div>
+                        
+                        <div v-if="order.affiliateCommission > 0" class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-danger small">ค่าคอม Affiliate</span>
+                            <span class="fw-bold text-danger">-{{ formatCurrency(order.affiliateCommission) }}</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <div>
+                                <span class="text-secondary small">เงินที่ร้านได้รับจริง</span>
+                                <h3 class="fw-bolder m-0 text-success">
+                                    {{ formatCurrency(order.sellerEarnings || 0) }}
+                                </h3>
+                            </div>
 
-                        <div class="d-flex gap-2">
+                            <div class="d-flex gap-2">
                             <template v-if="checkStatus(order.status, 'request')">
                                 <button class="btn btn-outline-secondary rounded-pill px-4 shadow-sm fw-bold"
                                     @click="openRejectModal">
@@ -131,6 +152,7 @@
                                 <button class="btn btn-success text-white rounded-pill px-4 shadow-sm fw-bold"
                                     @click="handleAction('preparing')">Accept Order</button>
                             </template>
+                            </div>
                         </div>
                     </div>
                 </div>

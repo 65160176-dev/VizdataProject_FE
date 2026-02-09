@@ -72,9 +72,15 @@
               </div>
             </div>
           </div>
-          <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center pb-3">
-            <span class="text-secondary small">{{ getItems(order).length }} รายการ</span>
-            <div class="fw-bolder text-dark fs-5">{{ formatCurrency(calculateTotal(order)) }}</div>
+          <div class="card-footer bg-white border-top-0 pb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-secondary small">{{ getItems(order).length }} รายการ</span>
+              <span class="text-secondary small">ราคารวม: {{ formatCurrency(calculateTotal(order)) }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-success small fw-bold">เงินที่ร้านได้รับ:</span>
+              <div class="fw-bolder text-success fs-5">{{ formatCurrency(order.sellerEarnings || calculateTotal(order)) }}</div>
+            </div>
           </div>
         </div>
       </div>
