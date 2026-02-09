@@ -461,7 +461,7 @@ const topShopsLifetime = computed(() => {
     .slice(0, 5)
 })
 
-// Top Products (เฉพาะออเดอร์จ่ายแล้ว) รวมค่าคอมต่อสินค้า = commission/unit * qty
+// Top Products (เฉพาะออเดอร์จ่ายแล้ว) รวมค่าคอมต่อสินค้า = commission% * price * qty (ไม่ปัดเศษ)
 const topProducts = computed(() => {
   const totals = new Map()
   // map orderId -> raw order
@@ -472,9 +472,11 @@ const topProducts = computed(() => {
     if (!raw) return
     (raw.items || []).forEach((it) => {
       const info = productMap.value.get(it.productId)
-      const perUnit = info?.commission || 0
+      const commissionRate = info?.commission || 0
       const qty = Number(it.qty || 1)
-      const amount = perUnit * qty
+      const itemPrice = Number(it.price || 0)
+      // คำนวณ commission เป็น % ของราคา (ไม่ปัดเศษ)
+      const amount = (itemPrice * qty * commissionRate) / 100
       const key = it.productId
       const prev = totals.get(key) || { id: key, name: info?.name || it.name || 'สินค้า', amount: 0 }
       prev.amount += amount

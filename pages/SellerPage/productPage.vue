@@ -48,7 +48,7 @@
                   <span class="badge bg-light text-dark border fw-normal px-2 py-1">{{ item.stock }}</span>
                 </td>
                 <td class="text-orange fw-bold">{{ item.price }}</td>
-                <td>{{ item.commission }}</td>
+                <td><span class="badge bg-success-subtle text-success border fw-normal px-2 py-1">{{ item.commission }}%</span></td>
                 <td>{{ item.weight || 0 }}</td>
                 <td>
                   <span class="badge border" :class="getBadgeColor(item.shippingCost)" style="font-weight: 500; font-size: 11px; padding: 6px 12px; border-radius: 6px;">
