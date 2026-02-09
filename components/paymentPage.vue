@@ -704,16 +704,31 @@ export default {
             // ✅✅ ส่ง paymentMethod และ note ไป Backend ✅✅
             paymentMethod: this.selectedPayment === 'cod' ? 'COD' : 'PromptPay',
             note: this.note,
-            item: group.items.map(p => ({
-              productId: getSafeStringId(p.id) || getSafeStringId(p._id),
-              name: p.name || p.title,
-              price: this.calcPrice(p),
-              qty: p.quantity,
-              image: p.image || (p.images && p.images[0]?.src) || '',
-              // แนบ affiliate แบบต่อสินค้า หากมี
-              refAffiliateId: this.getAffiliateCodeForProduct(getSafeStringId(p.id) || getSafeStringId(p._id)) || undefined
-            }))
+            item: group.items.map(p => {
+              const productId = getSafeStringId(p.id) || getSafeStringId(p._id);
+              const affiliateCode = this.getAffiliateCodeForProduct(productId);
+              
+              console.log('🔍 Checkout item:', {
+                productId,
+                productName: p.name || p.title,
+                affiliateCode,
+                affiliateMap: this.getAffiliateMap(),
+                fallback: localStorage.getItem('affiliateFallback')
+              });
+              
+              return {
+                productId,
+                name: p.name || p.title,
+                price: this.calcPrice(p),
+                qty: p.quantity,
+                image: p.image || (p.images && p.images[0]?.src) || '',
+                // แนบ affiliate แบบต่อสินค้า หากมี
+                refAffiliateId: affiliateCode || undefined
+              };
+            })
           };
+          
+          console.log('📦 Order payload:', payload);
           return await this.orderStore.placeOrder(payload);
         });
 
@@ -804,10 +819,10 @@ export default {
       }
     },
 
-    // อ่าน mapping affiliate ต่อสินค้า
+    // อ่าน mapping affiliate ต่อสินค้า (เปลี่ยนเป็น localStorage)
     getAffiliateMap() {
       try {
-        const raw = sessionStorage.getItem('affiliateProductMap') || '{}';
+        const raw = localStorage.getItem('affiliateProductMap') || '{}';
         const map = JSON.parse(raw);
         return (map && typeof map === 'object') ? map : {};
       } catch (e) { return {}; }
@@ -815,14 +830,41 @@ export default {
 
     getAffiliateCodeForProduct(productId) {
       const map = this.getAffiliateMap();
-      if (!productId) return null;
-      return map[productId] || null;
+      if (!productId) {
+        console.warn('⚠️ getAffiliateCodeForProduct called without productId');
+        return null;
+      }
+      
+      console.log(`🔍 Looking for affiliate for product ${productId}`);
+      console.log('📋 Current affiliate map:', map);
+      
+      // ถ้ามี specific mapping สำหรับ product นี้ ให้ใช้เลย
+      if (map[productId]) {
+        console.log(`✅ Found specific mapping: ${map[productId]} for product ${productId}`);
+        return map[productId];
+      }
+      
+      // ถ้าไม่มี specific mapping ให้ใช้ fallback affiliate (ถ้ามี)
+      try {
+        const fallback = localStorage.getItem('affiliateFallback');
+        if (fallback) {
+          console.log(`📌 Using fallback affiliate ${fallback} for product ${productId}`);
+          return fallback;
+        } else {
+          console.log(`❌ No fallback affiliate found`);
+        }
+      } catch (e) {
+        console.error('Error getting fallback affiliate:', e);
+      }
+      
+      console.log(`❌ No affiliate code found for product ${productId}`);
+      return null;
     },
 
     isValidAffiliateSession() {
       try {
-        const mapRaw = sessionStorage.getItem('affiliateProductMap');
-        const startTime = sessionStorage.getItem('affiliateStartTime');
+        const mapRaw = localStorage.getItem('affiliateProductMap');
+        const startTime = localStorage.getItem('affiliateStartTime');
 
         if (!mapRaw || !startTime) {
           return false;
@@ -844,8 +886,9 @@ export default {
 
     clearAffiliateSession() {
       try {
-        sessionStorage.removeItem('affiliateProductMap');
-        sessionStorage.removeItem('affiliateStartTime');
+        localStorage.removeItem('affiliateProductMap');
+        localStorage.removeItem('affiliateFallback');
+        localStorage.removeItem('affiliateStartTime');
       } catch (e) { }
     }
   },

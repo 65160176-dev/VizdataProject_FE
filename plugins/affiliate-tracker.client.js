@@ -39,24 +39,28 @@ export default defineNuxtPlugin((nuxtApp) => {
         console.log('✅ Affiliate verification response:', response);
         
         if (response && response.valid) {
-          // เก็บ mapping แบบ productId -> affiliateCode ใน sessionStorage เท่านั้น
+          // เก็บ mapping แบบ productId -> affiliateCode ใน localStorage (แทน sessionStorage)
           const mapKey = 'affiliateProductMap';
+          const fallbackKey = 'affiliateFallback';
           const startKey = 'affiliateStartTime';
           const now = Date.now().toString();
           let currentMap = {};
           try {
-            currentMap = JSON.parse(sessionStorage.getItem(mapKey) || '{}');
+            currentMap = JSON.parse(localStorage.getItem(mapKey) || '{}');
           } catch (_) { currentMap = {}; }
 
           if (productId) {
+            // ถ้ามี productId เฉพาะเจาะจง ให้ bind กับ product นั้น (ไม่ตั้ง fallback)
             currentMap[String(productId)] = normalized;
-            console.log(`🧭 Bound affiliate ${normalized} to product ${productId}`);
+            localStorage.setItem(mapKey, JSON.stringify(currentMap));
+            console.log(`🧭 Bound affiliate ${normalized} to specific product ${productId}`);
           } else {
-            console.log('ℹ️ No product id in URL; will not bind globally');
+            // ถ้าไม่มี productId ให้เก็บเป็น fallback affiliate (แทนที่ fallback เดิม)
+            localStorage.setItem(fallbackKey, normalized);
+            console.log(`🌐 Set fallback affiliate: ${normalized} (will apply to all products without specific mapping)`);
           }
 
-          sessionStorage.setItem(mapKey, JSON.stringify(currentMap));
-          sessionStorage.setItem(startKey, now);
+          localStorage.setItem(startKey, now);
           
           console.log(`🎯 Valid affiliate link detected: ${code}`);
           console.log(`👤 Affiliate: ${response.affiliate?.name || 'Unknown'}`);
