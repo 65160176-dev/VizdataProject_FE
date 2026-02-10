@@ -107,10 +107,13 @@
                             </div>
                         </div>
 
-                        <div v-else class="empty-state">
-                            <div class="empty-icon"><i class="fa fa-clipboard-list"></i></div>
-                            <h4>ไม่พบรายการคำสั่งซื้อ</h4>
-                            <p>ไม่มีรายการคำสั่งซื้อในสถานะนี้</p>
+                        <div v-else
+                            class="empty-state d-flex flex-column align-items-center justify-content-center py-5">
+                            <div class="empty-icon mb-3">
+                                <i class="fa fa-clipboard-list text-muted" style="font-size: 4rem; opacity: 0.2;"></i>
+                            </div>
+                            <h4 class="text-muted mb-2">ไม่พบรายการคำสั่งซื้อ</h4>
+                            <p class="text-muted small">ไม่มีรายการคำสั่งซื้อในสถานะนี้</p>
                         </div>
                     </div>
                 </div>
@@ -155,7 +158,7 @@ const tabs = [
     { label: 'ทั้งหมด', value: 'all' },
     { label: 'รอยืนยัน', value: 'pending' },
     { label: 'กำลังเตรียม', value: 'processing' },
-    { label: 'จัดส่งแล้ว', value: 'shipping' },
+    { label: 'ที่ต้องได้รับ', value: 'shipping' },
     { label: 'สำเร็จ', value: 'completed' },
     { label: 'ยกเลิก', value: 'cancelled' }
 ]
@@ -205,6 +208,7 @@ const fetchOrders = async () => {
     }
 }
 
+// ... (Helper Functions เดิม) ...
 const checkStatus = (orderStatus, tab) => {
     const s = (orderStatus || '').toLowerCase();
     switch (tab) {
@@ -288,15 +292,28 @@ watch(() => route.query, () => {
     checkUrlAndOpenOrder()
 })
 
-onMounted(() => {
+// ✅ 1. สร้างฟังก์ชันโหลดข้อมูล
+const loadData = async () => {
     if (isAuthenticated.value) {
-        fetchOrders()
-        if (route.query.filter) activeTab.value = route.query.filter
+        await fetchOrders()
     }
+}
+
+// ✅ 2. เฝ้าดู User (ถ้าโหลดเสร็จให้ดึงข้อมูล)
+watch(() => auth.user, (u) => {
+    if (u) {
+        loadData()
+    }
+}, { immediate: true })
+
+onMounted(() => {
+    loadData()
+    if (route.query.filter) activeTab.value = route.query.filter
 })
 </script>
 
 <style scoped>
+/* (Style คงเดิม) */
 .dashboard-card {
     background: white;
     border: 1px solid #e2e8f0;
@@ -340,7 +357,7 @@ onMounted(() => {
     display: flex;
     gap: 10px;
     overflow-x: auto;
-    padding-bottom: 5px;
+    padding: 10px 4px 16px 4px;
     margin-bottom: 0;
     border-bottom: none;
     scrollbar-width: none;
@@ -478,7 +495,7 @@ onMounted(() => {
     display: block;
     font-size: 1.1rem;
     font-weight: 700;
-    color: #ff5722;
+    color: #000000;
 }
 
 .order-footer {
@@ -490,14 +507,16 @@ onMounted(() => {
 
 .btn-outline-theme {
     background: white;
-    border: 1px solid #ff5722;
-    color: #ff5722;
+    border: 1px solid #6c757d;
+    color: #6c757d;
     font-weight: 600;
+    transition: all 0.2s;
 }
 
 .btn-outline-theme:hover {
-    background: #ff5722;
+    background: #6c757d;
     color: white;
+    border-color: #6c757d;
 }
 
 /* Status Badges & Colors */
@@ -574,5 +593,19 @@ onMounted(() => {
 
 .hover-underline:hover {
     text-decoration: underline !important;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #a0aec0;
+    min-height: 300px;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: #e2e8f0;
 }
 </style>

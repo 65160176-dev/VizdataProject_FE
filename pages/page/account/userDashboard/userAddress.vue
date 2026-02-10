@@ -104,8 +104,7 @@
 </template>
 
 <script setup>
-// ... (คงเดิม)
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '~/store/auth'
 import { useAddressStore } from '~/store/address'
 import addAddressPop from '../Address/addAddressPop.vue'
@@ -213,10 +212,22 @@ const setDefaultAddress = async (item) => {
     }
 }
 
-onMounted(async () => {
+// ✅ 1. ฟังก์ชันโหลดข้อมูล
+const loadAddressData = async () => {
     if (isAuthenticated.value) {
         await addressStore.fetchAddresses()
     }
+}
+
+// ✅ 2. เฝ้าดู User
+watch(() => auth.user, (val) => {
+    if (val) {
+        loadAddressData()
+    }
+}, { immediate: true })
+
+onMounted(async () => {
+    loadAddressData()
 })
 </script>
 

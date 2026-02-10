@@ -143,7 +143,9 @@ import { useAuthStore } from '~/store/auth'
 import { useNotificationStore } from '~/store/notification'
 import { useRuntimeConfig } from '#app'
 import OrderDetailModal from '~/pages/SellerPage/components/orderDetailModal.vue'
+import { useOrderStore } from '~/store/orders'
 
+const orderStore = useOrderStore()
 const props = defineProps({ isCollapsed: { type: Boolean, default: false } })
 const emit = defineEmits(['toggle'])
 
@@ -207,7 +209,7 @@ const loadingOrder = ref(false)
 function toggleNoti() { isNotiOpen.value = !isNotiOpen.value }
 function markAllRead() { notiStore.markAllAsRead() }
 
-// ✅ ฟังก์ชันคลิกแจ้งเตือน -> เปิด Popup
+// ✅ ฟังก์ชันคลิกแจ้งเตือน (Logic ที่ถูกต้องสำหรับ Sidebar)
 const handleNotificationClick = async (item) => {
   if (!item.isRead) notiStore.markAsRead(item);
   isNotiOpen.value = false;
@@ -217,15 +219,41 @@ const handleNotificationClick = async (item) => {
     loadingOrder.value = true
     try {
       const token = localStorage.getItem('token')
-      // เรียก API (Backend ที่แก้แล้วจะรับ orderId ได้)
       const response = await $fetch(`${API_BASE_URL}/api/order/${orderId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
-      selectedOrder.value = response
-      showOrderModal.value = true
+
+      const status = (response.status || '').toLowerCase();
+      await orderStore.fetchOrders()
+
+      // กลุ่ม Cancel/Return (เปิด Popup หน้าเดิม)
+      const isCancelGroup = ['cancelled', 'cancel', 'cancel requested', 'return_requested', 'return requested'].includes(status);
+
+      if (isCancelGroup) {
+        selectedOrder.value = response
+        showOrderModal.value = true
+      }
+      // ✅ เพิ่ม: กลุ่ม Pending (ส่งไปหน้า New Orders)
+      else if (['pending', 'pending review'].includes(status)) {
+        router.push({
+          path: '/SellerPage/order', // 👈 ชื่อไฟล์หน้า New Orders ของคุณ
+          query: { id: orderId }
+        });
+      }
+      // กลุ่ม Process (ส่งไปหน้า Order Status)
+      else {
+        let targetTab = 'preparing';
+        if (['shipped', 'shipping', 'arrived'].includes(status)) targetTab = 'shipped';
+        else if (['completed', 'delivered', 'success'].includes(status)) targetTab = 'completed';
+
+        router.push({
+          path: '/SellerPage/orderStatus',
+          query: { status: targetTab, id: orderId }
+        });
+      }
+
     } catch (error) {
       console.error("Fetch Order Error:", error)
-      try { $showToast({ msg: "ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้", type: "error" }) } catch (e) { }
     } finally {
       loadingOrder.value = false
     }
@@ -238,8 +266,6 @@ const closeOrderModal = () => {
 }
 
 const handleOrderUpdated = () => {
-  // เมื่อมีการอัปเดตใน Popup (Accept/Reject)
-  // ให้โหลด Notification ใหม่ เพื่อให้สถานะอัปเดต หรือจะทำอย่างอื่นเพิ่มเติมก็ได้
   notiStore.fetchNotifications()
 }
 
@@ -268,11 +294,7 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString('th-TH', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 const deleteItem = async (id) => {
-  // (Optional) อาจจะใส่ confirm หรือไม่ก็ได้
-  // if (!confirm("ต้องการลบการแจ้งเตือนนี้ใช่หรือไม่?")) return;
-
   try {
-    // เรียก action ใน store (ต้องมั่นใจว่าใน notiStore มี action นี้)
     await notiStore.deleteNotification(id);
   } catch (error) {
     console.error("Failed to delete notification:", error);

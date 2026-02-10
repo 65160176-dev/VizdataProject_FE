@@ -28,7 +28,7 @@
                     ไม่มีการแจ้งเตือน
                 </li>
 
-                <li v-for="item in notifications.slice(0, 10)" :key="item._id" class="notification-item"
+                <li v-for="item in notifications" :key="item._id" class="notification-item"
                     :class="{ 'item-unread': !item.isRead, 'item-read': item.isRead }" @mouseenter="markAsRead(item)">
 
                     <div class="notif-box" @click="handleNotificationClick(item)">
@@ -236,41 +236,58 @@ export default {
     opacity: 1;
 }
 
-
 .notification-list {
     list-style: none;
     padding-left: 0;
+    /* ✅ มั่นใจว่าชิดซ้ายสุด */
     margin-left: 0;
     max-height: 350px;
     overflow-y: auto;
     cursor: default;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    /* ลบ margin ล่างออก */
 }
 
+/* ✅ Item ของรายการแจ้งเตือน */
 .notification-item {
     position: relative;
     text-align: left;
-    cursor: default !important;
+    cursor: pointer;
+    width: 100%;
+    border-bottom: 1px solid #f1f1f1;
+    margin: 0;
+    /* ลบ margin รอบนอก */
+    padding: 0;
+    /* ลบ padding รอบนอก */
 }
 
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+/* ✅ กล่องเนื้อหาหลัก */
 .notification-item .notif-box {
     display: flex;
-    align-items: center;
-    padding: 12px 15px;
+    align-items: flex-start;
+
+    /* ✅ แก้ไข: ลด Padding ด้านซ้ายลง (จาก 15px เหลือ 10px หรือ 5px ตามชอบ) */
+    padding: 12px 10px 12px 10px;
+
+    padding-right: 45px;
+    /* เว้นที่ให้ปุ่มลบ */
     text-decoration: none;
     color: #333;
-    border-bottom: 1px solid #f1f1f1;
     transition: 0.2s;
-
-    width: 90%;
-    height: auto;
-    min-height: 100px;
+    width: 100%;
+    min-height: 80px;
     box-sizing: border-box;
-
-    cursor: pointer;
+    margin: 0;
+    /* ลบ margin ของกล่อง */
 }
 
 .notification-item:hover {
-    background-color: #e4e6eb;
+    background-color: #f9f9f9;
 }
 
 .item-unread {
@@ -287,19 +304,25 @@ export default {
     height: 8px;
     border-radius: 50%;
     background-color: transparent;
-    margin-right: 12px;
+
+    /* ✅ ปรับระยะห่างของจุด */
+    margin-right: 8px;
+    margin-top: 6px;
     flex-shrink: 0;
 }
 
 .notif-dot.active {
     background-color: #ff4c3b;
-    /* แสดงสีแดงเมื่อยังไม่อ่าน */
     box-shadow: 0 0 4px rgba(255, 76, 59, 0.4);
 }
 
+/* ✅ ส่วนรูปภาพ */
 .notif-img {
-    margin-right: 12px;
+    /* ✅ ลดระยะห่างขวาลง เพื่อให้ชิดกับข้อความมากขึ้น */
+    margin-right: 10px;
     flex-shrink: 0;
+    line-height: 0;
+    /* แก้ปัญหารูปมีขอบล่าง */
 }
 
 .notif-img img {
@@ -307,6 +330,8 @@ export default {
     height: 40px;
     object-fit: cover;
     border-radius: 50%;
+    display: block;
+    /* แก้ปัญหารูปมีขอบล่าง */
 }
 
 .default-icon-bg {
@@ -320,15 +345,18 @@ export default {
     color: #666;
 }
 
+/* ✅ ส่วนข้อความ */
 .notif-content {
     flex-grow: 1;
     overflow: hidden;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: flex-start !important;
     text-align: left !important;
+    padding-top: 2px;
+    /* ดันลงนิดนึงให้ตรงกับรูป */
 }
 
 .notif-title {
@@ -338,6 +366,7 @@ export default {
     color: #222;
     text-align: left !important;
     width: 100%;
+    line-height: 1.2;
 }
 
 .item-unread .notif-title {
@@ -356,7 +385,7 @@ export default {
     margin-bottom: 4px;
     text-align: left !important;
     width: 100%;
-    line-height: 1.4;
+    line-height: 1.3;
 }
 
 .notif-date {
@@ -366,30 +395,29 @@ export default {
     width: 100%;
 }
 
+/* ปุ่มลบ */
 .delete-action {
     position: absolute;
-    right: 15px;
+    right: 5px;
+    /* ขยับเข้ามาจากขอบขวา */
     top: 50%;
     transform: translateY(-50%);
     z-index: 10;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    /* ลดขนาดปุ่มลงนิดนึง */
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ff4c3b;
-    /* เปลี่ยนเป็นสีแดงตามรูป */
     cursor: pointer;
     border-radius: 50%;
     transition: all 0.2s ease;
     background-color: transparent;
 }
 
-/* เอฟเฟกต์เมื่อ Hover ที่ปุ่มถังขยะ */
 .delete-action:hover {
     color: #d32f2f;
     background-color: rgba(255, 76, 59, 0.1);
-    transform: translateY(-50%) scale(1.1);
-    /* ขยายขนาดเล็กน้อย */
 }
 </style>

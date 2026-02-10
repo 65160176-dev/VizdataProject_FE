@@ -53,12 +53,12 @@
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span class="text-secondary">Date:</span>
                                     <span class="fw-bold text-dark">{{ formatDate(order.createdAt || order.date)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span class="text-secondary">Payment:</span>
                                     <span class="badge bg-secondary text-white">{{ order.paymentMethod || 'N/A'
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between small">
                                     <span class="text-secondary">Status:</span>
@@ -102,22 +102,23 @@
                             <span class="text-secondary small">ราคาสินค้า (Subtotal)</span>
                             <span class="fw-bold text-dark">{{ formatCurrency(calculateTotal(order)) }}</span>
                         </div>
-                        
+
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-secondary small">ค่าจัดส่ง</span>
                             <span class="fw-bold text-dark">{{ formatCurrency(order.shippingCost || 0) }}</span>
                         </div>
-                        
+
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-danger small">ค่าแพลตฟอร์ม (3%)</span>
                             <span class="fw-bold text-danger">-{{ formatCurrency(order.platformFee || 0) }}</span>
                         </div>
-                        
-                        <div v-if="order.affiliateCommission > 0" class="d-flex justify-content-between align-items-center mb-2">
+
+                        <div v-if="order.affiliateCommission > 0"
+                            class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-danger small">ค่าคอม Affiliate</span>
                             <span class="fw-bold text-danger">-{{ formatCurrency(order.affiliateCommission) }}</span>
                         </div>
-                        
+
                         <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                             <div>
                                 <span class="text-secondary small">เงินที่ร้านได้รับจริง</span>
@@ -127,31 +128,31 @@
                             </div>
 
                             <div class="d-flex gap-2">
-                            <template v-if="checkStatus(order.status, 'request')">
-                                <button class="btn btn-outline-secondary rounded-pill px-4 shadow-sm fw-bold"
-                                    @click="openRejectModal">
-                                    ปฏิเสธคำขอ
-                                </button>
-                                <button class="btn btn-danger rounded-pill px-4 shadow-sm text-white fw-bold"
-                                    @click="handleAction('cancelled')">
-                                    อนุมัติยกเลิก
-                                    <Icon name="feather:x-circle" class="ms-1" />
-                                </button>
-                            </template>
+                                <template v-if="checkStatus(order.status, 'request')">
+                                    <button class="btn btn-outline-secondary rounded-pill px-4 shadow-sm fw-bold"
+                                        @click="openRejectModal('preparing')">
+                                        ปฏิเสธคำขอ
+                                    </button>
+                                    <button class="btn btn-danger rounded-pill px-4 shadow-sm text-white fw-bold"
+                                        @click="handleAction('cancelled')">
+                                        อนุมัติยกเลิก
+                                        <Icon name="feather:x-circle" class="ms-1" />
+                                    </button>
+                                </template>
 
-                            <button v-if="checkStatus(order.status, 'preparing')"
-                                class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold"
-                                @click="handleAction('shipped')">
-                                ส่งสินค้าแล้ว
-                                <Icon name="feather:truck" class="ms-1" />
-                            </button>
+                                <button v-if="checkStatus(order.status, 'preparing')"
+                                    class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold"
+                                    @click="handleAction('shipped')">
+                                    ส่งสินค้าแล้ว
+                                    <Icon name="feather:truck" class="ms-1" />
+                                </button>
 
-                            <template v-if="checkStatus(order.status, 'pending')">
-                                <button class="btn btn-outline-danger rounded-pill px-4"
-                                    @click="handleAction('cancelled')">Reject</button>
-                                <button class="btn btn-success text-white rounded-pill px-4 shadow-sm fw-bold"
-                                    @click="handleAction('preparing')">Accept Order</button>
-                            </template>
+                                <template v-if="checkStatus(order.status, 'pending')">
+                                    <button class="btn btn-outline-danger rounded-pill px-4"
+                                        @click="openRejectModal('cancelled')">Reject</button>
+                                    <button class="btn btn-success text-white rounded-pill px-4 shadow-sm fw-bold"
+                                        @click="handleAction('preparing')">Accept Order</button>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -163,10 +164,10 @@
                     @click.stop="closeRejectModal">
                     <div class="modal-content-custom p-4 shadow-lg" style="max-width: 400px;" @click.stop>
                         <h5 class="fw-bold mb-3 text-danger">
-                            <Icon name="feather:alert-circle" class="me-2" />ปฏิเสธคำขอ
+                            <Icon name="feather:alert-circle" class="me-2" />{{ modalTitle }}
                         </h5>
                         <p class="text-secondary small mb-3">
-                            กรุณาระบุเหตุผลที่ปฏิเสธ เพื่อแจ้งให้ลูกค้าทราบ
+                            {{ modalDesc }}
                         </p>
 
                         <div class="mb-3">
@@ -202,7 +203,7 @@
                             <button class="btn btn-danger flex-grow-1 rounded-pill fw-bold"
                                 :disabled="selectedRejectReason === 'other' && !rejectNote.trim()"
                                 @click="submitReject">
-                                ยืนยันการปฏิเสธ
+                                ยืนยัน
                             </button>
                         </div>
                     </div>
@@ -227,19 +228,44 @@ const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
 const orderStore = useOrderStore()
 const { $showToast } = useNuxtApp()
 
-// --- Logic สำหรับ Reject Modal ---
+// --- Logic สำหรับ Reject Modal (ย้ายมาจาก orderStatus.vue) ---
 const showRejectDialog = ref(false)
 const rejectNote = ref('')
 const selectedRejectReason = ref('')
-const rejectOptions = [
+const targetStatus = ref('')
+const modalTitle = ref('')
+const modalDesc = ref('')
+const rejectOptions = ref([])
+
+// ตัวเลือกสาเหตุ
+const rejectOptionsRequest = [
     'สินค้าอยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกได้',
     'แพ็คสินค้าเรียบร้อยแล้วพร้อมส่ง',
     'สินค้าไม่เข้าเงื่อนไขการรับประกัน/คืนเงิน',
     'หลักฐานไม่เพียงพอ'
 ]
+const rejectOptionsCancel = [
+    'สินค้าหมดสต็อก / Out of Stock',
+    'ข้อมูลที่อยู่จัดส่งไม่ถูกต้อง',
+    'ไม่สามารถติดต่อลูกค้าได้',
+    'ลูกค้าขอยกเลิก (ผ่านแชท)'
+]
 
-const openRejectModal = () => {
-    selectedRejectReason.value = rejectOptions[0]
+// ฟังก์ชันเปิด Modal ปฏิเสธ (รวม Logic การเลือกข้อความ)
+const openRejectModal = (status) => {
+    targetStatus.value = status
+
+    if (status === 'cancelled') {
+        modalTitle.value = 'ยกเลิกคำสั่งซื้อ'
+        modalDesc.value = 'กรุณาระบุเหตุผลที่ต้องการยกเลิกคำสั่งซื้อนี้'
+        rejectOptions.value = rejectOptionsCancel
+    } else {
+        modalTitle.value = 'ปฏิเสธคำขอ'
+        modalDesc.value = 'กรุณาระบุเหตุผลที่ปฏิเสธ เพื่อแจ้งให้ลูกค้าทราบ'
+        rejectOptions.value = rejectOptionsRequest
+    }
+
+    selectedRejectReason.value = rejectOptions.value[0]
     rejectNote.value = ''
     showRejectDialog.value = true
 }
@@ -253,12 +279,12 @@ const submitReject = async () => {
     if (selectedRejectReason.value === 'other') {
         finalReason = rejectNote.value
     }
-    // ยิง API กลับไปสถานะ preparing พร้อมเหตุผล
-    await handleAction('preparing', finalReason)
+    // ส่งค่ากลับไปหา handleAction
+    await handleAction(targetStatus.value, finalReason)
     closeRejectModal()
 }
 
-// --- Action Logic ---
+// --- Action Logic (การยิง API) ---
 const handleAction = async (newStatus, reason = null) => {
     if (!props.order._id) return;
     try {
@@ -301,8 +327,6 @@ const calculateTotal = (o) => {
     return items.length > 0 ? items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0) : (o.total || 0)
 }
 
-const getTextClass = (s) => 'text-status-' + (s || '').toLowerCase()
-
 const getStatusClass = (status) => {
     switch (status?.toLowerCase()) {
         case 'pending': return 'bg-warning text-dark';
@@ -324,7 +348,7 @@ const checkStatus = (status, type) => {
 </script>
 
 <style scoped>
-/* CSS Gradient & Colors */
+/* CSS Gradient & Colors (จาก orderDetailModal เดิม) */
 .header-preparing,
 .header-processing,
 .header-confirmed {
@@ -356,28 +380,7 @@ const checkStatus = (status, type) => {
     background: #6c757d;
 }
 
-.text-status-preparing,
-.text-status-processing {
-    color: #0277BD;
-}
-
-.text-status-shipped {
-    color: #4527A0;
-}
-
-.text-status-completed {
-    color: #00695C;
-}
-
-.text-status-cancelled {
-    color: #C62828;
-}
-
-.text-status-pending,
-.text-status-return_requested {
-    color: #E65100;
-}
-
+/* Modal CSS (ใช้ร่วมกันได้) */
 .modal-backdrop-custom {
     position: fixed;
     inset: 0;
@@ -387,6 +390,7 @@ const checkStatus = (status, type) => {
     align-items: center;
     justify-content: center;
     z-index: 2050;
+    /* ระดับความสูงของ Detail Modal */
     padding: 20px;
 }
 

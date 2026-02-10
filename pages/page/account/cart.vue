@@ -86,11 +86,8 @@
                             </button>
                           </span>
                           <input type="number" name="quantity" class="form-control input-number qty-input"
-                            :disabled="item.quantity > item.stock" 
-                            :value="item.quantity" 
-                            @input="handleQuantityInput($event, item)"
-                            @blur="handleQuantityBlur($event, item)"
-                            min="1" 
+                            :disabled="item.quantity > item.stock" :value="item.quantity"
+                            @input="handleQuantityInput($event, item)" @blur="handleQuantityBlur($event, item)" min="1"
                             :max="item.stock" />
                           <span class="input-group-prepend">
                             <button type="button" class="btn quantity-btn" @click="increment(item)"
@@ -240,7 +237,7 @@ export default {
     async handleQuantityBlur(event, item) {
       const newQuantity = parseInt(event.target.value) || 1;
       const oldQuantity = item.quantity;
-      
+
       // Validate quantity
       if (newQuantity < 1) {
         event.target.value = oldQuantity;
@@ -251,7 +248,7 @@ export default {
         useNuxtApp().$showToast({ msg: `สินค้ามีเพียง ${item.stock} ชิ้นในสต็อก`, type: "error" });
         return;
       }
-      
+
       // Only update if quantity changed
       if (newQuantity !== oldQuantity) {
         const diff = newQuantity - oldQuantity;
@@ -301,5 +298,14 @@ export default {
   border-color: #ced4da !important;
 }
 
-/* ... (CSS เดิมของคุณ) ... */
+.product-img {
+  width: 60px;
+  /* กำหนดความกว้างตามต้องการ */
+  height: 60px;
+  /* กำหนดความสูงให้เท่ากัน (แนะนำสี่เหลี่ยมจัตุรัส) */
+  object-fit: cover;
+  /* สำคัญ! ช่วยให้รูปไม่บีบ ไม่ยืด แต่จะตัดส่วนเกินออกแทน */
+  border-radius: 5px;
+  /* (ทางเลือก) ลบเหลี่ยมมุมภาพเล็กน้อย */
+}
 </style>

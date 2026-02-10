@@ -52,7 +52,6 @@
                         <i class="fa fa-sign-out-alt me-2"></i> ออกจากระบบ
                       </a>
                     </li>
-
                     <li class="nav-item" v-else>
                       <a class="nav-link text-orange fw-bold" @click="goToLogin">
                         <i class="fa fa-sign-in-alt me-2"></i> เข้าสู่ระบบ
@@ -87,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '~/store/auth'
 import { useRuntimeConfig } from '#imports'
@@ -105,9 +104,8 @@ const BACKEND_URL = 'http://localhost:3001'
 const isAuthenticated = computed(() => !!auth.isLoggedIn || (!!auth.user && Object.keys(auth.user).length > 0))
 const userName = computed(() => auth.userName || auth.user?.username || 'User')
 
-// ✅ Logic รูปภาพ
+// Logic รูปภาพ
 const imageError = ref(false)
-
 const avatarSrc = computed(() => {
   imageError.value = false
   if (auth.user && auth.user.avatar) {
@@ -116,16 +114,16 @@ const avatarSrc = computed(() => {
   return null
 })
 
-// ✅ Logic ดึงตัวอักษรแรกของชื่อ
 const userInitial = computed(() => {
   const name = userName.value || 'U'
-  return name.charAt(0).toUpperCase()
+  return name.charAt(0)
 })
 
 const handleImageError = () => {
   imageError.value = true
 }
 
+// ส่วนจัดการ Tab
 const activeMainTab = ref('info')
 
 const updateTab = (tabName) => {
@@ -136,9 +134,18 @@ const updateTab = (tabName) => {
   router.replace({ query: newQuery })
 }
 
-// ✅ ฟังก์ชันไปหน้า Login
+// Watch URL changes (เช่น กดจาก Notification)
+watch(
+  () => route.query.tab,
+  (newTab) => {
+    if (newTab) {
+      activeMainTab.value = newTab
+    }
+  }
+)
+
 const goToLogin = () => {
-  router.push('/page/auth/LoginPage') // หรือ '/login' ตาม Route ที่คุณตั้งไว้
+  router.push('/page/auth/LoginPage')
 }
 
 const confirmLogout = () => {
@@ -149,10 +156,22 @@ const confirmLogout = () => {
   }
 }
 
-onMounted(() => {
+// ✅ 1. เพิ่มฟังก์ชัน Init
+const initDashboard = () => {
   if (route.query.tab) {
     activeMainTab.value = route.query.tab
   }
+}
+
+// ✅ 2. เพิ่ม Watcher เผื่อ User โหลดช้า (Refresh)
+watch(() => auth.user, (val) => {
+  if (val) {
+    initDashboard()
+  }
+}, { immediate: true })
+
+onMounted(() => {
+  initDashboard()
 })
 </script>
 
@@ -191,7 +210,6 @@ onMounted(() => {
   gap: 15px;
 }
 
-/* ✅ Style กรอบรูปใหม่ */
 .user-avatar-small {
   width: 50px;
   height: 50px;
@@ -212,7 +230,6 @@ onMounted(() => {
   display: block;
 }
 
-/* ✅ Style ตัวอักษรย่อ */
 .avatar-placeholder {
   width: 100%;
   height: 100%;
@@ -264,7 +281,6 @@ onMounted(() => {
   margin: 8px 0;
 }
 
-/* ✅ Helper Class สีส้ม */
 .text-orange {
   color: #ff5722 !important;
 }

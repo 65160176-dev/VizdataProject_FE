@@ -124,9 +124,10 @@
           <span class="fw-bold fs-4 text-primary">฿{{ order.total.toLocaleString() }}</span>
         </div>
 
-        <div v-if="order.note && shouldShowNote(order.status)" class="mt-4 p-3 rounded text-start border border-danger shadow-sm" style="background-color: #ffebee;">
+        <div v-if="order.note && shouldShowNote(order.status)"
+          class="mt-4 p-3 rounded text-start border border-danger shadow-sm" style="background-color: #ffebee;">
           <div class="fw-bold text-danger mb-2 d-flex align-items-center border-bottom border-danger-subtle pb-2">
-            <i class="fa fa-exclamation-circle me-2 fs-5"></i> 
+            <i class="fa fa-exclamation-circle me-2 fs-5"></i>
             <span style="font-size: 1rem;">{{ noteHeader }}</span>
           </div>
           <div class="text-dark pt-1 ps-1" style="font-size: 0.95rem; line-height: 1.5;">
@@ -246,29 +247,25 @@ const formatStatus = (status) => {
   }
 }
 
-// ✅✅ ฟังก์ชันเช็คการแสดงผล Note (เหมือนใน Dashboard) ✅✅
 const shouldShowNote = (status) => {
   const s = (status || '').toLowerCase();
-  // ซ่อนถ้าเป็น Note ของ User (ตอนกดขอ หรือตอน Pending)
   if (s.includes('request') || s === 'pending') return false;
   return true;
 }
 
-// ✅✅ Header ของ Note (Dynamic) ✅✅
 const noteHeader = computed(() => {
   const s = (props.order.status || '').toLowerCase();
-  
+
   if (s === 'preparing' || s === 'processing') {
     return 'ร้านค้าปฏิเสธคำขอ';
-  } 
+  }
   else if (s === 'cancelled' || s === 'cancel') {
     return 'เหตุผลการยกเลิก';
   }
-  
+
   return 'ข้อความจากร้านค้า';
 })
 
-// Stepper Logic
 const step = computed(() => {
   if (checkStatus(props.order.status, 'pending')) return 1
   if (checkStatus(props.order.status, 'processing')) return 2
@@ -282,15 +279,16 @@ const isCancelled = computed(() => {
   return s === 'cancelled' || s === 'cancel' || s.includes('cancel') || s.includes('return_requested') || s.includes('return requested');
 })
 
+// ✅✅ แก้ไขตรงนี้: เปลี่ยน class ให้ตรงกับ userOrder.vue ✅✅
 const statusBadgeClass = computed(() => {
   const s = (props.order.status || '').toLowerCase();
   switch (s) {
-    case 'accepted': case 'completed': case 'delivered': return 'bg-success text-white'
-    case 'pending review': case 'pending': return 'bg-warning text-dark'
-    case 'preparing': case 'processing': case 'confirmed': return 'bg-info text-dark'
-    case 'shipped': case 'shipping': case 'arrived': return 'bg-primary text-white'
-    case 'cancel requested': case 'cancelled': case 'cancel': case 'return_requested': return 'bg-danger text-white'
-    default: return 'bg-light text-dark border'
+    case 'accepted': case 'completed': case 'delivered': return 'status-success'
+    case 'pending review': case 'pending': return 'status-warning'
+    case 'preparing': case 'processing': case 'confirmed': return 'status-info'
+    case 'shipped': case 'shipping': case 'arrived': return 'status-primary'
+    case 'cancel requested': case 'cancelled': case 'cancel': case 'return_requested': case 'return requested': return 'status-danger'
+    default: return 'status-default'
   }
 })
 
@@ -307,9 +305,13 @@ const openReturnModal = () => {
 const closeCancelModal = () => { showCancelModal.value = false }
 
 const submitRequestCancellation = async (reason) => {
-  // ส่งคำขอให้ร้านตรวจสอบเสมอ ไม่เปลี่ยนเป็นยกเลิกทันที
-  const statusToSend = 'cancel requested'
-  const title = 'ส่งคำขอยกเลิกแล้ว'
+  let statusToSend = 'cancel requested'
+  let title = 'ส่งคำขอยกเลิกแล้ว'
+
+  if (checkStatus(props.order.status, 'pending') || checkStatus(props.order.status, 'shipping')) {
+    statusToSend = 'cancelled'
+    title = 'ยกเลิกคำสั่งซื้อเรียบร้อย'
+  }
 
   try {
     const token = localStorage.getItem('token')
@@ -322,14 +324,13 @@ const submitRequestCancellation = async (reason) => {
       body: {
         status: statusToSend,
         note: reason,
-        isCancelRequest: true
+        isCancelRequest: statusToSend === 'cancel requested'
       }
     })
 
     props.order.status = statusToSend
     props.order.note = reason
 
-    // แจ้งให้ parent อัปเดตสถานะ (ยังไม่ยกเลิกจนกว่าร้านจะอนุมัติ)
     emit('update', props.order)
 
     closeCancelModal()
@@ -365,6 +366,38 @@ const submitConfirmReceived = async () => {
 </script>
 
 <style scoped>
+/* ✅✅ เพิ่ม CSS สีสถานะจาก userOrder.vue ✅✅ */
+.status-success {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.status-warning {
+  background: #fefcbf;
+  color: #975a16;
+}
+
+.status-info {
+  background: #bee3f8;
+  color: #2b6cb0;
+}
+
+.status-primary {
+  background: #c3dafe;
+  color: #434190;
+}
+
+.status-danger {
+  background: #fed7d7;
+  color: #822727;
+}
+
+.status-default {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+/* --- Style เดิม --- */
 .stepper-wrapper {
   display: flex;
   justify-content: space-between;

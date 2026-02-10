@@ -67,7 +67,7 @@
                         </div>
                         <div class="text-side">
                             <strong>{{ defaultAddress.name || defaultAddress.firstName }} {{ defaultAddress.lastName
-                                }}</strong>
+                            }}</strong>
                             <p class="mb-1 text-muted">{{ defaultAddress.address }} {{ defaultAddress.subDistrict }} {{
                                 defaultAddress.district }} {{ defaultAddress.province }} {{ defaultAddress.zipCode }}
                             </p>
@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '~/store/auth'
 import { useAddressStore } from '~/store/address'
 import { useRuntimeConfig } from '#imports'
@@ -112,7 +112,6 @@ const editingName = ref(false)
 const pendingAvatarFile = ref(null)
 const pendingAvatarPreview = ref(null)
 
-// ✅ Logic รูปภาพใหม่
 const imageError = ref(false)
 
 const avatarSrc = computed(() => {
@@ -136,7 +135,6 @@ const initAvatarAndName = () => {
     editableName.value = auth.userName || (auth.user?.username || '')
 }
 
-// ... (Functions updateLocalAuth, cancelEditName, saveName, onAvatarSelected, cancelAvatar, saveAvatar เหมือนเดิม) ...
 const updateLocalAuth = (u) => { if (!u) return; auth.user = u; auth.userName = u.username || auth.userName; if (import.meta.client) { try { localStorage.setItem('user', JSON.stringify(u)); localStorage.setItem('userName', auth.userName) } catch (e) { } } }
 const cancelEditName = () => { editingName.value = false; editableName.value = auth.userName || (auth.user?.username || '') }
 const saveName = async () => { if (!editableName.value || !isAuthenticated.value) return; const userId = auth.user?.id || auth.user?._id; if (!userId) return; try { const res = await $fetch(`${API_BASE}/users/${userId}`, { method: 'PATCH', body: { username: editableName.value }, headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }); if (res) { updateLocalAuth(res); editingName.value = false; useNuxtApp().$showToast({ msg: "เปลี่ยนชื่อสำเร็จ", type: "success" }); } } catch (e) { useNuxtApp().$showToast({ msg: "เปลี่ยนชื่อไม่สำเร็จ", type: "error" }); } }
@@ -144,11 +142,23 @@ const onAvatarSelected = (e) => { const file = e.target.files && e.target.files[
 const cancelAvatar = () => { pendingAvatarFile.value = null; pendingAvatarPreview.value = null }
 const saveAvatar = async () => { const file = pendingAvatarFile.value; if (!file) return; const form = new FormData(); form.append('file', file); const endpoint = Number(auth.userType) === 0 ? `${API_BASE}/sellers/upload-avatar` : `${API_BASE}/users/upload-avatar`; try { const uploadRes = await fetch(endpoint, { method: 'POST', headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : {}, body: form }); if (!uploadRes.ok) throw new Error('Upload failed'); const data = await uploadRes.json(); if (data && data.success && data.data) { const fullUrl = data.data.fullUrl || (BACKEND_URL + data.data.avatar); if (auth.user) auth.user.avatar = data.data.avatar; updateLocalAuth(auth.user); cancelAvatar(); useNuxtApp().$showToast({ msg: "อัปโหลดรูปสำเร็จ", type: "success" }); } } catch (err) { useNuxtApp().$showToast({ msg: "อัปโหลดรูปไม่สำเร็จ", type: "error" }); } }
 
-onMounted(async () => {
+// ✅ 1. ฟังก์ชันโหลดข้อมูล
+const loadProfileData = async () => {
     if (isAuthenticated.value) {
         initAvatarAndName()
         await addressStore.fetchAddresses()
     }
+}
+
+// ✅ 2. เฝ้าดู User
+watch(() => auth.user, (val) => {
+    if (val) {
+        loadProfileData()
+    }
+}, { immediate: true })
+
+onMounted(async () => {
+    loadProfileData()
 })
 </script>
 

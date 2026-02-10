@@ -76,11 +76,11 @@
           </div>
         </li> -->
         <li class="onhover-div mobile-cart">
-          <div>
+          <nuxt-link to="/page/account/cart">
             <img alt src="/images/icon/layout4/cart.png" class="img-fluid">
             <i class="ti-shopping-cart"></i>
             <span class="cart_qty_cls">{{ cartTotalQuantity }}</span>
-          </div>
+          </nuxt-link>
           <ul class="show-div shopping-cart" v-if="!cart.length">
             <li>Your cart is currently empty.</li>
           </ul>
@@ -88,7 +88,7 @@
             <li v-for="(item, index) in cart" :key="index">
               <div class="media">
                 <nuxt-link :to="{ path: '/product/sidebar/' + (item._id || item.id) }">
-                  <img alt class="mr-3" :src='getProductImage(item)'>
+                  <img alt class="mr-3 cart-img" :src='getProductImage(item)'>
                 </nuxt-link>
                 <div class="media-body">
                   <nuxt-link :to="{ path: '/product/sidebar/' + (item._id || item.id) }">
@@ -269,5 +269,16 @@ export default {
 .onhover-div .show-div.shopping-cart {
   left: auto !important;
   right: 0 !important;
+}
+
+.shopping-cart .media img.cart-img {
+  width: 90px;
+  /* ปรับขนาดความกว้างตามต้องการ (เช่น 70px - 90px) */
+  height: 90px;
+  /* ปรับขนาดความสูงให้เท่ากับความกว้าง (สี่เหลี่ยมจัตุรัส) */
+  object-fit: cover;
+  /* สำคัญ! ช่วยให้รูปไม่เบี้ยว แม้ขนาดจริงจะไม่ใช่สี่เหลี่ยม */
+  border-radius: 5px;
+  /* (ทางเลือก) เพิ่มความมนให้ขอบรูป */
 }
 </style>

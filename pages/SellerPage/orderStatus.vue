@@ -25,9 +25,11 @@
           <li class="nav-item" v-for="s in statuses" :key="s.key">
             <a class="nav-link d-flex align-items-center justify-content-center gap-2 transition-all"
               :class="[currentStatus === s.key ? 'active-tab-' + s.key : '']" href="#"
-              @click.prevent="currentStatus = s.key">
+              @click.prevent="changeTab(s.key)">
+
               <Icon :name="s.icon" size="18" />
               <span>{{ s.label }}</span>
+
               <span class="badge rounded-pill ms-2 transition-all shadow-sm"
                 :class="[currentStatus === s.key ? 'bg-white ' + getTextClass(s.key) : 'bg-light text-muted']">
                 {{ countMyOrdersByStatus(s.key) }}
@@ -79,109 +81,15 @@
             </div>
             <div class="d-flex justify-content-between align-items-center">
               <span class="text-success small fw-bold">เงินที่ร้านได้รับ:</span>
-              <div class="fw-bolder text-success fs-5">{{ formatCurrency(order.sellerEarnings || calculateTotal(order)) }}</div>
+              <div class="fw-bolder text-success fs-5">{{ formatCurrency(order.sellerEarnings || calculateTotal(order))
+              }}</div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <Transition name="fade">
-      <div v-if="showDetail" class="modal-backdrop-custom" @click.self="closeDetail">
-        <div class="modal-content-custom p-0 overflow-hidden shadow-lg">
-          <div
-            :class="['px-4 py-3 d-flex justify-content-between align-items-center text-white', 'header-' + selectedOrder.status]">
-            <div>
-              <h5 class="fw-bold mb-0">Order Detail</h5>
-              <small class="opacity-90">สถานะ: {{ selectedOrder.status }}</small>
-            </div>
-            <button class="btn btn-icon btn-white-glass rounded-circle text-white" @click="closeDetail">
-              <Icon name="feather:x" size="20" />
-            </button>
-          </div>
-
-          <div class="p-4 bg-white">
-            <div class="row mb-4 g-3">
-              <div class="col-md-6">
-                <div class="p-3 bg-light rounded-3 h-100">
-                  <h6 class="text-muted small mb-2 fw-bold text-uppercase">ที่อยู่จัดส่ง</h6>
-                  <div class="fw-bold mb-1">{{ selectedOrder.customer }}</div>
-                  <div class="small text-secondary">{{ selectedOrder.address }}</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="p-3 bg-light rounded-3 h-100">
-                  <h6 class="text-muted small mb-2 fw-bold text-uppercase">ข้อมูลคำสั่งซื้อ</h6>
-                  <div class="d-flex justify-content-between small mb-1">
-                    <span>Email:</span> <span class="fw-bold">{{ selectedOrder.email }}</span>
-                  </div>
-                  <div class="d-flex justify-content-between small">
-                    <span>Date:</span> <span class="fw-bold">{{ formatDate(selectedOrder) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <h6 class="fw-bold mb-3">รายการสินค้า</h6>
-            <div class="table-responsive mb-4 border rounded-3">
-              <table class="table table-borderless align-middle mb-0">
-                <thead class="bg-light small">
-                  <tr>
-                    <th>Product</th>
-                    <th class="text-end">Price</th>
-                    <th class="text-end">Qty</th>
-                    <th class="text-end">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(it, idx) in getItems(selectedOrder)" :key="idx" class="border-bottom">
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <img :src="it.image || '/images/dashboard/default.png'" class="rounded border me-2"
-                          style="width: 40px; height: 40px; object-fit: cover;">
-                        <div class="small fw-bold text-wrap">
-                            {{ it.name }}
-                            <div v-if="it.productId && (typeof it.productId.stock !== 'undefined')" 
-                                 class="text-muted" style="font-size: 10px;">
-                                 (Stock: {{ it.productId.stock }})
-                            </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="text-end small">{{ formatCurrency(it.price) }}</td>
-                    <td class="text-end small">x{{ it.qty }}</td>
-                    <td class="text-end fw-bold">{{ formatCurrency(it.price * it.qty) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-              <div>
-                <span class="text-secondary small">ยอดรวมทั้งหมด</span>
-                <h3 class="fw-bolder m-0" :class="getTextClass(selectedOrder.status)">{{
-                  formatCurrency(calculateTotal(selectedOrder)) }}</h3>
-              </div>
-
-              <div>
-                <button v-if="selectedOrder.status === 'preparing'" class="btn btn-primary rounded-pill px-4 shadow-sm"
-                  @click="handleUpdate(selectedOrder._id, 'shipped')">
-                  ส่งสินค้าแล้ว
-                  <Icon name="feather:truck" class="ms-1" />
-                </button>
-
-                <button v-if="['cancel requested', 'return_requested'].includes(selectedOrder.status)"
-                  class="btn btn-danger rounded-pill px-4 shadow-sm text-white"
-                  @click="handleUpdate(selectedOrder._id, 'cancelled')">
-                  อนุมัติยกเลิก
-                  <Icon name="feather:x-circle" class="ms-1" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <OrderDetailModal v-if="showDetail" :order="selectedOrder" @close="closeDetail" @updated="handleOrderUpdated" />
 
     <Transition name="fade">
       <div v-if="showRequestsModal" class="modal-backdrop-custom" @click.self="showRequestsModal = false">
@@ -235,9 +143,8 @@
                 </div>
 
                 <div class="d-flex gap-2 mt-2">
-                  <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill"
-                    @click="openRejectModal(order)">
-                    ปฏิเสธคำขอ
+                  <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill" @click="openDetail(order)">
+                    ตรวจสอบ / ปฏิเสธ
                   </button>
                   <button class="btn btn-sm btn-success flex-grow-1 rounded-pill text-white fw-bold"
                     @click="handleRequestAction(order._id, 'cancelled')">
@@ -251,70 +158,28 @@
       </div>
     </Transition>
 
-    <Transition name="fade">
-      <div v-if="showRejectDialog" class="modal-backdrop-custom" style="z-index: 1060;" @click.self="closeRejectModal">
-        <div class="modal-content-custom p-4 shadow-lg" style="max-width: 400px;">
-          <h5 class="fw-bold mb-3 text-danger">
-            <Icon name="feather:alert-circle" class="me-2" />ปฏิเสธคำขอ
-          </h5>
-          <p class="text-secondary small mb-3">
-            กรุณาระบุเหตุผลที่ปฏิเสธ เพื่อแจ้งให้ลูกค้าทราบ
-          </p>
-
-          <div class="mb-3">
-            <label class="form-label small fw-bold text-dark mb-2">เลือกเหตุผล:</label>
-            <div class="d-flex flex-column gap-2">
-              <div class="form-check" v-for="(option, index) in rejectOptions" :key="index">
-                <input class="form-check-input" type="radio" :name="'rejectReason'" :id="'reason-' + index"
-                  :value="option" v-model="selectedRejectReason">
-                <label class="form-check-label small" :for="'reason-' + index">
-                  {{ option }}
-                </label>
-              </div>
-
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="rejectReason" id="reason-other" value="other"
-                  v-model="selectedRejectReason">
-                <label class="form-check-label small fw-bold" for="reason-other">
-                  อื่นๆ (โปรดระบุ)
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="mb-3" v-if="selectedRejectReason === 'other'">
-            <textarea v-model="rejectNote" class="form-control bg-light border-0" rows="3"
-              placeholder="พิมพ์เหตุผลเพิ่มเติม...">
-            </textarea>
-          </div>
-
-          <div class="d-flex gap-2 mt-4">
-            <button class="btn btn-light flex-grow-1 rounded-pill" @click="closeRejectModal">ยกเลิก</button>
-            <button class="btn btn-danger flex-grow-1 rounded-pill fw-bold"
-              :disabled="selectedRejectReason === 'other' && !rejectNote.trim()" @click="submitReject">
-              ยืนยันการปฏิเสธ
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useOrderStore } from '~/store/orders'
 import { useAuthStore } from '~/store/auth'
-import { useRoute } from 'vue-router'
-import Swal from 'sweetalert2' // ✅ Import SweetAlert2
+import OrderDetailModal from '~/pages/SellerPage/components/orderDetailModal.vue'
 
 definePageMeta({ layout: 'seller' })
 
+const router = useRouter()
+const route = useRoute()
 const orderStore = useOrderStore()
 const authStore = useAuthStore()
-const route = useRoute()
+
+// --- State Definitions ---
 const currentStatus = ref('preparing')
 const showRequestsModal = ref(false)
+const showDetail = ref(false)
+const selectedOrder = ref({ item: [] })
 
 const statuses = [
   { key: 'preparing', label: 'กำลังเตรียม', icon: 'feather:package' },
@@ -323,44 +188,70 @@ const statuses = [
   { key: 'cancelled', label: 'ยกเลิก', icon: 'feather:x-circle' }
 ]
 
-const showRejectDialog = ref(false)
-const targetRejectOrderId = ref(null)
-const rejectNote = ref('')
-const selectedRejectReason = ref('')
+// --- Core Logic & Lifecycle ---
 
-const rejectOptions = [
-  'สินค้าอยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกได้',
-  'แพ็คสินค้าเรียบร้อยแล้วพร้อมส่ง',
-  'สินค้าไม่เข้าเงื่อนไขการรับประกัน/คืนเงิน',
-  'หลักฐานไม่เพียงพอ'
-]
+const changeTab = async (statusKey) => {
+  currentStatus.value = statusKey
+  const query = { ...route.query, status: statusKey }
+  delete query.id
+  await router.push({ path: route.path, query })
+}
+
+const checkAndOpenOrder = (id) => {
+  if (!id || !orderStore.allOrders || orderStore.allOrders.length === 0) return
+
+  const targetOrder = orderStore.allOrders.find(o =>
+    String(o._id) === String(id) || o.orderId === id
+  )
+
+  if (targetOrder) {
+    openDetail(targetOrder)
+  }
+}
+
+// ✅ 1. Watch Status: เมื่อเปลี่ยน Tab ผ่าน URL ให้โหลดข้อมูลใหม่
+watch(() => route.query.status, async (newStatus) => {
+  if (newStatus && statuses.some(s => s.key === newStatus)) {
+    currentStatus.value = newStatus
+    // เพิ่มบรรทัดนี้ เพื่อดึงข้อมูลใหม่เมื่อ Tab เปลี่ยน
+    await orderStore.fetchOrders()
+  }
+})
+
+// ✅ 2. Watch ID: เมื่อ ID ใน URL เปลี่ยน (กด Noti มา) ให้เช็คและเปิด Popup
+watch(() => route.query.id, async (newId) => {
+  if (newId) {
+    // ถ้าข้อมูลยังไม่มา หรือหาไม่เจอ ให้โหลดใหม่ก่อน
+    const exists = orderStore.allOrders.find(o => o._id === newId || o.orderId === newId)
+    if (!exists) {
+      await orderStore.fetchOrders()
+    }
+    checkAndOpenOrder(newId)
+  } else {
+    closeDetail()
+  }
+})
 
 onMounted(async () => {
   await orderStore.fetchOrders()
 
-  const queryTab = route.query.tab
-  if (queryTab && statuses.some(s => s.key === queryTab)) {
-    currentStatus.value = queryTab
+  const queryStatus = route.query.status
+  if (queryStatus && statuses.some(s => s.key === queryStatus)) {
+    currentStatus.value = queryStatus
+  } else {
+    if (!route.query.id) {
+      changeTab('preparing')
+    } else {
+      currentStatus.value = 'preparing'
+    }
   }
 
-  const queryId = route.query.id
-  if (queryId) {
-    const targetOrder = orderStore.allOrders.find(o => o._id === queryId)
-    if (targetOrder) {
-      openDetail(targetOrder)
-    }
+  if (route.query.id) {
+    checkAndOpenOrder(route.query.id)
   }
 })
 
-const getModalHeaderClass = (status) => {
-  const s = (status || '').toLowerCase()
-  if (['pending', 'preparing', 'confirm'].includes(s)) return 'header-preparing'
-  if (['shipped', 'shipping'].includes(s)) return 'header-shipped'
-  if (['completed', 'success', 'delivered'].includes(s)) return 'header-completed'
-  if (['cancelled', 'cancel', 'cancel requested', 'rejected'].includes(s)) return 'header-cancelled'
-  if (['return_requested', 'returned'].includes(s)) return 'header-return_requested'
-  return 'header-preparing' 
-}
+// --- Computed Properties ---
 
 const myAllOrders = computed(() => {
   const all = orderStore.allOrders || []
@@ -386,123 +277,18 @@ const filteredMyOrders = computed(() => {
   return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === currentStatus.value.toLowerCase())
 })
 
-const openRejectModal = (order) => {
-  targetRejectOrderId.value = order._id
-  selectedRejectReason.value = rejectOptions[0]
-  rejectNote.value = ''
-  showRejectDialog.value = true
+// --- Helper Functions ---
+
+const getModalHeaderClass = (status) => {
+  const s = (status || '').toLowerCase()
+  if (['pending', 'preparing', 'confirm'].includes(s)) return 'header-preparing'
+  if (['shipped', 'shipping'].includes(s)) return 'header-shipped'
+  if (['completed', 'success', 'delivered'].includes(s)) return 'header-completed'
+  if (['cancelled', 'cancel', 'cancel requested', 'rejected'].includes(s)) return 'header-cancelled'
+  if (['return_requested', 'returned'].includes(s)) return 'header-return_requested'
+  return 'header-preparing'
 }
 
-const closeRejectModal = () => {
-  showRejectDialog.value = false
-  targetRejectOrderId.value = null
-}
-
-const submitReject = async () => {
-  if (!targetRejectOrderId.value) return
-  let finalReason = selectedRejectReason.value
-  if (selectedRejectReason.value === 'other') {
-    finalReason = rejectNote.value
-  }
-  await orderStore.updateStatus(targetRejectOrderId.value, 'preparing', finalReason)
-  closeRejectModal()
-  if (pendingOrders.value.length === 0) {
-    showRequestsModal.value = false
-  }
-}
-
-async function handleRequestAction(id, action) {
-  await orderStore.updateStatus(id, action)
-  if (pendingOrders.value.length === 0) {
-    showRequestsModal.value = false
-  }
-}
-
-// ✅ [แก้ไข] ใช้ SweetAlert2 แจ้งเตือนสินค้าหมด และดักจับ Error
-async function handleUpdate(id, action) {
-  
-  // 1. ตรวจสอบสต็อกก่อนเรียก API
-  if (action === 'shipped') {
-      const targetOrder = myAllOrders.value.find(o => o._id === id) || selectedOrder.value
-      const items = getItems(targetOrder)
-      
-      const outOfStockItem = items.find(item => {
-          let stock = item.productId?.stock
-          stock = Number(stock)
-          return typeof stock === 'number' && !isNaN(stock) && stock <= 0
-      })
-
-      if (outOfStockItem) {
-          const currentStock = outOfStockItem.productId?.stock ?? 0
-          
-          // ✨ แสดง Pop-up แจ้งเตือนด้วย SweetAlert2 แบบสวยๆ
-          Swal.fire({
-            icon: 'warning',
-            title: 'ไม่สามารถส่งสินค้าได้',
-            html: `
-              <div class="text-start px-3">
-                <p class="mb-2">สินค้า: <strong>${outOfStockItem.name}</strong></p>
-                <p class="mb-3">สถานะ: <span class="text-danger fw-bold">สินค้าหมด (Stock: ${currentStock})</span></p>
-                <small class="text-muted">กรุณาเติมสต็อกสินค้าในคลังสินค้าก่อนดำเนินการเปลี่ยนสถานะ</small>
-              </div>
-            `,
-            confirmButtonText: 'เข้าใจแล้ว',
-            confirmButtonColor: '#ff9f43', // สีส้มตามธีม
-            focusConfirm: false,
-            customClass: {
-              popup: 'rounded-4 shadow-lg border-0',
-              confirmButton: 'rounded-pill px-4 shadow-sm'
-            }
-          })
-          
-          return // ⛔️ หยุดการทำงาน
-      }
-  }
-
-  // 2. เรียก API ภายใน Try-Catch
-  try {
-    await orderStore.updateStatus(id, action)
-    
-    if (pendingOrders.value.length === 0) {
-      showRequestsModal.value = false
-    }
-    
-    // แจ้งเตือนเมื่อสำเร็จ (Toast มุมขวาบน)
-    if(action === 'shipped') {
-        const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true
-        })
-        Toast.fire({ icon: 'success', title: 'อัปเดตสถานะจัดส่งเรียบร้อย' })
-    }
-
-    await handleOrderUpdated()
-
-  } catch (error) {
-    console.error("Update Status Failed:", error)
-    const msg = error.response?._data?.message || error.message || 'เกิดข้อผิดพลาดในการอัปเดต';
-    
-    // แจ้งเตือน Error
-    Swal.fire({
-      icon: 'error',
-      title: 'เกิดข้อผิดพลาด!',
-      text: msg,
-      confirmButtonText: 'ปิด',
-      confirmButtonColor: '#d33',
-      customClass: { popup: 'rounded-4' }
-    })
-  }
-}
-
-async function handleOrderUpdated() {
-  await orderStore.fetchOrders()
-  closeDetail()
-}
-
-// Helper Functions
 function countMyOrdersByStatus(statusKey) { return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === statusKey.toLowerCase()).length }
 function getStatusLabel(key) { return statuses.find(s => s.key === key)?.label || key }
 function getItems(o) { return o.item || o.items || [] }
@@ -513,36 +299,149 @@ function formatDate(o) { if (!o) return ''; const d = o.updatedAt || o.date; ret
 function formatCurrency(v) { return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(v || 0) }
 function getTextClass(s) { return 'text-status-' + (s || '').toLowerCase() }
 
-const showDetail = ref(false)
-const selectedOrder = ref({ item: [] })
-function openDetail(o) { selectedOrder.value = { ...o }; showDetail.value = true }
-function closeDetail() { showDetail.value = false }
+// --- Modal Actions ---
+
+function openDetail(o) {
+  selectedOrder.value = { ...o };
+  showDetail.value = true
+
+  if (!route.query.id) {
+    router.replace({ query: { ...route.query, id: o.orderId || o._id } })
+  }
+}
+
+function closeDetail() {
+  showDetail.value = false
+  const query = { ...route.query }
+  delete query.id
+  router.replace({ query })
+}
+
+// ฟังก์ชันอนุมัติทันที (ไม่ต้องมี Modal)
+async function handleRequestAction(id, action) {
+  await orderStore.updateStatus(id, action)
+  // ถ้าไม่มี pending เหลือแล้ว ให้ปิด modal รายการ
+  if (pendingOrders.value.length === 0) {
+    showRequestsModal.value = false
+  }
+}
+
+async function handleOrderUpdated() {
+  await orderStore.fetchOrders()
+  closeDetail()
+}
 </script>
 
 <style scoped>
-/* CSS เดิมทั้งหมด */
-.header-preparing { background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%); }
-.text-status-preparing { color: #0277BD; }
-.header-shipped { background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%); }
-.text-status-shipped { color: #4527A0; }
-.header-completed { background: linear-gradient(135deg, #00897B 0%, #26A69A 100%); }
-.text-status-completed { color: #00695C; }
-.header-cancelled { background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%); }
-.text-status-cancelled { color: #C62828; }
-.header-return_requested { background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%); }
+/* ใช้ CSS ที่คุณมีอยู่แล้ว */
+.header-preparing {
+  background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%);
+}
 
-.active-tab-preparing { background-color: #0288D1 !important; color: white !important; }
-.active-tab-shipped { background-color: #5E35B1 !important; color: white !important; }
-.active-tab-completed { background-color: #00897B !important; color: white !important; }
-.active-tab-cancelled { background-color: #D32F2F !important; color: white !important; }
+.text-status-preparing {
+  color: #0277BD;
+}
 
-.custom-tabs .nav-link { color: #64748b; border-radius: 12px; font-weight: 600; padding: 12px; border: 1px solid transparent; }
-.custom-tabs .nav-link:hover { background-color: #f8fafc; }
-.transition-all { transition: all 0.3s ease; }
-.order-card { cursor: pointer; transition: 0.2s; }
-.order-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important; }
-.modal-backdrop-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1050; padding: 20px; }
-.modal-content-custom { background: #fff; width: 100%; max-width: 700px; border-radius: 20px; }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.header-shipped {
+  background: linear-gradient(135deg, #5E35B1 0%, #7E57C2 100%);
+}
+
+.text-status-shipped {
+  color: #4527A0;
+}
+
+.header-completed {
+  background: linear-gradient(135deg, #00897B 0%, #26A69A 100%);
+}
+
+.text-status-completed {
+  color: #00695C;
+}
+
+.header-cancelled {
+  background: linear-gradient(135deg, #D32F2F 0%, #EF5350 100%);
+}
+
+.text-status-cancelled {
+  color: #C62828;
+}
+
+.header-return_requested {
+  background: linear-gradient(135deg, #F57F17 0%, #FFB300 100%);
+}
+
+.active-tab-preparing {
+  background-color: #0288D1 !important;
+  color: white !important;
+}
+
+.active-tab-shipped {
+  background-color: #5E35B1 !important;
+  color: white !important;
+}
+
+.active-tab-completed {
+  background-color: #00897B !important;
+  color: white !important;
+}
+
+.active-tab-cancelled {
+  background-color: #D32F2F !important;
+  color: white !important;
+}
+
+.custom-tabs .nav-link {
+  color: #64748b;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 12px;
+  border: 1px solid transparent;
+}
+
+.custom-tabs .nav-link:hover {
+  background-color: #f8fafc;
+}
+
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+.order-card {
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 20px;
+}
+
+.modal-content-custom {
+  background: #fff;
+  width: 100%;
+  max-width: 700px;
+  border-radius: 20px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

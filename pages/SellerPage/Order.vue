@@ -20,37 +20,41 @@
             <div class="col-xl-4 col-md-6" v-for="order in myStoreOrders" :key="order._id">
                 <div class="card h-100 order-card border-0 shadow-sm rounded-4 overflow-hidden"
                     @click="openDetail(order)">
+
                     <div
-                        class="card-header border-0 py-3 d-flex justify-content-between align-items-center text-white header-pending">
-                        <span class="fw-bold">Order #{{ order.orderId || order._id.substr(-6) }}</span>
+                        :class="['card-header border-0 py-3 d-flex justify-content-between align-items-center text-white', getModalHeaderClass(order.status)]">
+                        <span class="fw-bold">Order #{{ order.orderId || (order._id ? order._id.substr(-6) : 'N/A')
+                        }}</span>
                         <small class="bg-white-glass px-2 py-1 rounded">
-                            <Icon name="feather:clock" size="12" /> {{ formatDate(order) }}
+                            <Icon name="feather:calendar" size="12" /> {{ formatDate(order) }}
                         </small>
                     </div>
 
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
-                            <div class="position-relative">
-                                <img :src="getItemImage(order)" class="rounded-3 border"
-                                    style="width: 70px; height: 70px; object-fit: cover;">
-                                <span
-                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white"
-                                    v-if="getItems(order).length > 1">
-                                    +{{ getItems(order).length - 1 }}
-                                </span>
-                            </div>
-
+                            <img :src="getItemImage(order)" class="rounded-3 border"
+                                style="width: 70px; height: 70px; object-fit: cover;">
                             <div class="ms-3 flex-grow-1">
-                                <h6 class="fw-bold mb-1 text-dark">{{ order.customer || 'Customer' }}</h6>
-                                <p class="text-muted small mb-1 text-truncate">{{ getItemName(order) }}</p>
-                                <span class="badge bg-light text-warning border border-warning">● รอการยืนยัน</span>
+                                <h6 class="fw-bold mb-1 text-dark">{{ order.customer || 'Unknown' }}</h6>
+                                <p class="text-muted small mb-0 text-truncate">{{ getItemName(order) }}</p>
+                                <div class="mt-2 small fw-bold" :class="getTextClass(order.status)">
+                                    ● {{ order.status ? order.status.toUpperCase() : '' }}
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                            <span class="text-muted small">คลิกเพื่อจัดการ</span>
-                            <span class="fw-bold fs-5 text-status-pending">{{ formatCurrency(calculateTotal(order))
+                    <div class="card-footer bg-white border-top-0 pb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-secondary small">{{ getItems(order).length }} รายการ</span>
+                            <span class="text-secondary small">ราคารวม: {{ formatCurrency(calculateTotal(order))
                             }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-success small fw-bold">เงินที่ร้านได้รับ:</span>
+                            <div class="fw-bolder text-success fs-5">{{ formatCurrency(order.sellerEarnings ||
+                                calculateTotal(order))
+                            }}</div>
                         </div>
                     </div>
                 </div>
@@ -62,21 +66,42 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useOrderStore } from '~/store/orders'
 import { useAuthStore } from '~/store/auth'
-// ✅ Import Modal
 import OrderDetailModal from '~/pages/SellerPage/components/orderDetailModal.vue'
 
 definePageMeta({ layout: 'seller' })
 
 const router = useRouter()
+const route = useRoute()
 const orderStore = useOrderStore()
 const authStore = useAuthStore()
 
+const showDetail = ref(false)
+const selectedOrder = ref({ item: [] })
+
+const checkAndOpenOrder = (id) => {
+    if (!id || !orderStore.allOrders.length) return
+    const targetOrder = orderStore.allOrders.find(o => String(o._id) === String(id) || o.orderId === id)
+    if (targetOrder) openDetail(targetOrder)
+}
+
+watch(() => route.query.id, async (newId) => {
+    if (newId) {
+        await orderStore.fetchOrders()
+        checkAndOpenOrder(newId)
+    } else {
+        closeDetail()
+    }
+})
+
 onMounted(async () => {
     await orderStore.fetchOrders()
+    if (route.query.id) {
+        checkAndOpenOrder(route.query.id)
+    }
 })
 
 const myStoreOrders = computed(() => {
@@ -93,23 +118,38 @@ const myStoreOrders = computed(() => {
     })
 })
 
-const showDetail = ref(false)
-const selectedOrder = ref({ item: [] })
-
 function openDetail(o) {
     selectedOrder.value = { ...o }
     showDetail.value = true
+    if (!route.query.id) {
+        router.replace({ query: { ...route.query, id: o.orderId || o._id } })
+    }
 }
 
-function closeDetail() { showDetail.value = false }
+function closeDetail() {
+    showDetail.value = false
+    const query = { ...route.query }
+    delete query.id
+    router.replace({ query })
+}
 
-// ✅ ฟังก์ชันรับ Event เมื่อ Modal ทำงานเสร็จ
 async function handleOrderUpdated() {
     await orderStore.fetchOrders()
-    // ถ้าไม่มีออเดอร์ค้างแล้ว อาจจะ redirect หรือไม่ก็ได้
+    closeDetail()
 }
 
-// Helper Functions (สำหรับการ์ดด้านนอก)
+// --- Helper Functions (เพิ่ม getModalHeaderClass และ getTextClass) ---
+
+const getModalHeaderClass = (status) => {
+    const s = (status || '').toLowerCase()
+    // ในหน้า Order ส่วนใหญ่จะเป็น pending แต่ใส่เผื่อไว้ให้ครบ
+    if (['pending', 'pending review'].includes(s)) return 'header-pending'
+    if (['preparing', 'processing', 'confirm'].includes(s)) return 'header-preparing'
+    return 'header-pending' // Default สีส้ม
+}
+
+const getTextClass = (s) => 'text-status-' + (s || 'pending').toLowerCase()
+
 function getItems(order) { return order.item || order.items || [] }
 function calculateTotal(order) { const items = getItems(order); return items.length > 0 ? items.reduce((sum, i) => sum + (Number(i.price) * Number(i.qty)), 0) : (order.total || 0) }
 function getItemName(order) { const items = getItems(order); return items.length > 0 ? items[0].name : 'No Items' }
@@ -119,14 +159,25 @@ function formatCurrency(v) { return new Intl.NumberFormat('th-TH', { style: 'cur
 </script>
 
 <style scoped>
+/* Gradient Backgrounds */
 .header-pending {
     background: linear-gradient(135deg, #FF8F00 0%, #FFB300 100%);
 }
 
+.header-preparing {
+    background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%);
+}
+
+/* Text Colors */
 .text-status-pending {
     color: #E65100;
 }
 
+.text-status-preparing {
+    color: #0277BD;
+}
+
+/* Card & Button Styles */
 .order-card {
     transition: 0.2s;
     cursor: pointer;

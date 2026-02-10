@@ -7,7 +7,6 @@ export const useOrderStore = defineStore('orders', {
   }),
 
   getters: {
-    // กรองเฉพาะออเดอร์สถานะ Pending
     pendingOrders: (state) => state.allOrders.filter(o => o.status?.toLowerCase() === 'pending')
   },
 
@@ -33,12 +32,11 @@ export const useOrderStore = defineStore('orders', {
     async placeOrder(payload) {
       this.isLoading = true;
       try {
-        // ✅ เพิ่ม Header Token
-        const token = localStorage.getItem('token'); 
+        const token = localStorage.getItem('token');
         const data = await $fetch('http://localhost:3001/api/order', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`, // ส่ง Token
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
           body: payload
@@ -51,27 +49,28 @@ export const useOrderStore = defineStore('orders', {
       }
     },
 
-    // ✅✅ จุดที่แก้: เพิ่ม parameter 'note' และส่ง Token
     async updateStatus(id, newStatus, note = null) {
       try {
-        const token = localStorage.getItem('token'); // ดึง Token จาก LocalStorage
-        
-        // เตรียมข้อมูลที่จะส่ง (Payload)
-        const payload = { status: newStatus }
-        if (note) payload.note = note // ถ้ามีเหตุผล ให้ใส่ไปด้วย
+        const token = localStorage.getItem('token');
+
+        // ✅ แก้ไข: เพิ่ม role: 'seller' ลงใน payload
+        const payload = {
+          status: newStatus,
+          role: 'seller'
+        }
+        if (note) payload.note = note
 
         await $fetch(`http://localhost:3001/api/order/${id}`, {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${token}`, // ✅ ต้องมี Token
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: payload // ✅ ส่ง payload ที่มี note
+          body: payload
         })
 
-        // โหลดข้อมูลใหม่หลังจากอัปเดตเสร็จ
         await this.fetchOrders()
-        
+
       } catch (e) {
         console.error('Update status error:', e)
         throw e
