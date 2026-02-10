@@ -72,7 +72,7 @@
         </div>
         <div class="stat-content">
           <h3 class="stat-value">{{ formatCurrency(totalIncome || 0) }}</h3>
-          <p class="stat-label">รายได้ทั้งหมด</p>
+          <p class="stat-label">รายได้ทั้งหมด(บาท)</p>
         </div>
       </div>
       
@@ -82,7 +82,7 @@
         </div>
         <div class="stat-content">
           <h3 class="stat-value">{{ formatCurrency(summary?.paidCommission || 0) }}</h3>
-          <p class="stat-label">ได้รับแล้ว</p>
+          <p class="stat-label">ได้รับแล้ว(บาท)</p>
         </div>
       </div>
       
@@ -102,7 +102,7 @@
         </div>
         <div class="stat-content">
           <h3 class="stat-value">{{ summary?.totalOrders || 0 }}</h3>
-          <p class="stat-label">ยอดขายทั้งหมด</p>
+          <p class="stat-label">ยอดขายทั้งหมด(รายการ)</p>
         </div>
       </div>
     </div>

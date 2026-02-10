@@ -7027,8 +7027,8 @@
           .mobile-cart {
             .show-div {
               &.shopping-cart {
-                left: unset !important;
-                right: -118px !important;
+                left: auto !important;
+                right: 0 !important;
               }
             }
           }

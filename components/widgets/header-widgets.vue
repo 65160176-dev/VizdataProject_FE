@@ -2,7 +2,7 @@
   <div>
     <div class="icon-nav">
       <ul>
-        <li class="onhover-div mobile-search">
+        <!-- <li class="onhover-div mobile-search">
           <div>
             <img alt src="/images/icon/layout4/search.png" @click="openSearch()" class="img-fluid">
             <i class="ti-search" @click="openSearch()"></i>
@@ -41,8 +41,8 @@
               </div>
             </div>
           </div>
-        </li>
-        <li class="onhover-div mobile-setting">
+        </li> -->
+        <!-- <li class="onhover-div mobile-setting">
           <div>
             <img alt src="/images/icon/layout4/setting.png" class="img-fluid">
             <i class="ti-settings"></i>
@@ -74,7 +74,7 @@
               </li>
             </ul>
           </div>
-        </li>
+        </li> -->
         <li class="onhover-div mobile-cart">
           <div>
             <img alt src="/images/icon/layout4/cart.png" class="img-fluid">
@@ -259,3 +259,15 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.onhover-div .show-div {
+  left: auto !important;
+  right: 0 !important;
+}
+
+.onhover-div .show-div.shopping-cart {
+  left: auto !important;
+  right: 0 !important;
+}
+</style>

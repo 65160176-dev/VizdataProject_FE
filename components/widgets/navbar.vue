@@ -152,12 +152,17 @@ export default {
   list-style: none;
   margin: 6px 0;
 }
-.mega-menu-container .mega-box .menu-content ul li a,
-.nav-submenu li a {
+.mega-menu-container .mega-box .menu-content ul li a {
   font-size: 13px;
   color: #333;
   padding: 4px 6px;
 }
 .nav-submenu { max-width: 300px; }
+
+/* Prevent right-edge overflow: open dropdowns to the left */
+.nav-menu > li.dropdown > .nav-submenu {
+  left: auto;
+  right: 0;
+}
 
 </style>

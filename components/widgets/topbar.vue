@@ -155,3 +155,10 @@ export default {
   }
 }   
 </script>
+
+<style scoped>
+.onhover-dropdown .onhover-show-div {
+  left: auto !important;
+  right: 0 !important;
+}
+</style>
