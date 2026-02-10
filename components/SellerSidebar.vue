@@ -120,8 +120,8 @@
           </NuxtLink>
         </li>
         <li>
-          <NuxtLink to="/SellerPage/setting" :class="['menu-item', { 'is-active': isActive('/SellerPage/setting') }]">
-            <span class="icon-slot">⚙️</span><span class="menu-label" v-show="!isCollapsed">Settings</span>
+          <NuxtLink to="/SellerPage/wallet" :class="['menu-item', { 'is-active': isActive('/SellerPage/wallet') }]">
+            <span class="icon-slot">💳</span><span class="menu-label" v-show="!isCollapsed">Wallet</span>
           </NuxtLink>
         </li>
       </ul>
