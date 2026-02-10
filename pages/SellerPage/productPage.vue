@@ -111,9 +111,9 @@
                 <div class="category-list-wrapper border rounded-3 p-2 bg-light mb-4" style="max-height: 300px; overflow-y: auto;">
                   
                   <div v-if="displayModalCategories.length === 0" class="text-center text-muted py-5 small">
-                     <Icon name="feather:inbox" size="32" class="mb-2 opacity-50"/>
-                     <br>ยังไม่มีหมวดหมู่ที่เลือก
-                     <br><span class="text-orange cursor-pointer" @click="showAllCategories = true">กดเพื่อเลือกหมวดหมู่จากระบบ</span>
+                      <Icon name="feather:inbox" size="32" class="mb-2 opacity-50"/>
+                      <br>ยังไม่มีหมวดหมู่ที่เลือก
+                      <br><span class="text-orange cursor-pointer" @click="showAllCategories = true">กดเพื่อเลือกหมวดหมู่จากระบบ</span>
                   </div>
 
                   <div v-for="cat in displayModalCategories" :key="cat.id" 
@@ -185,15 +185,24 @@
                     <div class="col-md-7">
                       <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="newItem.name" type="text"></div>
                       <div class="row">
-                        <div class="col-6 form-group mb-3"><label class="small fw-bold">Stock :</label><input class="form-control" v-model="newItem.stock" type="number" min="0"></div>
-                        <div class="col-6 form-group mb-3"><label class="small fw-bold">Price :</label><input class="form-control" v-model="newItem.price" type="number" min="1"></div>
+                        <div class="col-6 form-group mb-3">
+                            <label class="small fw-bold">Stock :</label>
+                            <input class="form-control" v-model="newItem.stock" type="number" min="0" @keydown="preventNegativeInput" @input="newItem.stock < 0 ? newItem.stock = 0 : null">
+                        </div>
+                        <div class="col-6 form-group mb-3">
+                            <label class="small fw-bold">Price :</label>
+                            <input class="form-control" v-model="newItem.price" type="number" min="1" @keydown="preventNegativeInput">
+                        </div>
                       </div>
 
                       <div class="row">
-                        <div class="col-6 form-group mb-3"><label class="small fw-bold">Commission (%) :</label><input class="form-control" v-model="newItem.commission" type="number" min="0.1" step="0.1"></div>
+                        <div class="col-6 form-group mb-3">
+                            <label class="small fw-bold">Commission (%) :</label>
+                            <input class="form-control" v-model="newItem.commission" type="number" min="0.1" step="0.1" @keydown="preventNegativeInput">
+                        </div>
                         <div class="col-6 form-group mb-3">
                           <label class="text-orange fw-bold small">Weight (kg) :</label>
-                          <input class="form-control border-orange" v-model="newItem.weight" type="number" min="0" step="0.1">
+                          <input class="form-control border-orange" v-model="newItem.weight" type="number" min="0" step="0.1" @keydown="preventNegativeInput">
                           
                           <div class="mt-2" v-if="newItem.weight >= 0">
                              <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
@@ -214,7 +223,7 @@
                           <option disabled value="">Select Category</option>
                           <option v-for="cat in activeCategories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
                         </select>
-                         <div v-if="activeCategories.length === 0" class="text-danger small mt-1">* กรุณาไปเลือกหมวดหมู่ที่ปุ่ม Category ก่อน</div>
+                          <div v-if="activeCategories.length === 0" class="text-danger small mt-1">* กรุณาไปเลือกหมวดหมู่ที่ปุ่ม Category ก่อน</div>
                       </div>
 
                       <div class="form-group mb-0"><label class="small fw-bold">Description :</label><textarea class="form-control" rows="3" v-model="newItem.description"></textarea></div>
@@ -253,25 +262,34 @@
                     <div class="col-md-7">
                         <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="editItem.name"></div>
                         <div class="row">
-                          <div class="col-6 form-group mb-3"><label class="small fw-bold">Stock :</label><input class="form-control" v-model="editItem.stock" type="number" min="0"></div>
-                          <div class="col-6 form-group mb-3"><label class="small fw-bold">Price :</label><input class="form-control" v-model="editItem.price" type="number" min="1"></div>
+                          <div class="col-6 form-group mb-3">
+                              <label class="small fw-bold">Stock :</label>
+                              <input class="form-control" v-model="editItem.stock" type="number" min="0" @keydown="preventNegativeInput" @input="editItem.stock < 0 ? editItem.stock = 0 : null">
+                          </div>
+                          <div class="col-6 form-group mb-3">
+                              <label class="small fw-bold">Price :</label>
+                              <input class="form-control" v-model="editItem.price" type="number" min="1" @keydown="preventNegativeInput">
+                          </div>
                         </div>
 
                         <div class="row">
-                          <div class="col-6 form-group mb-3"><label class="small fw-bold">Commission (%) :</label><input class="form-control" v-model="editItem.commission" type="number" min="0.1" step="0.1"></div>
+                          <div class="col-6 form-group mb-3">
+                              <label class="small fw-bold">Commission (%) :</label>
+                              <input class="form-control" v-model="editItem.commission" type="number" min="0.1" step="0.1" @keydown="preventNegativeInput">
+                          </div>
                           <div class="col-6 form-group mb-3">
                             <label class="text-orange fw-bold small">Weight (kg) :</label>
-                            <input class="form-control border-orange" v-model="editItem.weight" type="number" min="0" step="0.1">
+                            <input class="form-control border-orange" v-model="editItem.weight" type="number" min="0" step="0.1" @keydown="preventNegativeInput">
                             
                             <div class="mt-2" v-if="editItem.weight >= 0">
                                 <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
                                 <div class="d-flex flex-wrap gap-2">
                                   <button v-for="(option, index) in availableOptionsEdit" :key="index" type="button" class="btn btn-sm badge-btn" 
-                                      :class="[editItem.shippingCost === option.value ? 'btn-' + option.colorName + ' active-badge' : 'btn-outline-secondary']" 
-                                      @click="editItem.shippingCost = option.value">
-                                      {{ option.text }}
-                                      <Icon v-if="editItem.shippingCost === option.value" name="feather:check" size="12" />
-                                  </button>
+                                     :class="[editItem.shippingCost === option.value ? 'btn-' + option.colorName + ' active-badge' : 'btn-outline-secondary']" 
+                                     @click="editItem.shippingCost = option.value">
+                                     {{ option.text }}
+                                     <Icon v-if="editItem.shippingCost === option.value" name="feather:check" size="12" />
+                                   </button>
                                 </div>
                             </div>
                           </div>
@@ -323,7 +341,10 @@
                     </select>
                   </div>
 
-                  <div class="form-group mb-3"><label class="small fw-bold">Quantity :</label><input class="form-control shadow-none" type="number" v-model="stockForm.quantity" min="1"></div>
+                  <div class="form-group mb-3">
+                      <label class="small fw-bold">Quantity :</label>
+                      <input class="form-control shadow-none" type="number" v-model="stockForm.quantity" min="1" @keydown="preventNegativeInput" @input="stockForm.quantity < 1 ? stockForm.quantity = 1 : null">
+                  </div>
                 </form>
               </div>
               <div class="modal-footer border-0">
@@ -349,6 +370,14 @@ const products = ref([])
 const newCategoryInput = ref('')
 const allCategories = ref([])
 const categoryToDelete = ref(null)
+
+// ✅ Helper function to prevent negative input
+const preventNegativeInput = (e) => {
+  // Block '-' (minus), 'e' (exponent), and '+' (plus - optional)
+  if (['-', 'e', '+'].includes(e.key)) {
+    e.preventDefault()
+  }
+}
 
 // ✅ Toggle Logic
 const showAllCategories = ref(false)
@@ -515,6 +544,7 @@ const onFileChange = (e, m) => {
 }
 
 // --- CRUD ---
+// ✅ เปลี่ยนค่าเริ่มต้น stock เป็น '' หรือ 0 ก็ได้ แต่เรามี preventNegative แล้ว
 const newItem = ref({ name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null })
 const editItem = ref({ _id: null, name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null })
 
@@ -541,11 +571,19 @@ const resetNewItemForm = () => { newItem.value = { name: '', stock: 0, price: 0,
 const saveNewItem = async () => {
   if (!newItem.value.category) { showError('กรุณาเลือกหมวดหมู่'); return; }
   
+  // ✅ ตรวจสอบไม่ให้ stock ติดลบก่อนส่ง
+  if (newItem.value.stock < 0) newItem.value.stock = 0;
+
   const token = localStorage.getItem('token')
   const fd = new FormData()
-  fd.append('name', newItem.value.name); fd.append('stock', newItem.value.stock); fd.append('price', newItem.value.price); 
-  fd.append('commission', newItem.value.commission); fd.append('weight', newItem.value.weight); fd.append('shippingCost', newItem.value.shippingCost); 
-  fd.append('description', newItem.value.description); fd.append('category', newItem.value.category)
+  fd.append('name', newItem.value.name); 
+  fd.append('stock', newItem.value.stock); 
+  fd.append('price', newItem.value.price); 
+  fd.append('commission', newItem.value.commission); 
+  fd.append('weight', newItem.value.weight); 
+  fd.append('shippingCost', newItem.value.shippingCost); 
+  fd.append('description', newItem.value.description); 
+  fd.append('category', newItem.value.category)
   if (newItem.value.rawFile) fd.append('file', newItem.value.rawFile)
   
   try {
@@ -565,11 +603,19 @@ function goEdit(id) {
 }
 
 async function saveEdit() {
+  // ✅ ตรวจสอบไม่ให้ stock ติดลบก่อนส่ง
+  if (editItem.value.stock < 0) editItem.value.stock = 0;
+
   const token = localStorage.getItem('token')
   const fd = new FormData()
-  fd.append('name', editItem.value.name); fd.append('stock', editItem.value.stock); fd.append('price', editItem.value.price); 
-  fd.append('commission', editItem.value.commission); fd.append('weight', editItem.value.weight); fd.append('shippingCost', editItem.value.shippingCost);
-  fd.append('category', editItem.value.category); fd.append('description', editItem.value.description)
+  fd.append('name', editItem.value.name); 
+  fd.append('stock', editItem.value.stock); 
+  fd.append('price', editItem.value.price); 
+  fd.append('commission', editItem.value.commission); 
+  fd.append('weight', editItem.value.weight); 
+  fd.append('shippingCost', editItem.value.shippingCost);
+  fd.append('category', editItem.value.category); 
+  fd.append('description', editItem.value.description)
   if (editItem.value.rawFile) fd.append('file', editItem.value.rawFile)
   
   try {
@@ -607,7 +653,14 @@ watch(stockCategoryFilter, () => { stockForm.value.id = '' })
 async function saveAddStock() {
   const t = products.value.find(p => p._id === stockForm.value.id)
   if (t) {
-    const n = parseInt(t.stock) + parseInt(stockForm.value.quantity)
+    // ✅ ตรวจสอบค่าก่อนคำนวณ
+    const qtyToAdd = parseInt(stockForm.value.quantity)
+    if (isNaN(qtyToAdd) || qtyToAdd <= 0) {
+        showError('กรุณาระบุจำนวนที่ถูกต้อง (ต้องมากกว่า 0)');
+        return;
+    }
+
+    const n = parseInt(t.stock) + qtyToAdd
     const token = localStorage.getItem('token')
     const fd = new FormData(); fd.append('stock', n)
     await $fetch(`http://localhost:3001/api/product/${t._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
