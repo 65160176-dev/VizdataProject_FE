@@ -8,11 +8,11 @@
         </h5>
         
         <div>
-          <button type="button" class="btn btn-outline-light me-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#categoryModal">
+          <button type="button" class="btn btn-success me-2 shadow-sm border border-white" data-bs-toggle="modal" data-bs-target="#categoryModal">
             <Icon name="feather:list" size="16" class="me-1" style="margin-bottom:2px;"/> Category
           </button>
           
-          <button type="button" class="btn btn-success me-2 shadow-sm border border-white" data-bs-toggle="modal" data-bs-target="#addStockModal">
+          <button type="button" class="btn btn-info text-white me-2 shadow-sm border border-white" data-bs-toggle="modal" data-bs-target="#addStockModal" @click="resetStockForm">
             <Icon name="feather:box" size="16" class="me-1" style="margin-bottom:2px;"/> Add Stock
           </button>
           
@@ -208,7 +208,7 @@
                              <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
                              <div class="d-flex flex-wrap gap-2">
                                <button v-for="(option, index) in availableOptionsAdd" :key="index" type="button" class="btn btn-sm badge-btn" 
-                                  :class="[newItem.shippingCost === option.value ? 'btn-' + option.colorName + ' active-badge' : 'btn-outline-secondary']" 
+                                  :class="[newItem.shippingCost === option.value ? 'btn-' + option.colorName + ' active-badge' : 'btn-outline-' + option.colorName]" 
                                   @click="newItem.shippingCost = option.value">
                                   {{ option.text }}
                                   <Icon v-if="newItem.shippingCost === option.value" name="feather:check" size="12" />
@@ -285,7 +285,7 @@
                                 <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
                                 <div class="d-flex flex-wrap gap-2">
                                   <button v-for="(option, index) in availableOptionsEdit" :key="index" type="button" class="btn btn-sm badge-btn" 
-                                     :class="[editItem.shippingCost === option.value ? 'btn-' + option.colorName + ' active-badge' : 'btn-outline-secondary']" 
+                                     :class="[editItem.shippingCost === option.value ? 'btn-' + option.colorName + ' active-badge' : 'btn-outline-' + option.colorName]" 
                                      @click="editItem.shippingCost = option.value">
                                      {{ option.text }}
                                      <Icon v-if="editItem.shippingCost === option.value" name="feather:check" size="12" />
@@ -318,7 +318,10 @@
         <div class="modal fade" id="addStockModal" tabindex="-1">
           <div class="modal-dialog border-0">
             <div class="modal-content border-0 shadow">
-              <div class="modal-header border-0"><h5 class="modal-title fw-bold text-success">Add Stock</h5><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+              <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-info">Add Stock</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" @click="resetStockForm"></button>
+              </div>
               <div class="modal-body py-4">
                 <form>
                   <div class="form-group mb-3">
@@ -331,25 +334,35 @@
 
                   <div class="form-group mb-3">
                     <label class="small fw-bold">Select Product :</label>
-                    <select class="form-select shadow-none" v-model="stockForm.id" :disabled="filteredStockProducts.length === 0">
+                    <select class="form-select shadow-none mb-2" v-model="stockForm.id" :disabled="filteredStockProducts.length === 0">
                       <option disabled value="">
                         {{ filteredStockProducts.length === 0 ? 'No products in this category' : 'Select Product...' }}
                       </option>
                       <option v-for="item in filteredStockProducts" :key="item._id" :value="item._id">
-                        {{ item.name }} (Current: {{ item.stock }})
+                        {{ item.name }}
                       </option>
                     </select>
+
+                    <div v-if="selectedStockProduct" class="d-flex align-items-center p-2 border rounded-3 bg-white shadow-sm mt-2 transition-all">
+                      <img :src="selectedStockProduct.image || 'https://placehold.co/400'" class="rounded-3 shadow-sm border" style="width: 50px; height: 50px; object-fit: cover;">
+                      <div class="ms-3">
+                        <div class="fw-bold text-dark mb-1" style="font-size: 14px; line-height: 1.2;">{{ selectedStockProduct.name }}</div>
+                        <div class="small text-muted">
+                          Current Stock: <span class="badge bg-light text-dark border">{{ selectedStockProduct.stock }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div class="form-group mb-3">
-                      <label class="small fw-bold">Quantity :</label>
-                      <input class="form-control shadow-none" type="number" v-model="stockForm.quantity" min="1" @keydown="preventNegativeInput" @input="stockForm.quantity < 1 ? stockForm.quantity = 1 : null">
+                  <div class="form-group mb-3 mt-4">
+                      <label class="small fw-bold">Quantity to Add :</label>
+                      <input class="form-control shadow-none" type="number" v-model="stockForm.quantity" min="1" placeholder="Enter quantity..." @keydown="preventNegativeInput" @input="stockForm.quantity < 1 ? stockForm.quantity = 1 : null">
                   </div>
                 </form>
               </div>
               <div class="modal-footer border-0">
-                <button class="btn btn-success px-4" @click="saveAddStock" :disabled="!stockForm.id || !stockForm.quantity">Update</button>
-                <button class="btn btn-light px-4 shadow-sm text-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-info text-white px-4" @click="saveAddStock" :disabled="!stockForm.id || !stockForm.quantity">Update Stock</button>
+                <button class="btn btn-light px-4 shadow-sm text-secondary" data-bs-dismiss="modal" @click="resetStockForm">Close</button>
               </div>
             </div>
           </div>
@@ -371,18 +384,13 @@ const newCategoryInput = ref('')
 const allCategories = ref([])
 const categoryToDelete = ref(null)
 
-// ✅ Helper function to prevent negative input
 const preventNegativeInput = (e) => {
-  // Block '-' (minus), 'e' (exponent), and '+' (plus - optional)
   if (['-', 'e', '+'].includes(e.key)) {
     e.preventDefault()
   }
 }
 
-// ✅ Toggle Logic
 const showAllCategories = ref(false)
-
-// --- Computed ---
 
 const activeCategories = computed(() => {
   return allCategories.value.filter(cat => cat.isSelected)
@@ -400,7 +408,6 @@ const displayModalCategories = computed(() => {
   })
 })
 
-// --- Toast Logic ---
 const toastMessage = ref('')
 const errorMessage = ref('')
 
@@ -416,7 +423,6 @@ const showError = (message) => {
   if(toastEl) new bootstrap.Toast(toastEl).show()
 }
 
-// --- Category Logic ---
 const fetchCategories = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -427,22 +433,18 @@ const fetchCategories = async () => {
   } catch (e) { console.error('Error fetching categories:', e) }
 }
 
-// ✅ เช็คว่ามีสินค้าในหมวดหมู่นี้ไหม
 const checkIsCategoryUsed = (categoryName) => {
   const found = products.value.find(p => p.category === categoryName)
   return !!found 
 }
 
-// ✅ Toggle Category with Validation
 const toggleCategory = async (cat) => {
   const token = localStorage.getItem('token')
   if (cat.isSelected) {
-    // 🔴 เช็คก่อนเอาออก
     if (checkIsCategoryUsed(cat.name)) {
       showError(`ไม่สามารถซ่อนหมวดหมู่ "${cat.name}" ได้ เนื่องจากยังมีสินค้าในหมวดหมู่นี้`)
       return 
     }
-
     cat.isSelected = false 
     try {
       await $fetch(`http://localhost:3001/api/category/${cat.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
@@ -471,16 +473,12 @@ const addNewCategoryToSystem = async () => {
   } catch (e) { console.error(e); showError(e.data?.message || 'สร้างหมวดหมู่ไม่สำเร็จ') }
 }
 
-// ✅ Open Delete with Validation
 const openConfirmDelete = (catObj) => {
   if (catObj.isSystem) return
-  
-  // 🔴 เช็คก่อนลบ
   if (checkIsCategoryUsed(catObj.name)) {
       showError(`ไม่สามารถลบหมวดหมู่ "${catObj.name}" ได้ เนื่องจากยังมีสินค้าอยู่`)
       return 
   }
-
   categoryToDelete.value = catObj
   new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show()
 }
@@ -498,7 +496,6 @@ const executeDeleteCategory = async () => {
   if (modalInstance) modalInstance.hide()
 }
 
-// --- Fetch Products & Helpers ---
 const fetchProducts = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -516,20 +513,23 @@ onMounted(() => {
 const refresh = fetchProducts
 
 const getStockStatus = (s) => (s >= 100 ? 'success' : s >= 25 ? 'warning' : 'danger')
+
 const getBadgeColor = (c) => {
   const cost = parseInt(c)
-  if (cost === 0) return 'bg-success-light text-success border-success'
-  if (cost <= 40) return 'bg-info-light text-info border-info'
-  if (cost <= 80) return 'bg-warning-light text-warning border-warning'
-  return 'bg-danger-light text-danger border-danger'
+  if (cost === 0) return 'bg-ship-0-light'
+  if (cost <= 40) return 'bg-ship-30-light'
+  if (cost <= 80) return 'bg-ship-60-light'
+  return 'bg-ship-120-light'
 }
+
 const formatShippingCost = (c) => (parseInt(c) === 0 ? 'Free' : `${c} บ.`)
+
 const calculateOptions = (w) => {
   const weight = parseFloat(w) || 0
-  const options = [{ value: 0, text: 'Free', colorName: 'success' }]
-  if (weight >= 1) options.push({ value: 30, text: '30 บ.', colorName: 'info' })
-  if (weight >= 10) options.push({ value: 60, text: '60 บ.', colorName: 'warning' })
-  if (weight >= 20) options.push({ value: 120, text: '120 บ.', colorName: 'danger' })
+  const options = [{ value: 0, text: 'Free', colorName: 'ship-0' }]
+  if (weight >= 1) options.push({ value: 30, text: '30 บ.', colorName: 'ship-30' })
+  if (weight >= 10) options.push({ value: 60, text: '60 บ.', colorName: 'ship-60' })
+  if (weight >= 20) options.push({ value: 120, text: '120 บ.', colorName: 'ship-120' })
   return options
 }
 
@@ -543,8 +543,6 @@ const onFileChange = (e, m) => {
   }
 }
 
-// --- CRUD ---
-// ✅ เปลี่ยนค่าเริ่มต้น stock เป็น '' หรือ 0 ก็ได้ แต่เรามี preventNegative แล้ว
 const newItem = ref({ name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null })
 const editItem = ref({ _id: null, name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null })
 
@@ -560,18 +558,34 @@ watch(() => editItem.value.weight, (v) => {
   availableOptionsEdit.value = calculateOptions(v)
 })
 
+// ✅ วิธีที่ชัวร์ที่สุด: สั่งจำลองการคลิกที่ปุ่มกากบาทของ Modal นั้นๆ เลย
+// เพื่อให้ Bootstrap รันกระบวนการทำลายหน้าจอเทาของมันเอง 100%
 const safeCloseModal = (id) => {
-  const el = document.getElementById(id)
-  if (el) (bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el)).hide()
-  document.querySelectorAll('.modal-backdrop').forEach(b => b.remove())
+  const modalEl = document.getElementById(id)
+  if (modalEl) {
+    const closeBtn = modalEl.querySelector('[data-bs-dismiss="modal"]')
+    if (closeBtn) {
+      closeBtn.click()
+    } else {
+      // แผนสำรอง เผื่อหาปุ่มไม่เจอ
+      const modalInstance = bootstrap.Modal.getInstance(modalEl)
+      if (modalInstance) modalInstance.hide()
+    }
+  }
+  
+  // กวาดล้างเผื่อเหนียวอีกชั้น
+  setTimeout(() => {
+    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove())
+    document.body.classList.remove('modal-open')
+    document.body.style.overflow = ''
+    document.body.style.paddingRight = ''
+  }, 300)
 }
 
 const resetNewItemForm = () => { newItem.value = { name: '', stock: 0, price: 0, commission: 0, weight: 0, shippingCost: 0, category: '', description: '', previewImage: null, rawFile: null } }
 
 const saveNewItem = async () => {
   if (!newItem.value.category) { showError('กรุณาเลือกหมวดหมู่'); return; }
-  
-  // ✅ ตรวจสอบไม่ให้ stock ติดลบก่อนส่ง
   if (newItem.value.stock < 0) newItem.value.stock = 0;
 
   const token = localStorage.getItem('token')
@@ -603,7 +617,6 @@ function goEdit(id) {
 }
 
 async function saveEdit() {
-  // ✅ ตรวจสอบไม่ให้ stock ติดลบก่อนส่ง
   if (editItem.value.stock < 0) editItem.value.stock = 0;
 
   const token = localStorage.getItem('token')
@@ -620,7 +633,7 @@ async function saveEdit() {
   
   try {
     await $fetch(`http://localhost:3001/api/product/${editItem.value._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
-    showToast('แก้ไขข้อมูลสินค้าเรีย้อยแล้ว')
+    showToast('แก้ไขข้อมูลสินค้าเรียบร้อยแล้ว')
     refresh(); safeCloseModal('editModal')
   } catch(e) { console.error(e); showError('แก้ไขไม่สำเร็จ'); }
 }
@@ -634,9 +647,13 @@ async function deleteItem(id) {
   }
 }
 
-// --- Stock Logic ---
 const stockForm = ref({ id: '', quantity: '' })
 const stockCategoryFilter = ref('')
+
+const selectedStockProduct = computed(() => {
+  if (!stockForm.value.id) return null
+  return products.value.find(p => p._id === stockForm.value.id)
+})
 
 const activeProductCategories = computed(() => {
   const used = products.value.map(p => p.category).filter(c => c)
@@ -650,10 +667,16 @@ const filteredStockProducts = computed(() => {
 
 watch(stockCategoryFilter, () => { stockForm.value.id = '' })
 
+const resetStockForm = () => {
+  stockCategoryFilter.value = ''
+  stockForm.value.id = ''
+  stockForm.value.quantity = ''
+}
+
+// ✅ อัปเดตการลำดับเหตุการณ์ ล้างก่อน ปิดตาม แล้วค่อยดึงข้อมูล
 async function saveAddStock() {
   const t = products.value.find(p => p._id === stockForm.value.id)
   if (t) {
-    // ✅ ตรวจสอบค่าก่อนคำนวณ
     const qtyToAdd = parseInt(stockForm.value.quantity)
     if (isNaN(qtyToAdd) || qtyToAdd <= 0) {
         showError('กรุณาระบุจำนวนที่ถูกต้อง (ต้องมากกว่า 0)');
@@ -663,8 +686,24 @@ async function saveAddStock() {
     const n = parseInt(t.stock) + qtyToAdd
     const token = localStorage.getItem('token')
     const fd = new FormData(); fd.append('stock', n)
-    await $fetch(`http://localhost:3001/api/product/${t._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
-    showToast('เพิ่มสต็อกเรียบร้อยแล้ว'); refresh(); safeCloseModal('addStockModal'); stockForm.value = { id: '', quantity: '' }
+    
+    try {
+      await $fetch(`http://localhost:3001/api/product/${t._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
+      showToast('เพิ่มสต็อกเรียบร้อยแล้ว')
+      
+      // ดึงข้อมูลตารางใหม่
+      refresh()
+      
+      // สั่งปิดด้วยการกระตุ้นปุ่มปิด
+      safeCloseModal('addStockModal')
+      
+      // ล้างค่าในฟอร์มทิ้ง
+      resetStockForm() 
+      
+    } catch(e) {
+      console.error(e)
+      showError('เพิ่มสต็อกไม่สำเร็จ')
+    }
   }
 }
 </script>
@@ -683,7 +722,6 @@ async function saveAddStock() {
 :deep(.border-orange) { border-color: #fd7e14 !important; }
 :deep(.border-orange-focus:focus) { border-color: #fd7e14 !important; box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25); }
 
-/* Override Primary Button to Orange */
 .btn-primary { 
   background-color: #fd7e14 !important; 
   border-color: #fd7e14 !important; 
@@ -695,18 +733,6 @@ async function saveAddStock() {
   border-color: #e36a0d !important; 
 }
 
-/* Outline Orange Button */
-.btn-outline-orange {
-  color: #fd7e14;
-  border-color: #fd7e14;
-  background-color: transparent;
-}
-.btn-outline-orange:hover {
-  background-color: #fd7e14;
-  color: white;
-}
-
-/* General UI Improvements */
 .img-40 { width: 40px; height: 40px; object-fit: cover; }
 .upload-box { width: 100%; height: 220px; border: 2px dashed #fcc495; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fffcf9; overflow: hidden; transition: 0.3s;}
 .upload-box:hover { background-color: #fff4e6; border-color: #fd7e14; }
@@ -715,21 +741,34 @@ async function saveAddStock() {
 .rounded-start-pill { border-top-left-radius: 50px !important; border-bottom-left-radius: 50px !important; }
 .rounded-end-pill { border-top-right-radius: 50px !important; border-bottom-right-radius: 50px !important; }
 
-/* Badge Refinements */
-.badge-btn { border-radius: 50px; padding: 4px 12px; font-size: 12px; transition: all 0.2s; display: flex; align-items: center; gap: 4px; border: 1px solid #dee2e6; background: white;}
-.active-badge { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); font-weight: bold; color: white !important; border: none; }
+/* 📦 Shipping Badge Refinements */
+.badge-btn { border-radius: 50px; padding: 4px 12px; font-size: 12px; transition: all 0.2s; display: flex; align-items: center; gap: 4px; border-width: 1px; border-style: solid; background: white;}
+.active-badge { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); font-weight: bold; color: white !important; border-color: transparent; }
 
-/* Status Colors (Clean Pastel) */
-.bg-success-light { background-color: #e8f9ee !important; }
-.bg-info-light { background-color: #e6f6ff !important; }
-.bg-warning-light { background-color: #fff9e6 !important; }
-.bg-danger-light { background-color: #ffe6e6 !important; }
+/* 🎨 Custom Shipping Colors */
+/* Free -> Green */
+.btn-outline-ship-0 { color: #28c76f; border-color: #28c76f; }
+.btn-ship-0 { background-color: #28c76f; border-color: #28c76f; }
+.bg-ship-0-light { background-color: #e8f9ee !important; border-color: #28c76f !important; color: #28c76f !important; }
 
-/* Font Colors */
+/* 30 บ. -> Light Yellow */
+.btn-outline-ship-30 { color: #ffbc00; border-color: #ffbc00; }
+.btn-ship-30 { background-color: #ffbc00; border-color: #ffbc00; }
+.bg-ship-30-light { background-color: #fffbcc !important; border-color: #ffbc00 !important; color: #d49c00 !important; }
+
+/* 60 บ. -> Main Orange */
+.btn-outline-ship-60 { color: #fd7e14; border-color: #fd7e14; }
+.btn-ship-60 { background-color: #fd7e14; border-color: #fd7e14; }
+.bg-ship-60-light { background-color: #fff4e6 !important; border-color: #fd7e14 !important; color: #fd7e14 !important; }
+
+/* 120 บ. -> Red / Coral */
+.btn-outline-ship-120 { color: #ea5455; border-color: #ea5455; }
+.btn-ship-120 { background-color: #ea5455; border-color: #ea5455; }
+.bg-ship-120-light { background-color: #fceaea !important; border-color: #ea5455 !important; color: #ea5455 !important; }
+
 .font-success { color: #28c76f; } .font-warning { color: #ff9f43; } .font-danger { color: #ea5455; }
 .f-10 { font-size: 10px; }
 
-/* Form Controls */
 .form-control:focus, .form-select:focus {
   border-color: #fd7e14;
   box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25);
@@ -740,7 +779,6 @@ async function saveAddStock() {
 }
 .form-check.border-orange { border: 1px solid #fd7e14 !important; background-color: #fff9f5 !important;}
 
-/* Scrollbar */
 .table-responsive::-webkit-scrollbar { height: 6px; }
 .table-responsive::-webkit-scrollbar-thumb { background: #eee; border-radius: 4px; }
 </style>
