@@ -63,12 +63,33 @@
 <script>
 import { useAuthStore } from '~/store/auth'
 import { useNotificationStore } from '~/store/notification'
+import { onMounted, onUnmounted, watch } from 'vue' // ✅ เพิ่มการนำเข้า
 
 export default {
     name: 'HeaderNotification',
     setup() {
         const authStore = useAuthStore()
         const notiStore = useNotificationStore()
+        let intervalId = null; // ✅ ตัวแปรเก็บค่า Interval
+
+        // ✅ ฟังก์ชันดึงข้อมูลใหม่
+        const refreshNotifications = async () => {
+            if (authStore.user && (authStore.user._id || authStore.user.id)) {
+                await notiStore.fetchNotifications();
+            }
+        };
+
+        onMounted(() => {
+            // ✅ ดึงข้อมูลทุกๆ 15 วินาที (Real-time Polling)
+            intervalId = setInterval(refreshNotifications, 15000);
+        });
+
+        onUnmounted(() => {
+            // ✅ ล้างค่าเมื่อปิดหน้าจอ
+            if (intervalId) clearInterval(intervalId);
+            notiStore.disconnectSocket();
+        });
+
         return { authStore, notiStore }
     },
     computed: {
@@ -83,9 +104,9 @@ export default {
         'authStore.user': {
             handler(newUser) {
                 if (newUser && (newUser._id || newUser.id)) {
-                    console.log("User loaded, fetching notifications...");
+                    console.log("User loaded, initializing real-time notifications...");
                     this.notiStore.fetchNotifications();
-                    this.notiStore.initSocket();
+                    this.notiStore.initSocket(); // ระบบเดิมของคุณ
                 }
             },
             immediate: true,
@@ -142,9 +163,6 @@ export default {
                 console.error("Failed to delete notification:", error);
             }
         },
-    },
-    beforeUnmount() {
-        this.notiStore.disconnectSocket();
     }
 }
 </script>

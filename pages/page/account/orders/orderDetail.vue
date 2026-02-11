@@ -134,6 +134,7 @@
             {{ order.note }}
           </div>
         </div>
+
         <div v-if="checkStatus(order.status, 'pending')" class="mt-4 text-end">
           <button class="btn btn-outline-danger px-4 rounded-pill fw-bold" @click="openCancelModal">
             ยกเลิกคำสั่งซื้อ
@@ -176,7 +177,9 @@
 
     </div>
 
-    <cancReqOrderPop v-if="showCancelModal" @close="closeCancelModal" @confirm="submitRequestCancellation" />
+    <cancReqOrderPop v-if="showCancelModal" :status="order.status" @close="closeCancelModal"
+      @confirm="submitRequestCancellation" />
+
     <confirmOrder v-if="showConfirmReceivedModal" @close="showConfirmReceivedModal = false"
       @confirm="submitConfirmReceived" />
 
@@ -195,9 +198,7 @@ const props = defineProps({
 
 const emit = defineEmits(['back', 'cancel', 'update'])
 
-// State
 const isReturnMode = ref(false)
-const showStatusAlert = ref(true)
 const showCancelModal = ref(false)
 const showConfirmReceivedModal = ref(false)
 
@@ -205,7 +206,6 @@ const { $showToast } = useNuxtApp()
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
 
-// --- Helper Functions ---
 const checkStatus = (status, type) => {
   const s = (status || '').toLowerCase();
   switch (type) {
@@ -230,7 +230,6 @@ const formatDate = (dateString) => {
 const formatStatus = (status) => {
   if (!status) return ''
   const s = status.toLowerCase()
-
   switch (s) {
     case 'pending': return 'Pending'
     case 'pending review': return 'Pending Review'
@@ -255,14 +254,12 @@ const shouldShowNote = (status) => {
 
 const noteHeader = computed(() => {
   const s = (props.order.status || '').toLowerCase();
-
   if (s === 'preparing' || s === 'processing') {
     return 'ร้านค้าปฏิเสธคำขอ';
   }
   else if (s === 'cancelled' || s === 'cancel') {
     return 'เหตุผลการยกเลิก';
   }
-
   return 'ข้อความจากร้านค้า';
 })
 
@@ -279,7 +276,6 @@ const isCancelled = computed(() => {
   return s === 'cancelled' || s === 'cancel' || s.includes('cancel') || s.includes('return_requested') || s.includes('return requested');
 })
 
-// ✅✅ แก้ไขตรงนี้: เปลี่ยน class ให้ตรงกับ userOrder.vue ✅✅
 const statusBadgeClass = computed(() => {
   const s = (props.order.status || '').toLowerCase();
   switch (s) {
@@ -308,7 +304,13 @@ const submitRequestCancellation = async (reason) => {
   let statusToSend = 'cancel requested'
   let title = 'ส่งคำขอยกเลิกแล้ว'
 
-  if (checkStatus(props.order.status, 'pending') || checkStatus(props.order.status, 'shipping')) {
+  // ถ้าอยู่หน้า shipping ถือเป็นการ "ขอคืนสินค้า" (Return Requested)
+  if (checkStatus(props.order.status, 'shipping')) {
+    statusToSend = 'return_requested'
+    title = 'ส่งคำขอคืนสินค้าแล้ว'
+  }
+  // ถ้าอยู่หน้า Pending (ยังไม่เตรียมของ) ให้ Cancel ทันที
+  else if (checkStatus(props.order.status, 'pending')) {
     statusToSend = 'cancelled'
     title = 'ยกเลิกคำสั่งซื้อเรียบร้อย'
   }
@@ -324,7 +326,7 @@ const submitRequestCancellation = async (reason) => {
       body: {
         status: statusToSend,
         note: reason,
-        isCancelRequest: statusToSend === 'cancel requested'
+        isCancelRequest: statusToSend === 'cancel requested' || statusToSend === 'return_requested'
       }
     })
 
@@ -332,7 +334,6 @@ const submitRequestCancellation = async (reason) => {
     props.order.note = reason
 
     emit('update', props.order)
-
     closeCancelModal()
     $showToast({ msg: title, type: 'success' })
 
@@ -354,7 +355,6 @@ const submitConfirmReceived = async () => {
     })
 
     props.order.status = 'Completed'
-
     emit('update', props.order)
     showConfirmReceivedModal.value = false
     $showToast({ msg: 'ยืนยันรับสินค้าเรียบร้อย', type: 'success' })
@@ -366,7 +366,7 @@ const submitConfirmReceived = async () => {
 </script>
 
 <style scoped>
-/* ✅✅ เพิ่ม CSS สีสถานะจาก userOrder.vue ✅✅ */
+/* CSS สีสถานะ */
 .status-success {
   background: #c6f6d5;
   color: #22543d;
@@ -397,7 +397,7 @@ const submitConfirmReceived = async () => {
   color: #4a5568;
 }
 
-/* --- Style เดิม --- */
+/* Style เดิม */
 .stepper-wrapper {
   display: flex;
   justify-content: space-between;

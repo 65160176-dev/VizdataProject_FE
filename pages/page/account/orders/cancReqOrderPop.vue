@@ -12,7 +12,8 @@
                     </label>
 
                     <div class="reason-list mb-3">
-                        <div v-for="(reason, index) in reasons" :key="index" class="form-check custom-radio mb-2">
+                        <div v-for="(reason, index) in dynamicReasons" :key="index"
+                            class="form-check custom-radio mb-2">
                             <input class="form-check-input" type="radio" name="cancelReason" :id="'reason-' + index"
                                 :value="reason" v-model="selectedReason">
                             <label class="form-check-label ms-2" :for="'reason-' + index" style="cursor: pointer;">
@@ -22,7 +23,7 @@
                     </div>
 
                     <transition name="fade">
-                        <textarea v-if="selectedReason === 'อื่นๆ'" v-model="otherReason"
+                        <textarea v-if="selectedReason === 'อื่นๆ (โปรดระบุ)'" v-model="otherReason"
                             class="form-control border-0 shadow-sm mt-2 bg-light" rows="3"
                             placeholder="ระบุเหตุผลอื่นๆ เพิ่มเติม...">
                         </textarea>
@@ -45,21 +46,63 @@
 <script setup>
 import { ref, computed } from 'vue'
 
+// ✅ 1. เพิ่ม props รับ status
+const props = defineProps({
+    status: {
+        type: String,
+        default: 'pending' // ค่าเริ่มต้น
+    }
+})
+
 const emit = defineEmits(['close', 'confirm'])
 const selectedReason = ref('')
 const otherReason = ref('')
 
-const reasons = [
-    "เปลี่ยนใจ / ไม่ต้องการสินค้านี้แล้ว",
-    "เจอสินค้าราคาถูกกว่าจากที่อื่น",
-    "สั่งซื้อสินค้าผิด (ผิดสี, ผิดไซส์, ผิดรุ่น)",
-    "ผู้ขายไม่ตอบ / ตอบช้า",
-    "อื่นๆ"
-]
+// ✅ 2. แยกชุดเหตุผลตามสถานะ
+const reasonSets = {
+    pending: [
+        "ต้องการแก้ไขที่อยู่จัดส่ง หรือเบอร์โทรศัพท์",
+        "ต้องการเปลี่ยนวิธีการชำระเงิน",
+        "สั่งซื้อสินค้าผิด (ผิดสี, ผิดไซส์, ผิดจำนวน)",
+        "เปลี่ยนใจ / พบสินค้าอื่นที่ต้องการมากกว่า",
+        "อื่นๆ (โปรดระบุ)"
+    ],
+    preparing: [
+        "ผู้ขายใช้เวลาเตรียมพัสดุนานกว่าที่คาดไว้",
+        "ผู้ขายแจ้งว่าสินค้าหมดสต็อก",
+        "พบสินค้าที่ราคาถูกกว่าในร้านอื่น",
+        "อื่นๆ (โปรดระบุ)"
+    ],
+    shipped: [
+        "ได้รับสินค้าไม่ตรงตามที่สั่ง (ผิดสี, ผิดรุ่น)",
+        "สินค้าชำรุด / เสียหายจากการขนส่ง",
+        "ได้รับสินค้าไม่ครบตามจำนวน",
+        "สินค้าไม่ตรงตามรายละเอียด (ไม่ตรงปก)",
+        "อื่นๆ (โปรดระบุ)"
+    ]
+}
+
+// ✅ 3. สร้าง Computed เพื่อเลือกชุดเหตุผลอัตโนมัติ
+const dynamicReasons = computed(() => {
+    // แปลง status เป็นตัวพิมพ์เล็กเพื่อเทียบ
+    const currentStatus = (props.status || 'pending').toLowerCase()
+
+    // ถ้าสถานะเป็น shipping หรือ shipped ให้ใช้ชุดเดียวกัน
+    if (currentStatus === 'shipping' || currentStatus === 'shipped') {
+        return reasonSets.shipped
+    }
+    // ถ้าสถานะเป็น preparing หรือ processing ให้ใช้ชุดเดียวกัน
+    if (currentStatus === 'preparing' || currentStatus === 'processing') {
+        return reasonSets.preparing
+    }
+
+    // ค่า default เป็น pending
+    return reasonSets.pending
+})
 
 const isFormValid = computed(() => {
     if (!selectedReason.value) return false
-    if (selectedReason.value === 'อื่นๆ') {
+    if (selectedReason.value === 'อื่นๆ (โปรดระบุ)') {
         return otherReason.value && otherReason.value.trim().length >= 3
     }
     return true
@@ -67,21 +110,19 @@ const isFormValid = computed(() => {
 
 const submit = () => {
     let finalReason = selectedReason.value
-    if (finalReason === 'อื่นๆ') { finalReason = `อื่นๆ: ${otherReason.value}` }
+    if (finalReason === 'อื่นๆ (โปรดระบุ)') { finalReason = `อื่นๆ: ${otherReason.value}` }
     emit('confirm', finalReason)
 }
 </script>
 
 <style scoped>
-/* Theme กลาง */
+/* (ใช้ Style เดิมของคุณทั้งหมด ไม่ต้องแก้) */
 .modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
-    /* เต็มจอ */
     height: 100vh;
-    /* เต็มจอ */
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 99999;
     display: flex;
@@ -117,7 +158,6 @@ const submit = () => {
     color: #333;
 }
 
-/* Radio & Inputs */
 .form-check-input {
     cursor: pointer;
     border-color: #ccc;
@@ -133,19 +173,15 @@ textarea.form-control:focus {
     border-color: #dc3545;
 }
 
-/* [แก้ไข] Buttons ให้เหมือนหน้ายืนยันรับสินค้า */
 .modal-footer {
     width: 100%;
-    /* ให้ Container กว้างเต็ม */
 }
 
 .btn-theme-primary,
 .btn-theme-secondary {
     width: 100%;
-    /* ปุ่มกว้างเต็ม */
     padding: 12px;
     border-radius: 50px;
-    /* ปุ่มรี */
     border: none;
     font-weight: 600;
     font-size: 1rem;
@@ -155,10 +191,8 @@ textarea.form-control:focus {
 
 .btn-theme-primary:hover {
     background-color: #c82333;
-    /* แดงเข้มเมื่อ Hover */
 }
 
-/* ปุ่มรอง (สีขาวขอบเทา) */
 .btn-theme-secondary {
     background-color: white;
     border: 1px solid #dee2e6;

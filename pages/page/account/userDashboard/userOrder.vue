@@ -120,8 +120,8 @@
 
                 <div v-else>
                     <div class="p-3">
-                        <OrderDetail :order="selectedOrder" @back="closeOrder" @cancel="handleOrderCancel"
-                            @update="saveOrderChanges" />
+                        <OrderDetail :order="orders.find(o => o.orderId === selectedOrder?.orderId) || selectedOrder"
+                            @back="closeOrder" @cancel="handleOrderCancel" @update="saveOrderChanges" />
                     </div>
                 </div>
             </template>
@@ -137,10 +137,12 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '~/store/auth'
+import { useOrderStore } from '~/store/orders' // ✅ เพิ่ม Import
 import { useRuntimeConfig } from '#imports'
 import OrderDetail from '../orders/orderDetail.vue'
 
 const auth = useAuthStore()
+const orderStore = useOrderStore() // ✅ ประกาศใช้ Store
 const router = useRouter()
 const route = useRoute()
 const config = useRuntimeConfig()
@@ -148,7 +150,46 @@ const API_BASE = config.public?.apiBase || 'http://localhost:3001/api'
 
 const isAuthenticated = computed(() => !!auth.isLoggedIn || (!!auth.user && Object.keys(auth.user).length > 0))
 const selectedOrder = ref(null)
-const orders = ref([])
+
+// ✅ 1. เปลี่ยนจาก ref([]) เป็น computed() เพื่อให้ Update ตาม Store อัตโนมัติ
+const orders = computed(() => {
+    const rawOrders = orderStore.allOrders || []
+    const currentUserId = auth.user?._id || auth.user?.id
+
+    // กรองเฉพาะออเดอร์ที่เป็นของ User คนนี้
+    let myOrders = rawOrders.filter(o => {
+        const orderUserId = (o.user && typeof o.user === 'object') ? o.user._id : o.user;
+        return String(orderUserId) === String(currentUserId);
+    });
+
+    // Map ข้อมูล (Logic เดิมจาก fetchOrders)
+    return myOrders.map(order => {
+        let displayDate = order.date;
+        if (!displayDate && order.createdAt) {
+            displayDate = new Date(order.createdAt).toLocaleString('en-GB', {
+                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        let shopName = 'Official Store';
+        let shopId = null;
+        const firstItem = order.item && order.item[0];
+        if (firstItem && firstItem.productId && firstItem.productId.userId) {
+            shopName = firstItem.productId.userId.shopName || firstItem.productId.userId.username || 'Shop';
+            shopId = firstItem.productId.userId._id || firstItem.productId.userId;
+        }
+
+        return {
+            ...order,
+            items: order.item || [],
+            date: displayDate,
+            shopName: shopName,
+            shopId: shopId,
+            shippingFee: order.shippingCost || order.shippingFee || 0
+        };
+    }).sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+})
+
 const isLoadingOrders = ref(false)
 const activeTab = ref('all')
 const currentPage = ref(1)
@@ -163,44 +204,14 @@ const tabs = [
     { label: 'ยกเลิก', value: 'cancelled' }
 ]
 
+// ✅ 2. ปรับปรุง fetchOrders ให้สั่ง Store ดึงข้อมูล
 const fetchOrders = async () => {
     if (!auth.isLoggedIn) return;
     isLoadingOrders.value = true;
     try {
-        const token = auth.token || localStorage.getItem('token');
-        if (!token) return;
-        const response = await $fetch(`${API_BASE}/order`, { headers: { Authorization: `Bearer ${token}` } });
-        const currentUserId = auth.user?._id || auth.user?.id;
-        let myOrders = response;
-        if (currentUserId) {
-            myOrders = response.filter(o => {
-                const orderUserId = (o.user && typeof o.user === 'object') ? o.user._id : o.user;
-                return String(orderUserId) === String(currentUserId);
-            });
-        }
-        orders.value = myOrders.map(order => {
-            let displayDate = order.date;
-            if (!displayDate && order.createdAt) {
-                displayDate = new Date(order.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-            }
-            let shopName = 'Official Store';
-            let shopId = null;
-            const firstItem = order.item && order.item[0];
-            if (firstItem && firstItem.productId && firstItem.productId.userId) {
-                shopName = firstItem.productId.userId.shopName || firstItem.productId.userId.username || 'Shop';
-                shopId = firstItem.productId.userId._id || firstItem.productId.userId;
-            }
-            return {
-                ...order,
-                items: order.item || [],
-                date: displayDate,
-                shopName: shopName,
-                shopId: shopId,
-                shippingFee: order.shippingCost || order.shippingFee || 0
-            };
-        });
-        orders.value.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
-        checkUrlAndOpenOrder()
+        // สั่งให้ Store โหลดข้อมูลใหม่ (computed ด้านบนจะขยับตามเอง)
+        await orderStore.fetchOrders();
+        checkUrlAndOpenOrder();
     } catch (error) {
         console.error("Failed to fetch orders:", error);
     } finally {
@@ -208,7 +219,6 @@ const fetchOrders = async () => {
     }
 }
 
-// ... (Helper Functions เดิม) ...
 const checkStatus = (orderStatus, tab) => {
     const s = (orderStatus || '').toLowerCase();
     switch (tab) {
@@ -221,12 +231,24 @@ const checkStatus = (orderStatus, tab) => {
     }
 }
 
-const filteredOrders = computed(() => { if (activeTab.value === 'all') return orders.value; return orders.value.filter(o => checkStatus(o.status, activeTab.value)) })
+const filteredOrders = computed(() => {
+    if (activeTab.value === 'all') return orders.value;
+    return orders.value.filter(o => checkStatus(o.status, activeTab.value))
+})
+
 const totalPages = computed(() => Math.ceil(filteredOrders.value.length / itemsPerPage))
-const paginatedOrders = computed(() => { const start = (currentPage.value - 1) * itemsPerPage; return filteredOrders.value.slice(start, start + itemsPerPage) })
+const paginatedOrders = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage;
+    return filteredOrders.value.slice(start, start + itemsPerPage)
+})
+
 const changePage = (page) => { if (page >= 1 && page <= totalPages.value) currentPage.value = page }
 watch(activeTab, () => { currentPage.value = 1 })
-const getCount = (tabValue) => { if (tabValue === 'all') return orders.value.length; return orders.value.filter(o => checkStatus(o.status, tabValue)).length }
+
+const getCount = (tabValue) => {
+    if (tabValue === 'all') return orders.value.length;
+    return orders.value.filter(o => checkStatus(o.status, tabValue)).length
+}
 
 const shouldShowNote = (status) => {
     if (!status) return false;
@@ -234,30 +256,53 @@ const shouldShowNote = (status) => {
     if (s.includes('request') || s === 'pending') return false;
     return true;
 }
+
 const getNoteHeader = (status) => {
     const s = (status || '').toLowerCase();
     if (s === 'preparing' || s === 'processing') return 'ร้านค้าปฏิเสธคำขอ';
     if (s === 'cancelled' || s === 'cancel') return 'เหตุผลการยกเลิก';
     return 'หมายเหตุ';
 }
+
 const getStatusClass = (s) => {
     const status = (s || '').toLowerCase();
-    if (status === 'accepted' || status === 'completed') return 'status-success';
+    if (status === 'accepted' || status === 'completed' || status === 'delivered') return 'status-success';
     if (status === 'pending') return 'status-warning';
-    if (status === 'preparing' || status === 'processing') return 'status-info';
-    if (status === 'shipped') return 'status-primary';
+    if (status === 'preparing' || status === 'processing' || status === 'confirmed') return 'status-info';
+    if (status === 'shipped' || status === 'shipping') return 'status-primary';
     if (status.includes('cancel') || status.includes('return')) return 'status-danger';
     return 'status-default';
 }
-const formatStatus = (status) => { if (!status) return ''; const s = status.toLowerCase(); if (s === 'return_requested' || s === 'return requested') { return 'Cancel Requested' } return status }
+
+const formatStatus = (status) => {
+    if (!status) return '';
+    const s = status.toLowerCase();
+    if (s === 'return_requested' || s === 'return requested' || s === 'cancel requested') { return 'Cancel Requested' }
+    return status
+}
 
 const updateOrderFilter = (filterVal) => {
     activeTab.value = filterVal;
     router.replace({ query: { ...route.query, tab: 'orders', filter: filterVal } })
 }
-const openOrder = (order) => { selectedOrder.value = order; router.push({ query: { ...route.query, tab: 'orders', orderId: order.orderId } }) }
-const closeOrder = () => { selectedOrder.value = null; const newQuery = { ...route.query }; delete newQuery.orderId; router.replace({ query: newQuery }) }
-const handleOrderCancel = (cancelledOrder) => { if (cancelledOrder) saveOrderChanges(cancelledOrder); selectedOrder.value = null }
+
+const openOrder = (order) => {
+    selectedOrder.value = order;
+    router.push({ query: { ...route.query, tab: 'orders', orderId: order.orderId } })
+}
+
+const closeOrder = () => {
+    selectedOrder.value = null;
+    const newQuery = { ...route.query };
+    delete newQuery.orderId;
+    router.replace({ query: newQuery })
+}
+
+const handleOrderCancel = (cancelledOrder) => {
+    if (cancelledOrder) saveOrderChanges(cancelledOrder);
+    selectedOrder.value = null
+}
+
 const saveOrderChanges = async (updatedOrder) => {
     try {
         const token = auth.token || localStorage.getItem('token');
@@ -268,8 +313,9 @@ const saveOrderChanges = async (updatedOrder) => {
             headers: { Authorization: `Bearer ${token}` },
             body: { status: updatedOrder.status, cancelReason: updatedOrder.cancelReason }
         });
-        const index = orders.value.findIndex(o => o.orderId === updatedOrder.orderId);
-        if (index !== -1) { orders.value[index] = { ...updatedOrder }; orders.value = [...orders.value] }
+
+        // โหลดข้อมูลใหม่เข้า Store ทันที
+        await orderStore.fetchOrders();
         useNuxtApp().$showToast({ msg: "อัปเดตสถานะสำเร็จ", type: "success" });
     } catch (error) {
         useNuxtApp().$showToast({ msg: "บันทึกสถานะไม่สำเร็จ", type: "error" });
@@ -292,14 +338,12 @@ watch(() => route.query, () => {
     checkUrlAndOpenOrder()
 })
 
-// ✅ 1. สร้างฟังก์ชันโหลดข้อมูล
 const loadData = async () => {
     if (isAuthenticated.value) {
         await fetchOrders()
     }
 }
 
-// ✅ 2. เฝ้าดู User (ถ้าโหลดเสร็จให้ดึงข้อมูล)
 watch(() => auth.user, (u) => {
     if (u) {
         loadData()
@@ -313,7 +357,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* (Style คงเดิม) */
 .dashboard-card {
     background: white;
     border: 1px solid #e2e8f0;
@@ -343,7 +386,6 @@ onMounted(() => {
     background: white;
 }
 
-/* Order Tabs */
 .order-tab-box {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -358,10 +400,7 @@ onMounted(() => {
     gap: 10px;
     overflow-x: auto;
     padding: 10px 4px 16px 4px;
-    margin-bottom: 0;
-    border-bottom: none;
     scrollbar-width: none;
-    -ms-overflow-style: none;
 }
 
 .order-tabs-wrapper::-webkit-scrollbar {
@@ -395,7 +434,6 @@ onMounted(() => {
 .order-tab-btn.active {
     background: #ff5722;
     color: white;
-    border: none;
     font-weight: 600;
     box-shadow: 0 4px 10px rgba(255, 87, 34, 0.25);
     transform: translateY(-1px);
@@ -415,7 +453,6 @@ onMounted(() => {
     color: white;
 }
 
-/* Order Item */
 .order-card-item {
     border: 1px solid #e2e8f0;
     border-radius: 8px;
@@ -519,7 +556,6 @@ onMounted(() => {
     border-color: #6c757d;
 }
 
-/* Status Badges & Colors */
 .status-badge-pill {
     padding: 4px 12px;
     border-radius: 12px;
@@ -568,7 +604,6 @@ onMounted(() => {
     border-radius: 0 4px 4px 0;
 }
 
-/* Pagination */
 .custom-pagination .page-link {
     color: #4a5568;
     border-color: #e2e8f0;
@@ -595,7 +630,6 @@ onMounted(() => {
     text-decoration: underline !important;
 }
 
-/* Empty States */
 .empty-state {
     text-align: center;
     padding: 60px 20px;

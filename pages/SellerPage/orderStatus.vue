@@ -258,8 +258,30 @@ const changeTab = async (statusKey) => {
 
 const checkAndOpenOrder = (id) => {
   if (!id || !orderStore.allOrders || orderStore.allOrders.length === 0) return
-  const targetOrder = orderStore.allOrders.find(o => String(o._id) === String(id) || o.orderId === id)
-  if (targetOrder) openDetail(targetOrder)
+
+  const targetOrder = orderStore.allOrders.find(o =>
+    String(o._id) === String(id) || o.orderId === id
+  )
+
+  if (targetOrder) {
+    // ✅ เพิ่มการเช็คสิทธิ์ตรงนี้
+    const myId = authStore.user?._id || authStore.user?.id
+    const items = targetOrder.item || targetOrder.items || []
+    const productOwner = items[0]?.productId?.userId
+    const ownerId = (typeof productOwner === 'object') ? productOwner?._id : productOwner
+
+    if (ownerId !== myId) {
+      // ถ้าไม่ใช่เจ้าของออเดอร์ ให้แจ้งเตือนและไม่เปิด Modal
+      Swal.fire({
+        icon: 'error',
+        title: 'ปฏิเสธการเข้าถึง',
+        text: 'คุณไม่มีสิทธิ์ดูรายละเอียดคำสั่งซื้อนี้'
+      })
+      return
+    }
+
+    openDetail(targetOrder)
+  }
 }
 
 watch(() => route.query.status, async (newStatus) => {

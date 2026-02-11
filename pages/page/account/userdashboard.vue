@@ -86,9 +86,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '~/store/auth'
+import { useOrderStore } from '~/store/orders' // ✅ นำเข้า Order Store
 import { useRuntimeConfig } from '#imports'
 
 import UserProfile from './userDashboard/userProfile.vue'
@@ -96,6 +97,7 @@ import UserAddress from './userDashboard/userAddress.vue'
 import UserOrder from './userDashboard/userOrder.vue'
 
 const auth = useAuthStore()
+const orderStore = useOrderStore() // ✅ ประกาศใช้ Store
 const router = useRouter()
 const route = useRoute()
 const config = useRuntimeConfig()
@@ -156,23 +158,54 @@ const confirmLogout = () => {
   }
 }
 
-// ✅ 1. เพิ่มฟังก์ชัน Init
+// ✅ 1. ฟังก์ชัน Init
 const initDashboard = () => {
   if (route.query.tab) {
     activeMainTab.value = route.query.tab
   }
 }
 
-// ✅ 2. เพิ่ม Watcher เผื่อ User โหลดช้า (Refresh)
+// ✅ 2. เพิ่ม Watcher เผื่อ User โหลดช้า
 watch(() => auth.user, (val) => {
   if (val) {
     initDashboard()
   }
 }, { immediate: true })
 
-onMounted(() => {
-  initDashboard()
-})
+// ในไฟล์ userdashboard.vue
+let refreshInterval = null;
+
+onMounted(async () => {
+  initDashboard();
+
+  const orderStore = useOrderStore();
+  await orderStore.fetchOrders();
+
+  if (!refreshInterval) {
+    refreshInterval = setInterval(async () => {
+      await orderStore.fetchOrders();
+
+      // ✅ เพิ่ม Logic: ตรวจสอบออเดอร์ที่มีสถานะ Shipped และเวลาเกิน 3 นาที
+      const now = new Date();
+      orderStore.allOrders.forEach(async (order) => {
+        if (order.status.toLowerCase() === 'shipped' && order.updatedAt) {
+          const updatedTime = new Date(order.updatedAt);
+          const diffMinutes = (now - updatedTime) / (1000 * 60);
+
+          if (diffMinutes >= 3) {
+            console.log(`Order ${order.orderId} is over 3 mins, auto-completing...`);
+            await $fetch(`http://localhost:3001/api/order/${order._id}`, {
+              method: 'PUT',
+              headers: { Authorization: `Bearer ${auth.token}` },
+              body: { status: 'completed' }
+            });
+            await orderStore.fetchOrders();
+          }
+        }
+      });
+    }, 15000); // เช็คทุก 15 วินาที
+  }
+});
 </script>
 
 <style scoped>

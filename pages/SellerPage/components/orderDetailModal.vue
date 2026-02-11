@@ -53,12 +53,12 @@
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span class="text-secondary">Date:</span>
                                     <span class="fw-bold text-dark">{{ formatDate(order.createdAt || order.date)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span class="text-secondary">Payment:</span>
                                     <span class="badge bg-secondary text-white">{{ order.paymentMethod || 'N/A'
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between small">
                                     <span class="text-secondary">Status:</span>
@@ -285,7 +285,7 @@ const submitReject = async () => {
 }
 
 const handleAction = async (newStatus, reason = null) => {
-    // 1. Check Stock
+    // 1. Check Stock (คงเดิม)
     if (newStatus === 'shipped') {
         const items = props.order.item || props.order.items || []
         const outOfStockItem = items.find(item => {
@@ -309,7 +309,7 @@ const handleAction = async (newStatus, reason = null) => {
                 confirmButtonColor: '#ff9f43',
                 focusConfirm: false,
                 customClass: {
-                    container: 'swal-z-index-fix', // ✅ Class แก้ z-index
+                    container: 'swal-z-index-fix',
                     popup: 'rounded-4 shadow-lg border-0',
                     confirmButton: 'rounded-pill px-4 shadow-sm'
                 }
@@ -324,6 +324,7 @@ const handleAction = async (newStatus, reason = null) => {
         await orderStore.updateStatus(props.order._id, newStatus, reason)
 
         if (newStatus === 'shipped') {
+            // ✅ แสดง Toast แจ้งเตือนปกติ
             const Toast = Swal.mixin({
                 toast: true,
                 position: 'top-end',
@@ -332,12 +333,30 @@ const handleAction = async (newStatus, reason = null) => {
                 timerProgressBar: true
             })
             Toast.fire({ icon: 'success', title: 'อัปเดตสถานะจัดส่งเรียบร้อย' })
+
+            // ✅ เริ่มระบบนับเวลาถอยหลัง 3 นาที (180,000 ms)
+            console.log('Auto-complete timer started: 3 minutes');
+            setTimeout(async () => {
+                // ตรวจสอบสถานะล่าสุดจากฐานข้อมูลหรือ Store ก่อนเปลี่ยน
+                // โดยดึงออเดอร์นี้ขึ้นมาเช็คอีกรอบ
+                const currentOrder = orderStore.allOrders.find(o => o._id === props.order._id);
+
+                if (currentOrder && (currentOrder.status === 'shipped' || currentOrder.status === 'shipping')) {
+                    console.log('Time is up! Changing order to completed.');
+                    await orderStore.updateStatus(props.order._id, 'completed');
+                    await orderStore.fetchOrders(); // อัปเดตข้อมูลใหม่ทั้งหมด
+                }
+            }, 3 * 60 * 1000);
+
         } else {
             try { $showToast({ msg: `ดำเนินการเรียบร้อย`, type: 'success' }) } catch (e) { }
         }
 
+        // ✅ ต้องสั่ง fetchOrders ที่นี่ด้วยเพื่อให้ข้อมูลหน้าบ้านอัปเดตทันทีหลังกดปุ่ม
+        await orderStore.fetchOrders();
         emit('updated')
         emit('close')
+
     } catch (error) {
         console.error("Update Status Failed:", error)
         const msg = error.response?._data?.message || error.message || 'เกิดข้อผิดพลาดในการอัปเดต';
@@ -349,7 +368,7 @@ const handleAction = async (newStatus, reason = null) => {
             confirmButtonText: 'ปิด',
             confirmButtonColor: '#d33',
             customClass: {
-                container: 'swal-z-index-fix', // ✅ Class แก้ z-index (ใส่เผื่อไว้สำหรับ error ด้วย)
+                container: 'swal-z-index-fix',
                 popup: 'rounded-4'
             }
         })
