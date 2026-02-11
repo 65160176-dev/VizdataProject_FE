@@ -53,12 +53,12 @@
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span class="text-secondary">Date:</span>
                                     <span class="fw-bold text-dark">{{ formatDate(order.createdAt || order.date)
-                                    }}</span>
+                                        }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span class="text-secondary">Payment:</span>
                                     <span class="badge bg-secondary text-white">{{ order.paymentMethod || 'N/A'
-                                    }}</span>
+                                        }}</span>
                                 </div>
                                 <div class="d-flex justify-content-between small">
                                     <span class="text-secondary">Status:</span>
@@ -217,6 +217,7 @@
 import { ref } from 'vue'
 import { useRuntimeConfig, useNuxtApp } from '#app'
 import { useOrderStore } from '~/store/orders'
+import Swal from 'sweetalert2'
 
 const props = defineProps({
     order: { type: Object, required: true }
@@ -228,7 +229,7 @@ const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
 const orderStore = useOrderStore()
 const { $showToast } = useNuxtApp()
 
-// --- Logic สำหรับ Reject Modal (ย้ายมาจาก orderStatus.vue) ---
+// --- State Definitions ---
 const showRejectDialog = ref(false)
 const rejectNote = ref('')
 const selectedRejectReason = ref('')
@@ -237,7 +238,6 @@ const modalTitle = ref('')
 const modalDesc = ref('')
 const rejectOptions = ref([])
 
-// ตัวเลือกสาเหตุ
 const rejectOptionsRequest = [
     'สินค้าอยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกได้',
     'แพ็คสินค้าเรียบร้อยแล้วพร้อมส่ง',
@@ -251,7 +251,8 @@ const rejectOptionsCancel = [
     'ลูกค้าขอยกเลิก (ผ่านแชท)'
 ]
 
-// ฟังก์ชันเปิด Modal ปฏิเสธ (รวม Logic การเลือกข้อความ)
+// --- Logic ---
+
 const openRejectModal = (status) => {
     targetStatus.value = status
 
@@ -279,26 +280,83 @@ const submitReject = async () => {
     if (selectedRejectReason.value === 'other') {
         finalReason = rejectNote.value
     }
-    // ส่งค่ากลับไปหา handleAction
     await handleAction(targetStatus.value, finalReason)
     closeRejectModal()
 }
 
-// --- Action Logic (การยิง API) ---
 const handleAction = async (newStatus, reason = null) => {
+    // 1. Check Stock
+    if (newStatus === 'shipped') {
+        const items = props.order.item || props.order.items || []
+        const outOfStockItem = items.find(item => {
+            const stock = Number(item.productId?.stock || 0)
+            return typeof item.productId?.stock !== 'undefined' && stock <= 0
+        })
+
+        if (outOfStockItem) {
+            const currentStock = outOfStockItem.productId?.stock ?? 0
+            Swal.fire({
+                icon: 'warning',
+                title: 'ไม่สามารถส่งสินค้าได้',
+                html: `
+                    <div class="text-start px-3">
+                        <p class="mb-2">สินค้า: <strong>${outOfStockItem.name}</strong></p>
+                        <p class="mb-3">สถานะ: <span class="text-danger fw-bold">สินค้าหมด (Stock: ${currentStock})</span></p>
+                        <small class="text-muted">กรุณาเติมสต็อกสินค้าในคลังสินค้าก่อนดำเนินการเปลี่ยนสถานะ</small>
+                    </div>
+                `,
+                confirmButtonText: 'เข้าใจแล้ว',
+                confirmButtonColor: '#ff9f43',
+                focusConfirm: false,
+                customClass: {
+                    container: 'swal-z-index-fix', // ✅ Class แก้ z-index
+                    popup: 'rounded-4 shadow-lg border-0',
+                    confirmButton: 'rounded-pill px-4 shadow-sm'
+                }
+            })
+            return
+        }
+    }
+
+    // 2. Call API
     if (!props.order._id) return;
     try {
         await orderStore.updateStatus(props.order._id, newStatus, reason)
-        try { $showToast({ msg: `ดำเนินการเรียบร้อย`, type: 'success' }) } catch (e) { }
+
+        if (newStatus === 'shipped') {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            })
+            Toast.fire({ icon: 'success', title: 'อัปเดตสถานะจัดส่งเรียบร้อย' })
+        } else {
+            try { $showToast({ msg: `ดำเนินการเรียบร้อย`, type: 'success' }) } catch (e) { }
+        }
+
         emit('updated')
         emit('close')
     } catch (error) {
-        console.error(error)
-        try { $showToast({ msg: 'เกิดข้อผิดพลาด', type: 'error' }) } catch (e) { }
+        console.error("Update Status Failed:", error)
+        const msg = error.response?._data?.message || error.message || 'เกิดข้อผิดพลาดในการอัปเดต';
+
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด!',
+            text: msg,
+            confirmButtonText: 'ปิด',
+            confirmButtonColor: '#d33',
+            customClass: {
+                container: 'swal-z-index-fix', // ✅ Class แก้ z-index (ใส่เผื่อไว้สำหรับ error ด้วย)
+                popup: 'rounded-4'
+            }
+        })
     }
 }
 
-// --- Helper Functions ---
+// --- Helpers ---
 const getImgUrl = (path) => {
     if (!path) return '/images/dashboard/default.png';
     if (path.startsWith('http')) return path;
@@ -348,7 +406,7 @@ const checkStatus = (status, type) => {
 </script>
 
 <style scoped>
-/* CSS Gradient & Colors (จาก orderDetailModal เดิม) */
+/* CSS เดิม (Scoped) */
 .header-preparing,
 .header-processing,
 .header-confirmed {
@@ -380,7 +438,6 @@ const checkStatus = (status, type) => {
     background: #6c757d;
 }
 
-/* Modal CSS (ใช้ร่วมกันได้) */
 .modal-backdrop-custom {
     position: fixed;
     inset: 0;
@@ -390,7 +447,6 @@ const checkStatus = (status, type) => {
     align-items: center;
     justify-content: center;
     z-index: 2050;
-    /* ระดับความสูงของ Detail Modal */
     padding: 20px;
 }
 
@@ -421,5 +477,11 @@ const checkStatus = (status, type) => {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+</style>
+
+<style>
+.swal-z-index-fix {
+    z-index: 3050 !important;
 }
 </style>

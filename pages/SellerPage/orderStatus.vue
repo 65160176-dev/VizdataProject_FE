@@ -26,10 +26,8 @@
             <a class="nav-link d-flex align-items-center justify-content-center gap-2 transition-all"
               :class="[currentStatus === s.key ? 'active-tab-' + s.key : '']" href="#"
               @click.prevent="changeTab(s.key)">
-
               <Icon :name="s.icon" size="18" />
               <span>{{ s.label }}</span>
-
               <span class="badge rounded-pill ms-2 transition-all shadow-sm"
                 :class="[currentStatus === s.key ? 'bg-white ' + getTextClass(s.key) : 'bg-light text-muted']">
                 {{ countMyOrdersByStatus(s.key) }}
@@ -143,8 +141,9 @@
                 </div>
 
                 <div class="d-flex gap-2 mt-2">
-                  <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill" @click="openDetail(order)">
-                    ตรวจสอบ / ปฏิเสธ
+                  <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill"
+                    @click="openRejectModal(order)">
+                    ปฏิเสธคำขอ
                   </button>
                   <button class="btn btn-sm btn-success flex-grow-1 rounded-pill text-white fw-bold"
                     @click="handleRequestAction(order._id, 'cancelled')">
@@ -158,24 +157,84 @@
       </div>
     </Transition>
 
+    <Transition name="fade">
+      <div v-if="showRejectDialog" class="modal-backdrop-custom" style="z-index: 1060;" @click.self="closeRejectModal">
+        <div class="modal-content-custom p-4 shadow-lg" style="max-width: 400px;">
+          <h5 class="fw-bold mb-3 text-danger">
+            <Icon name="feather:alert-circle" class="me-2" />ปฏิเสธคำขอ
+          </h5>
+          <p class="text-secondary small mb-3">
+            กรุณาระบุเหตุผลที่ปฏิเสธ เพื่อแจ้งให้ลูกค้าทราบ
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark mb-2">เลือกเหตุผล:</label>
+            <div class="d-flex flex-column gap-2">
+              <div class="form-check" v-for="(option, index) in rejectOptions" :key="index">
+                <input class="form-check-input" type="radio" :name="'rejectReason'" :id="'reason-' + index"
+                  :value="option" v-model="selectedRejectReason">
+                <label class="form-check-label small" :for="'reason-' + index">
+                  {{ option }}
+                </label>
+              </div>
+
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="rejectReason" id="reason-other" value="other"
+                  v-model="selectedRejectReason">
+                <label class="form-check-label small fw-bold" for="reason-other">
+                  อื่นๆ (โปรดระบุ)
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3" v-if="selectedRejectReason === 'other'">
+            <textarea v-model="rejectNote" class="form-control bg-light border-0" rows="3"
+              placeholder="พิมพ์เหตุผลเพิ่มเติม...">
+            </textarea>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-light flex-grow-1 rounded-pill" @click="closeRejectModal">ยกเลิก</button>
+            <button class="btn btn-danger flex-grow-1 rounded-pill fw-bold"
+              :disabled="selectedRejectReason === 'other' && !rejectNote.trim()" @click="submitReject">
+              ยืนยันการปฏิเสธ
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
 import { useOrderStore } from '~/store/orders'
 import { useAuthStore } from '~/store/auth'
+import { useRoute, useRouter } from 'vue-router'
 import OrderDetailModal from '~/pages/SellerPage/components/orderDetailModal.vue'
+import Swal from 'sweetalert2'
 
 definePageMeta({ layout: 'seller' })
 
-const router = useRouter()
-const route = useRoute()
 const orderStore = useOrderStore()
 const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 
-// --- State Definitions ---
+// State สำหรับ Reject Logic
+const showRejectDialog = ref(false)
+const targetRejectOrderId = ref(null)
+const rejectNote = ref('')
+const selectedRejectReason = ref('')
+const rejectOptions = [
+  'สินค้าอยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกได้',
+  'แพ็คสินค้าเรียบร้อยแล้วพร้อมส่ง',
+  'สินค้าไม่เข้าเงื่อนไขการรับประกัน/คืนเงิน',
+  'หลักฐานไม่เพียงพอ'
+]
+
 const currentStatus = ref('preparing')
 const showRequestsModal = ref(false)
 const showDetail = ref(false)
@@ -199,33 +258,21 @@ const changeTab = async (statusKey) => {
 
 const checkAndOpenOrder = (id) => {
   if (!id || !orderStore.allOrders || orderStore.allOrders.length === 0) return
-
-  const targetOrder = orderStore.allOrders.find(o =>
-    String(o._id) === String(id) || o.orderId === id
-  )
-
-  if (targetOrder) {
-    openDetail(targetOrder)
-  }
+  const targetOrder = orderStore.allOrders.find(o => String(o._id) === String(id) || o.orderId === id)
+  if (targetOrder) openDetail(targetOrder)
 }
 
-// ✅ 1. Watch Status: เมื่อเปลี่ยน Tab ผ่าน URL ให้โหลดข้อมูลใหม่
 watch(() => route.query.status, async (newStatus) => {
   if (newStatus && statuses.some(s => s.key === newStatus)) {
     currentStatus.value = newStatus
-    // เพิ่มบรรทัดนี้ เพื่อดึงข้อมูลใหม่เมื่อ Tab เปลี่ยน
     await orderStore.fetchOrders()
   }
 })
 
-// ✅ 2. Watch ID: เมื่อ ID ใน URL เปลี่ยน (กด Noti มา) ให้เช็คและเปิด Popup
 watch(() => route.query.id, async (newId) => {
   if (newId) {
-    // ถ้าข้อมูลยังไม่มา หรือหาไม่เจอ ให้โหลดใหม่ก่อน
     const exists = orderStore.allOrders.find(o => o._id === newId || o.orderId === newId)
-    if (!exists) {
-      await orderStore.fetchOrders()
-    }
+    if (!exists) await orderStore.fetchOrders()
     checkAndOpenOrder(newId)
   } else {
     closeDetail()
@@ -234,24 +281,106 @@ watch(() => route.query.id, async (newId) => {
 
 onMounted(async () => {
   await orderStore.fetchOrders()
-
   const queryStatus = route.query.status
   if (queryStatus && statuses.some(s => s.key === queryStatus)) {
     currentStatus.value = queryStatus
-  } else {
-    if (!route.query.id) {
-      changeTab('preparing')
-    } else {
-      currentStatus.value = 'preparing'
+  }
+  if (route.query.id) checkAndOpenOrder(route.query.id)
+})
+
+// --- Modal & Action Controls ---
+
+function openDetail(o) {
+  selectedOrder.value = { ...o }
+  showDetail.value = true
+  if (showRequestsModal.value) showRequestsModal.value = false
+}
+
+function closeDetail() { showDetail.value = false }
+
+async function handleOrderUpdated() {
+  await orderStore.fetchOrders()
+  closeDetail()
+}
+
+// ฟังก์ชันเปิด Popup ปฏิเสธ
+const openRejectModal = (order) => {
+  targetRejectOrderId.value = order._id
+  selectedRejectReason.value = rejectOptions[0]
+  rejectNote.value = ''
+  showRejectDialog.value = true
+}
+
+const closeRejectModal = () => {
+  showRejectDialog.value = false
+  targetRejectOrderId.value = null
+}
+
+// ยืนยันการปฏิเสธ
+const submitReject = async () => {
+  if (!targetRejectOrderId.value) return
+  let finalReason = selectedRejectReason.value
+  if (selectedRejectReason.value === 'other') finalReason = rejectNote.value
+
+  try {
+    await orderStore.updateStatus(targetRejectOrderId.value, 'preparing', finalReason)
+    Swal.fire({ icon: 'success', title: 'ปฏิเสธคำขอเรียบร้อย', timer: 1500, showConfirmButton: false })
+    closeRejectModal()
+    await orderStore.fetchOrders()
+    if (pendingOrders.value.length === 0) showRequestsModal.value = false
+  } catch (error) {
+    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message })
+  }
+}
+
+// อนุมัติการยกเลิก
+async function handleRequestAction(id, action) {
+  try {
+    await orderStore.updateStatus(id, action)
+    await orderStore.fetchOrders()
+    if (pendingOrders.value.length === 0) showRequestsModal.value = false
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+// ฟังก์ชันอัปเดตสถานะพร้อมเช็คสต็อก
+async function handleUpdate(id, action) {
+  if (action === 'shipped') {
+    const targetOrder = myAllOrders.value.find(o => o._id === id) || selectedOrder.value
+    const items = getItems(targetOrder)
+    const outOfStockItem = items.find(item => {
+      let stock = Number(item.productId?.stock)
+      return !isNaN(stock) && stock <= 0
+    })
+
+    if (outOfStockItem) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'ไม่สามารถส่งสินค้าได้',
+        html: `<div class="text-start px-3"><p>สินค้า: <strong>${outOfStockItem.name}</strong> หมดสต็อก</p></div>`,
+        confirmButtonText: 'เข้าใจแล้ว',
+        confirmButtonColor: '#ff9f43',
+        customClass: { popup: 'rounded-4 shadow-lg border-0' }
+      })
+      return
     }
   }
 
-  if (route.query.id) {
-    checkAndOpenOrder(route.query.id)
+  try {
+    await orderStore.updateStatus(id, action)
+    if (pendingOrders.value.length === 0) showRequestsModal.value = false
+    if (action === 'shipped') {
+      const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 })
+      Toast.fire({ icon: 'success', title: 'อัปเดตสถานะจัดส่งเรียบร้อย' })
+    }
+    await handleOrderUpdated()
+  } catch (error) {
+    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด!', text: error.message })
   }
-})
+}
 
-// --- Computed Properties ---
+// --- Computed & Helpers ---
 
 const myAllOrders = computed(() => {
   const all = orderStore.allOrders || []
@@ -266,18 +395,12 @@ const myAllOrders = computed(() => {
   })
 })
 
-const pendingOrders = computed(() => {
-  return myAllOrders.value.filter(o => {
-    const s = (o.status || '').toLowerCase()
-    return s === 'cancel requested' || s === 'return_requested'
-  })
-})
+const pendingOrders = computed(() => myAllOrders.value.filter(o => {
+  const s = (o.status || '').toLowerCase()
+  return s === 'cancel requested' || s === 'return_requested'
+}))
 
-const filteredMyOrders = computed(() => {
-  return myAllOrders.value.filter(o => (o.status || '').toLowerCase() === currentStatus.value.toLowerCase())
-})
-
-// --- Helper Functions ---
+const filteredMyOrders = computed(() => myAllOrders.value.filter(o => (o.status || '').toLowerCase() === currentStatus.value.toLowerCase()))
 
 const getModalHeaderClass = (status) => {
   const s = (status || '').toLowerCase()
@@ -298,42 +421,9 @@ function getItemImage(o) { const items = getItems(o); return (items.length > 0 &
 function formatDate(o) { if (!o) return ''; const d = o.updatedAt || o.date; return d ? new Date(d).toLocaleDateString('th-TH') : 'N/A' }
 function formatCurrency(v) { return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(v || 0) }
 function getTextClass(s) { return 'text-status-' + (s || '').toLowerCase() }
-
-// --- Modal Actions ---
-
-function openDetail(o) {
-  selectedOrder.value = { ...o };
-  showDetail.value = true
-
-  if (!route.query.id) {
-    router.replace({ query: { ...route.query, id: o.orderId || o._id } })
-  }
-}
-
-function closeDetail() {
-  showDetail.value = false
-  const query = { ...route.query }
-  delete query.id
-  router.replace({ query })
-}
-
-// ฟังก์ชันอนุมัติทันที (ไม่ต้องมี Modal)
-async function handleRequestAction(id, action) {
-  await orderStore.updateStatus(id, action)
-  // ถ้าไม่มี pending เหลือแล้ว ให้ปิด modal รายการ
-  if (pendingOrders.value.length === 0) {
-    showRequestsModal.value = false
-  }
-}
-
-async function handleOrderUpdated() {
-  await orderStore.fetchOrders()
-  closeDetail()
-}
 </script>
 
 <style scoped>
-/* ใช้ CSS ที่คุณมีอยู่แล้ว */
 .header-preparing {
   background: linear-gradient(135deg, #0288D1 0%, #29B6F6 100%);
 }
