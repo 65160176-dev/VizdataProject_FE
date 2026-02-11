@@ -184,7 +184,7 @@
                           </span>
 
                           <span class="text-end" style="width: 100px;">
-                            ฿{{ (calcPrice(item) * curr.curr * item.quantity).toFixed(2) }}
+                            ฿{{ (calcPrice(item) * curr.curr).toFixed(2) }}
                           </span>
 
                           <span class="ms-3 text-end" style="width: 80px;">
@@ -200,7 +200,15 @@
                     </ul>
                     <ul class="sub-total">
                       <li>Subtotal <span class="count">{{ (cartTotal * curr.curr).toFixed(2) }}</span></li>
-                      <li>Shipping <span class="count">{{ (shippingTotal * curr.curr).toFixed(2) }}</span></li>
+                      <li v-if="shippingBeforeDiscount > 0">
+                        Shipping <span class="count">{{ (shippingBeforeDiscount * curr.curr).toFixed(2) }}</span>
+                      </li>
+                      <li v-if="shippingDiscount > 0" class="text-success">
+                        Shipping Discount <span class="count">-{{ (shippingDiscount * curr.curr).toFixed(2) }}</span>
+                      </li>
+                      <li v-if="shippingDiscountInfo" class="small text-muted" style="border: none; padding: 5px 0;">
+                        <i class="ti-info-alt"></i> {{ shippingDiscountInfo }}
+                      </li>
                       <li class="fw-bold">Total <span class="count">{{ (grandTotal * curr.curr).toFixed(2) }}</span>
                       </li>
                     </ul>
@@ -431,15 +439,68 @@ export default {
     cartTotal() {
       return this.checkoutItems.reduce((total, item) => total + (this.calcPrice(item) * item.quantity), 0);
     },
-    shippingTotal() {
+    totalQuantity() {
+      return this.checkoutItems.reduce((total, item) => total + item.quantity, 0);
+    },
+    shippingBeforeDiscount() {
       return this.checkoutItems.reduce((total, item) => {
         let shipping = 0;
         if (item.shippingCost) {
           const cost = String(item.shippingCost).toLowerCase();
           shipping = (cost === 'free' || cost === '0') ? 0 : (Number(item.shippingCost) || 0);
         }
-        return total + shipping;
+        return total + (shipping * item.quantity);
       }, 0);
+    },
+    shippingDiscount() {
+      let discount = 0;
+      let originalShipping = this.shippingBeforeDiscount;
+      
+      // ถ้ายอดรวม >= 2000 บาท ส่งฟรีทั้งหมด (ลำดับความสำคัญสูงสุด)
+      if (this.cartTotal >= 2000) {
+        return originalShipping;
+      }
+      
+      // ถ้ายอดรวม >= 1000 บาท ลดค่าส่ง 50% (ลำดับความสำคัญรองลงมา)
+      if (this.cartTotal >= 1000) {
+        return originalShipping * 0.5;
+      }
+      
+      // ถ้าซื้อ >= 5 ชิ้น และยอดไม่ถึง 1000 บาท ฟรีค่าส่ง 1 ชิ้น (ชิ้นที่ถูกที่สุดที่ไม่ใช่ free)
+      if (this.totalQuantity >= 5 && this.cartTotal < 1000) {
+        const shippingCosts = this.checkoutItems
+          .map(item => {
+            if (item.shippingCost) {
+              const cost = String(item.shippingCost).toLowerCase();
+              if (cost !== 'free' && cost !== '0') {
+                return Number(item.shippingCost) || 0;
+              }
+            }
+            return 0;
+          })
+          .filter(cost => cost > 0)
+          .sort((a, b) => a - b);
+        
+        if (shippingCosts.length > 0) {
+          discount = shippingCosts[0];
+        }
+      }
+      
+      // ส่วนลดไม่เกินค่าส่งเต็ม
+      return Math.min(discount, originalShipping);
+    },
+    shippingTotal() {
+      return Math.max(0, this.shippingBeforeDiscount - this.shippingDiscount);
+    },
+    shippingDiscountInfo() {
+      if (this.cartTotal >= 2000) {
+        return 'ฟรีค่าส่ง (ยอดซื้อครบ 2,000 บาท)';
+      } else if (this.cartTotal >= 1000) {
+        return 'ลดค่าส่ง 50% (ยอดซื้อครบ 1,000 บาท)';
+      } else if (this.totalQuantity >= 5 && this.cartTotal < 1000) {
+        return 'ฟรีค่าส่ง 1 ชิ้น (ซื้อครบ 5 ชิ้น)';
+      }
+      return '';
     },
     grandTotal() { return this.cartTotal + this.shippingTotal }
   },

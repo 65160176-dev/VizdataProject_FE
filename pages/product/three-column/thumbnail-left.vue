@@ -66,7 +66,7 @@
                         <td>{{ product.category || '-' }}</td>
                       </tr>
                       <tr>
-                        <td>ค่าจัดส่ง:</td>
+                        <td>ค่าจัดส่ง: (ต่อชิ้น)</td>
                         <td>฿{{ product.shippingCost || 0 }}</td>
                       </tr>
                     </tbody>
