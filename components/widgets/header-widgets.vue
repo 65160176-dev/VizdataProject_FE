@@ -203,15 +203,25 @@ export default {
       return ('/images/' + path)
     },
     getProductImage(product) {
-      // รองรับทั้ง image field จาก API (string) และ images array จาก mock data
-      if (product.image) {
-        if (product.image.startsWith('http')) {
-          return product.image
-        }
-        return `/images/${product.image}`
+      if (!product) return 'https://placehold.co/400'
+      
+      const resolveUrl = (url) => {
+        if (!url || (typeof url === 'string' && url.trim() === '')) return null
+        if (url.startsWith('http')) return url
+        if (url.startsWith('/')) return `http://localhost:3001${url}`
+        return `http://localhost:3001/${url}`
       }
-      const img = (product.images && product.images[0] && product.images[0].src) ? product.images[0].src : null
-      return img ? `/images/${img}` : 'https://placehold.co/400'
+      
+      const fromImage = resolveUrl(product.image)
+      if (fromImage) return fromImage
+      
+      if (product.images && product.images.length > 0) {
+        const img = product.images[0].src || product.images[0]
+        const fromImages = resolveUrl(img)
+        if (fromImages) return fromImages
+      }
+      
+      return 'https://placehold.co/400'
     },
     openSearch() {
       this.search = true

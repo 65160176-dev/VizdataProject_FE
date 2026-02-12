@@ -195,7 +195,23 @@ export default {
     getImgUrl(path) { return ('/images/' + path) },
     getProductImage(product) {
       if (!product) return 'https://placehold.co/400'
-      if (product.image) return product.image.startsWith('http') ? product.image : `/images/${product.image}`
+      
+      const resolveUrl = (url) => {
+        if (!url || (typeof url === 'string' && url.trim() === '')) return null
+        if (url.startsWith('http')) return url
+        if (url.startsWith('/')) return `http://localhost:3001${url}`
+        return `http://localhost:3001/${url}`
+      }
+      
+      const fromImage = resolveUrl(product.image)
+      if (fromImage) return fromImage
+      
+      if (product.images && product.images.length > 0) {
+        const img = product.images[0].src || product.images[0]
+        const fromImages = resolveUrl(img)
+        if (fromImages) return fromImages
+      }
+      
       return 'https://placehold.co/400'
     },
     calcPrice(item) {
@@ -212,7 +228,14 @@ export default {
     goToShop(item) {
       if (item.seller && item.seller._id) this.$router.push('/seller/' + item.seller._id);
     },
-    removeCartItem(product) { useCartStore().removeCartItem(product) },
+    removeCartItem(product) {
+      useCartStore().removeCartItem(product).then(() => {
+        this.cartKey++
+      }).catch((err) => {
+        console.error('Remove failed:', err)
+        useNuxtApp().$showToast({ msg: 'ลบสินค้าไม่สำเร็จ กรุณาลองใหม่', type: 'error' })
+      })
+    },
     async increment(product) {
       // ✅ เพิ่มการตรวจสอบ Stock ตรงนี้
       if (product.quantity >= product.stock) {

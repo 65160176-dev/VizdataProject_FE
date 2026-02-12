@@ -58,6 +58,18 @@ export const useCartStore = defineStore({
                          `${product.userId.firstName || ''} ${product.userId.lastName || ''}`.trim() || 
                          'Shop'
             }
+
+            // Build proper image URL
+            let imageUrl = ''
+            if (product.image) {
+              if (product.image.startsWith('http')) {
+                imageUrl = product.image
+              } else if (product.image.startsWith('/')) {
+                imageUrl = `http://localhost:3001${product.image}`
+              } else {
+                imageUrl = `http://localhost:3001/${product.image}`
+              }
+            }
             
             const mappedItem = {
               _id: productIdString,
@@ -67,8 +79,8 @@ export const useCartStore = defineStore({
               price: Number(product.price) || 0,
               quantity: Number(item.quantity) || 1,
               shippingCost: product.shippingCost || 'Free',
-              image: product.image || '',
-              images: product.image ? [{ src: product.image }] : [],
+              image: imageUrl,
+              images: imageUrl ? [{ src: imageUrl }] : [],
               stock: Number(product.stock) || 0,
               commission: Number(product.commission) || 0,
               weight: Number(product.weight) || 0,
@@ -160,8 +172,11 @@ export const useCartStore = defineStore({
         })
         
         await this.fetchCart()
+        useNuxtApp().$showToast({ msg: "Product added to cart", type: "success" })
       } catch (error) {
         console.error('Error adding to cart:', error)
+        const errorMessage = error.data?.message || error.message || 'Failed to add product to cart'
+        useNuxtApp().$showToast({ msg: errorMessage, type: "error" })
       }
     },
     async updateCartQuantity(payload) {
@@ -222,6 +237,10 @@ export const useCartStore = defineStore({
         this.cart = [...this.cart];
       } catch (error) {
         console.error('Error updating cart quantity:', error)
+        const errorMessage = error.data?.message || error.message || 'Failed to update quantity'
+        useNuxtApp().$showToast({ msg: errorMessage, type: "error" })
+        // Refresh cart to show current state
+        await this.fetchCart()
       }
     },
     async removeCartItem(payload) {
@@ -242,20 +261,39 @@ export const useCartStore = defineStore({
         const productId = payload._id || payload.id
         
         if (!productId) {
+          console.error('No productId found in payload:', payload)
           return;
         }
         
-        await $fetch(`http://localhost:3001/api/cart/${productId}`, {
+        console.log('Deleting product from cart, productId:', productId)
+        
+        const response = await $fetch(`http://localhost:3001/api/cart/${productId}`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`
           }
         })
         
+        console.log('Delete response:', response)
+        
+        // Remove from local cart immediately
+        this.cart = this.cart.filter((item) => {
+          const itemId = item._id || item.id
+          return itemId !== productId
+        })
+        
+        // Then sync with server
         await this.fetchCart()
       } catch (error) {
         console.error('Error removing from cart:', error)
-        throw error;
+        // Still remove locally even if API fails
+        const productId = payload._id || payload.id
+        if (productId) {
+          this.cart = this.cart.filter((item) => {
+            const itemId = item._id || item.id
+            return itemId !== productId
+          })
+        }
       }
     },
     setInitialCart(payload) {

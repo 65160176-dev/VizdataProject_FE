@@ -16,7 +16,7 @@
             <li v-for="(item, index) in cart" :key="index">
               <div class="media">
                 <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
-                  <img alt class="mr-3" :src='getImgUrl(item.images[0].src)'>
+                  <img alt class="mr-3" :src='getProductImage(item)'>
                 </nuxt-link>
                 <div class="media-body">
                   <nuxt-link :to="{ path: '/product/sidebar/' + item.id }">
@@ -89,6 +89,27 @@ export default {
    
     getImgUrl(path) {
       return ('/images/' + path)
+    },
+    getProductImage(product) {
+      if (!product) return 'https://placehold.co/400'
+      
+      const resolveUrl = (url) => {
+        if (!url || (typeof url === 'string' && url.trim() === '')) return null
+        if (url.startsWith('http')) return url
+        if (url.startsWith('/')) return `http://localhost:3001${url}`
+        return `http://localhost:3001/${url}`
+      }
+      
+      const fromImage = resolveUrl(product.image)
+      if (fromImage) return fromImage
+      
+      if (product.images && product.images.length > 0) {
+        const img = product.images[0].src || product.images[0]
+        const fromImages = resolveUrl(img)
+        if (fromImages) return fromImages
+      }
+      
+      return 'https://placehold.co/400'
     },
   
     closeCart(val) {

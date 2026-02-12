@@ -19,8 +19,8 @@
                                         </button>
                                         <div class="media">
                                             <a href="#">
-                                                <img :src="getImgUrl(productData.images[0].src)" class="img-fluid"
-                                                    :alt="productData.images[0].alt" />
+                                                <img :src="getProductImage(productData)" class="img-fluid"
+                                                    :alt="productData.title" />
                                             </a>
                                             <div class="media-body align-self-center text-center">
                                                 <a href="#">
@@ -54,7 +54,7 @@
                                                     <div class="img-wrapper">
                                                         <div class="front">
                                                             <nuxt-link :to="{ path: '/product/sidebar/' + product.id }">
-                                                                <img :src='getImgUrl(product.images[0].src)'
+                                                                <img :src='getProductImage(product)'
                                                                     class="img-fluid" :alt="product.title" />
                                                             </nuxt-link>
                                                         </div>
@@ -118,6 +118,27 @@ export default {
        
         getImgUrl(path) {
             return ('/images/' + path)
+        },
+        getProductImage(product) {
+            if (!product) return 'https://placehold.co/400'
+            
+            const resolveUrl = (url) => {
+                if (!url || (typeof url === 'string' && url.trim() === '')) return null
+                if (url.startsWith('http')) return url
+                if (url.startsWith('/')) return `http://localhost:3001${url}`
+                return `http://localhost:3001/${url}`
+            }
+            
+            const fromImage = resolveUrl(product.image)
+            if (fromImage) return fromImage
+            
+            if (product.images && product.images.length > 0) {
+                const img = product.images[0].src || product.images[0]
+                const fromImages = resolveUrl(img)
+                if (fromImages) return fromImages
+            }
+            
+            return 'https://placehold.co/400'
         },
         closeCart(val) {
             val = false
