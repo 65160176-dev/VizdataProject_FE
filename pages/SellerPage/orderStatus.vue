@@ -50,7 +50,7 @@
         </div>
       </div>
 
-      <div class="col-xl-4 col-md-6" v-for="order in filteredMyOrders" :key="order._id">
+      <div class="col-xl-3 col-md-6" v-for="order in filteredMyOrders" :key="order._id">
         <div class="card h-100 order-card border-0 shadow-sm rounded-4 overflow-hidden" @click="openDetail(order)">
           <div
             :class="['card-header border-0 py-3 d-flex justify-content-between align-items-center text-white', getModalHeaderClass(order.status)]">

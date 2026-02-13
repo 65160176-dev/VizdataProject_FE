@@ -397,7 +397,15 @@ function addToCart(product) {
   grid-template-columns: repeat(5, 1fr); 
   gap:12px; 
 }
-.product-card { display:block }
+.product-card { display:block; overflow: hidden; }
+.product-card .card { overflow: hidden; }
+.product-card .card img.card-img-top { 
+  width: 100%; 
+  height: 200px; 
+  object-fit: cover; 
+  display: block;
+  background: #f5f5f5;
+}
 
 /* Responsive Grid Adjustments */
 @media (max-width: 1400px) {

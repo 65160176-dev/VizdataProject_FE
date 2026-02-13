@@ -186,28 +186,18 @@
             <h2>สินค้าในหมวดเดียวกัน</h2>
           </div>
         </div>
-        <div class="row g-sm-4 g-3">
-          <div class="col-xl-2 col-lg-3 col-md-4 col-6" v-for="(prod, idx) in relatedProducts" :key="'related-' + idx">
-            <div class="product-box">
-              <div class="img-wrapper">
-                <div class="front" @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">
-                  <img :src="getProductImage(prod.image)" class="img-fluid bg-img" :alt="prod.name" style="width: 100%; height: 200px; object-fit: cover;">
-                </div>
-                <div class="cart-info cart-wrap">
-                  <button title="Add to cart" @click="addToCart(prod, 1)">
-                    <i class="ti-shopping-cart"></i>
-                  </button>
-                  <a href="javascript:void(0)" title="Wishlist" @click="addToWishlist(prod)">
-                    <i class="ti-heart"></i>
-                  </a>
-                </div>
+        <div class="product-grid">
+          <div v-for="(prod, idx) in relatedProducts" :key="'related-' + idx" class="product-card">
+            <div class="card h-100 shadow-sm">
+              <div class="card-img-wrap" @click="navigateToProduct(prod._id || prod.id)">
+                <img :src="getProductImage(prod.image)" class="card-img-top" :alt="prod.name" />
               </div>
-              <div class="product-detail">
-                <h6 @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">{{ prod.name }}</h6>
-                <div class="d-flex align-items-center justify-content-center gap-2">
-                  <h4 class="mb-0">฿{{ prod.price?.toFixed(2) }}</h4>
-                  <button class="btn btn-sm btn-solid" @click.stop="addToCart(prod, 1)" style="padding: 5px 12px; font-size: 12px;">
-                    <i class="ti-shopping-cart"></i>
+              <div class="card-body d-flex flex-column">
+                <h6 class="card-title mb-1 text-truncate" @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">{{ prod.name }}</h6>
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                  <div class="fw-bold">฿{{ prod.price?.toLocaleString() }}</div>
+                  <button class="btn-cart" @click="addToCart(prod, 1)" title="เพิ่มลงตะกร้า">
+                    <Icon name="feather:shopping-cart" size="18" />
                   </button>
                 </div>
               </div>
@@ -225,28 +215,18 @@
             <h2>สินค้าแนะนำ</h2>
           </div>
         </div>
-        <div class="row g-sm-4 g-3">
-          <div class="col-xl-2 col-lg-3 col-md-4 col-6" v-for="(prod, idx) in randomProducts" :key="'random-' + idx">
-            <div class="product-box">
-              <div class="img-wrapper">
-                <div class="front" @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">
-                  <img :src="getProductImage(prod.image)" class="img-fluid bg-img" :alt="prod.name" style="width: 100%; height: 200px; object-fit: cover;">
-                </div>
-                <div class="cart-info cart-wrap">
-                  <button title="Add to cart" @click="addToCart(prod, 1)">
-                    <i class="ti-shopping-cart"></i>
-                  </button>
-                  <a href="javascript:void(0)" title="Wishlist" @click="addToWishlist(prod)">
-                    <i class="ti-heart"></i>
-                  </a>
-                </div>
+        <div class="product-grid">
+          <div v-for="(prod, idx) in randomProducts" :key="'random-' + idx" class="product-card">
+            <div class="card h-100 shadow-sm">
+              <div class="card-img-wrap" @click="navigateToProduct(prod._id || prod.id)">
+                <img :src="getProductImage(prod.image)" class="card-img-top" :alt="prod.name" />
               </div>
-              <div class="product-detail">
-                <h6 @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">{{ prod.name }}</h6>
-                <div class="d-flex align-items-center justify-content-center gap-2">
-                  <h4 class="mb-0">฿{{ prod.price?.toFixed(2) }}</h4>
-                  <button class="btn btn-sm btn-solid" @click.stop="addToCart(prod, 1)" style="padding: 5px 12px; font-size: 12px;">
-                    <i class="ti-shopping-cart"></i>
+              <div class="card-body d-flex flex-column">
+                <h6 class="card-title mb-1 text-truncate" @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">{{ prod.name }}</h6>
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                  <div class="fw-bold">฿{{ prod.price?.toLocaleString() }}</div>
+                  <button class="btn-cart" @click="addToCart(prod, 1)" title="เพิ่มลงตะกร้า">
+                    <Icon name="feather:shopping-cart" size="18" />
                   </button>
                 </div>
               </div>
@@ -393,7 +373,7 @@ export default {
         )
         
         // สุ่มเอา 6 ตัว
-        this.relatedProducts = this.shuffleArray(related).slice(0, 6)
+        this.relatedProducts = this.shuffleArray(related).slice(0, 5)
       } catch (error) {
         console.error('Failed to fetch related products:', error)
         this.relatedProducts = []
@@ -410,7 +390,7 @@ export default {
         )
         
         // สุ่มเอา 6 ตัว
-        this.randomProducts = this.shuffleArray(filtered).slice(0, 6)
+        this.randomProducts = this.shuffleArray(filtered).slice(0, 5)
       } catch (error) {
         console.error('Failed to fetch random products:', error)
         this.randomProducts = []
@@ -446,77 +426,49 @@ export default {
   color: #333;
 }
 
-.product-box {
-  border: 1px solid #eee;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.3s ease;
+/* Product Grid (index style) */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
 }
+.product-card { display: block; }
 
-.product-box:hover {
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  transform: translateY(-5px);
-}
+.card { border: 1px solid #eee; border-radius: 8px; transition: transform .18s ease, box-shadow .18s ease; overflow: hidden; }
+.card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(17,24,39,0.08); }
+.card-img-wrap { height: 200px; overflow: hidden; background: #f5f5f5; cursor: pointer; }
+.card .card-img-top { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card .card-body { padding: 10px; }
+.card .card-title { font-size: 14px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .fw-bold { color: #111827; font-size: 16px; }
 
-.product-box .img-wrapper {
-  position: relative;
-  overflow: hidden;
-}
-
-.product-box .cart-info {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0;
-  transition: all 0.3s ease;
-}
-
-.product-box:hover .cart-info {
-  opacity: 1;
-}
-
-.product-box .cart-info button,
-.product-box .cart-info a {
-  background: white;
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
+/* Cart Button */
+.btn-cart {
+  background: #ff4c3b;
+  padding: 8px 14px;
+  border-radius: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: 0 3px;
-  border: none;
+  border: 1px solid #ff4c3b;
   cursor: pointer;
   transition: all 0.3s ease;
-}
-
-.product-box .cart-info button:hover,
-.product-box .cart-info a:hover {
-  background: #ff4c3b;
   color: white;
+  box-shadow: 0 2px 6px rgba(255, 76, 59, 0.3);
 }
-
-.product-box .product-detail {
-  padding: 15px;
-  text-align: center;
-}
-
-.product-box .product-detail h6 {
-  font-size: 14px;
-  margin: 10px 0;
-  color: #333;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.product-box .product-detail h4 {
-  font-size: 16px;
-  font-weight: 600;
+.btn-cart:hover {
+  background: white;
   color: #ff4c3b;
-  margin: 5px 0;
+  border-color: #ff4c3b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 76, 59, 0.3);
 }
+
+/* Responsive */
+@media (max-width: 1400px) { .product-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 1100px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 767px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .product-grid { grid-template-columns: repeat(1, 1fr); } }
 
 .qty-input-custom {
   border-color: #ced4da !important;
