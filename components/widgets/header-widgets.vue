@@ -97,6 +97,11 @@
                   <h4>
                     <span>{{ item.quantity }} x ฿{{ (item.price * curr.curr).toFixed(2) }}</span>
                   </h4>
+
+                  <div v-if="item.quantity > item.stock" class="text-danger mt-1"
+                    style="font-size: 11px; font-weight: 600;">
+                    <i class="fa fa-exclamation-circle"></i> สต็อกไม่พอ (เหลือ {{ item.stock }})
+                  </div>
                 </div>
               </div>
               <div class="close-circle">
@@ -136,6 +141,7 @@
 import { useProductStore } from '~/store/products'
 import { useCartStore } from '~/store/cart'
 import { mapState } from 'pinia'
+import Swal from 'sweetalert2'
 
 export default {
   data() {
@@ -143,15 +149,10 @@ export default {
       currencyChange: {},
       search: false,
       searchString: '',
+      refreshInterval: null, // ✅ 1. เพิ่มตัวแปรเก็บ Interval
       lang: [
-        {
-          code: 'en',
-          name: 'English'
-        },
-        {
-          code: 'fr',
-          name: 'French'
-        }
+        { code: 'en', name: 'English' },
+        { code: 'fr', name: 'French' }
       ]
     }
   },
@@ -171,32 +172,15 @@ export default {
       return useProductStore().changeCurrency
     },
     totalItems() {
-      console.log('===== COMPUTING TOTAL ITEMS =====');
-      console.log('Cart:', this.cart);
-      console.log('Cart length:', this.cart.length);
-
-      if (!this.cart || this.cart.length === 0) {
-        console.log('Cart is empty, returning 0');
-        return 0;
-      }
-
-      const total = this.cart.reduce((sum, item) => {
-        console.log(`Item: ${item.name}, quantity: ${item.quantity}`);
-        return sum + (item.quantity || 0);
-      }, 0);
-
-      console.log('Total items calculated:', total);
-      console.log('=================================');
-      return total;
+      if (!this.cart || this.cart.length === 0) return 0;
+      return this.cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
     }
   },
   watch: {
     searchString() {
       useProductStore().searchProduct(this.searchString)
     },
-    cart() {
-      useCartStore().cartItems
-    },
+    // ไม่จำเป็นต้อง watch cart เพื่อ update cartItems แล้ว เพราะใช้ mapState อัตโนมัติ
   },
   methods: {
     getImgUrl(path) {
@@ -204,23 +188,23 @@ export default {
     },
     getProductImage(product) {
       if (!product) return 'https://placehold.co/400'
-      
+
       const resolveUrl = (url) => {
         if (!url || (typeof url === 'string' && url.trim() === '')) return null
         if (url.startsWith('http')) return url
         if (url.startsWith('/')) return `http://localhost:3001${url}`
         return `http://localhost:3001/${url}`
       }
-      
+
       const fromImage = resolveUrl(product.image)
       if (fromImage) return fromImage
-      
+
       if (product.images && product.images.length > 0) {
         const img = product.images[0].src || product.images[0]
         const fromImages = resolveUrl(img)
         if (fromImages) return fromImages
       }
-      
+
       return 'https://placehold.co/400'
     },
     openSearch() {
@@ -232,7 +216,6 @@ export default {
     searchProduct() {
     },
     removeCartItem: async function (product) {
-      console.log('Removing from header cart:', product)
       await useCartStore().removeCartItem(product)
       if (this.cart.length == 0 && this.$route.name === 'page-account-checkout') {
         this.$router.replace('/page/account/cart')
@@ -246,27 +229,99 @@ export default {
       useProductStore().changeCurrency2(this.currencyChange)
     },
 
-    // --- แก้ไขฟังก์ชันนี้ ---
-    goToCheckout() {
+    // ✅ 2. เพิ่มฟังก์ชันดึงข้อมูลใหม่ (ทำงานเบื้องหลัง)
+    async refreshCartData() {
+      const store = useCartStore();
+      // ดึงข้อมูลใหม่ ซึ่งจะไปอัปเดต state.cart โดยอัตโนมัติ
+      // ผลลัพธ์คือ item.stock ใน template จะเปลี่ยนไป และข้อความสีแดงจะโชว์/ซ่อนเอง
+      await store.fetchCart();
+    },
+
+    async goToCheckout() {
+      const cartStore = useCartStore(); // เรียก store ไว้ก่อน
+
       // 1. ตรวจสอบว่ามีสินค้าในตะกร้าไหม
       if (this.cart.length === 0) {
         useNuxtApp().$showToast({ msg: "Cart is empty", type: "error" });
         return;
       }
 
-      // 2. บันทึกสินค้า "ทั้งหมด" ลงใน LocalStorage
-      // ชื่อตัวแปร 'checkout_items' ต้องตรงกับที่หน้า PaymentPage เรียกใช้
+      // ดึงข้อมูลล่าสุดก่อนเช็ค 1 ครั้ง เพื่อความชัวร์ที่สุด
+      await cartStore.fetchCart();
+
+      // 2. ตรวจสอบสต็อกสินค้า
+      const outOfStockItems = this.cart.filter(item => item.quantity > item.stock);
+
+      if (outOfStockItems.length > 0) {
+        let itemListHtml = '<div style="text-align: left; max-height: 250px; overflow-y: auto; padding-right: 5px;">';
+        outOfStockItems.forEach(item => {
+          const imageUrl = this.getProductImage(item);
+          itemListHtml += `
+             <div class="d-flex align-items-center mb-2 pb-2 border-bottom" style="gap: 10px;">
+               <img src="${imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;">
+               <div style="min-width: 0; flex-grow: 1;">
+                 <div style="font-size: 0.85rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</div>
+                 <div class="text-danger" style="font-size: 0.8rem;">
+                    เหลือเพียง ${item.stock} ชิ้น <span class="text-muted">(ในตะกร้า: ${item.quantity})</span>
+                 </div>
+               </div>
+             </div>`;
+        });
+        itemListHtml += '</div>';
+
+        Swal.fire({
+          icon: 'warning',
+          title: 'สต็อกสินค้ามีการเปลี่ยนแปลง',
+          html: `<p class="mb-3 small text-muted">สินค้าบางรายการมีไม่เพียงพอ ระบบจะปรับจำนวนให้เท่ากับสต็อกที่เหลืออัตโนมัติ</p>${itemListHtml}`,
+          confirmButtonText: 'ตกลง, ปรับปรุงข้อมูล',
+          confirmButtonColor: '#ff4c3b',
+          allowOutsideClick: false
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            // ✅ ทำการหักลบจำนวนใน Store ให้เท่ากับ Stock จริง
+            for (const item of outOfStockItems) {
+              const diff = item.stock - item.quantity;
+              if (diff !== 0) {
+                await cartStore.updateCartQuantity({ product: item, qty: diff });
+              }
+            }
+            useNuxtApp().$showToast({ msg: 'ปรับปรุงข้อมูลแล้ว กรุณากด Checkout อีกครั้ง', type: 'success' });
+          }
+        });
+        return; // หยุดการไปหน้าถัดไป
+      }
+
+      // 3. ถ้าตรวจสอบผ่านหมดแล้ว บันทึกสินค้าลง LocalStorage
       localStorage.setItem('checkout_items', JSON.stringify(this.cart));
 
-      // 3. ตรวจสอบ Login และเปลี่ยนหน้า
-      const user = localStorage.getItem('user')
-      if (user) {
+      // 4. ตรวจสอบ Login และเปลี่ยนหน้า
+      const token = localStorage.getItem('token')
+      if (token) {
         this.$router.push('/page/account/checkout')
       } else {
         this.$router.push('/page/auth/LoginPage?redirect=/page/account/checkout')
       }
     }
   },
+
+  // ✅ 3. เริ่มการทำงาน Real-time
+  mounted() {
+    // ดึงข้อมูลครั้งแรก
+    this.refreshCartData();
+
+    // ตั้งเวลาดึงข้อมูลทุก 15 วินาที
+    this.refreshInterval = setInterval(() => {
+      // ดึงเงียบๆ เพื่ออัปเดตตัวเลข Stock และแจ้งเตือนสีแดงใน Dropdown
+      this.refreshCartData();
+    }, 15000);
+  },
+
+  // ✅ 4. ล้างเวลาเมื่อ Component ถูกทำลาย
+  beforeUnmount() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+  }
 }
 </script>
 

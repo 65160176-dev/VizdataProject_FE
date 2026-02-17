@@ -73,7 +73,7 @@
 
                     <td class="col-center">
                       <h2 class="td-color price-text">
-                        {{ curr.symbol }}{{ (calcPrice(item) * curr.curr).toFixed(2) }}
+                        ฿ {{ (calcPrice(item) * curr.curr).toFixed(2) }}
                       </h2>
                     </td>
 
@@ -97,6 +97,10 @@
                           </span>
                         </div>
                       </div>
+
+                      <div class="text-danger mt-1" style="font-size: 0.8rem; font-weight: 500;">
+                        เหลือ {{ item.stock }} ชิ้น
+                      </div>
                     </td>
 
                     <td class="col-center">
@@ -107,7 +111,7 @@
 
                     <td class="col-right">
                       <h2 class="td-color total-text">
-                        {{ curr.symbol }} {{ ((calcPrice(item) * curr.curr) * item.quantity).toFixed(2) }}
+                        ฿ {{ ((calcPrice(item) * curr.curr) * item.quantity).toFixed(2) }}
                       </h2>
                     </td>
                   </tr>
@@ -157,12 +161,14 @@
 <script>
 import { useCartStore } from '~~/store/cart'
 import { useProductStore } from '~~/store/products'
+import Swal from 'sweetalert2'
 
 export default {
   data() {
     return {
       selectedItems: [],
-      cartKey: 0
+      cartKey: 0,
+      refreshInterval: null
     }
   },
   computed: {
@@ -194,32 +200,36 @@ export default {
   methods: {
     getImgUrl(path) { return ('/images/' + path) },
     getProductImage(product) {
-      if (!product) return 'https://placehold.co/400'
-      
+      // 1. ถ้าไม่มีข้อมูลสินค้าเลย ให้ส่งรูป Default กลับไป
+      if (!product) return 'https://placehold.co/400?text=No+Product'
+
       const resolveUrl = (url) => {
         if (!url || (typeof url === 'string' && url.trim() === '')) return null
         if (url.startsWith('http')) return url
         if (url.startsWith('/')) return `http://localhost:3001${url}`
         return `http://localhost:3001/${url}`
       }
-      
+
+      // 2. พยายามดึงรูปจาก product.image หลัก
       const fromImage = resolveUrl(product.image)
       if (fromImage) return fromImage
-      
+
+      // 3. ถ้าไม่มี ให้ลองดึงจาก product.images[0]
       if (product.images && product.images.length > 0) {
         const img = product.images[0].src || product.images[0]
         const fromImages = resolveUrl(img)
         if (fromImages) return fromImages
       }
-      
-      return 'https://placehold.co/400'
+
+      // 4. ถ้าไม่มีรูปเลย ให้ส่ง URL รูป Placeholder กลับไป
+      // (คุณสามารถเปลี่ยนตรงนี้เป็น '/images/default-product.png' ได้ถ้ามีไฟล์ในเครื่อง)
+      return 'https://placehold.co/400?text=No+Image'
     },
     calcPrice(item) {
       if (!item || !item.price) return 0
       const price = Number(item.price) || 0
       return (item.sale && item.discount) ? price - (price * (parseFloat(item.discount) / 100)) : price;
     },
-    // ✅ แก้ไข: ให้แสดงชื่อร้านเสมอ แม้จะเป็น Shop ก็ตาม (เพื่อ Debug)
     getShopName(item) {
       if (item.brand) return item.brand;
       if (item.seller && (item.seller.display_name || item.seller.name)) return item.seller.display_name || item.seller.name;
@@ -237,18 +247,15 @@ export default {
       })
     },
     async increment(product) {
-      // ✅ เพิ่มการตรวจสอบ Stock ตรงนี้
       if (product.quantity >= product.stock) {
         useNuxtApp().$showToast({ msg: "สินค้ามีจำนวนจำกัด ไม่สามารถเพิ่มได้อีก", type: "error" });
         return;
       }
-
       await useCartStore().updateCartQuantity({ product: product, qty: 1 });
       this.cartKey++;
     },
     async decrement(product) { await useCartStore().updateCartQuantity({ product: product, qty: -1 }); this.cartKey++; },
     handleQuantityInput(event, item) {
-      // Allow typing but don't update yet
       const value = parseInt(event.target.value) || 0;
       if (value < 1) {
         event.target.value = 1;
@@ -261,7 +268,6 @@ export default {
       const newQuantity = parseInt(event.target.value) || 1;
       const oldQuantity = item.quantity;
 
-      // Validate quantity
       if (newQuantity < 1) {
         event.target.value = oldQuantity;
         return;
@@ -272,7 +278,6 @@ export default {
         return;
       }
 
-      // Only update if quantity changed
       if (newQuantity !== oldQuantity) {
         const diff = newQuantity - oldQuantity;
         await useCartStore().updateCartQuantity({ product: item, qty: diff });
@@ -280,6 +285,12 @@ export default {
       }
     },
     goToCheckout() {
+      const outOfStockItems = this.cart.filter(item => item.quantity > item.stock);
+      if (outOfStockItems.length > 0) {
+        this.checkStockAvailability();
+        return;
+      }
+
       if (this.selectedItems.length === 0) {
         useNuxtApp().$showToast({ msg: "Please select items to checkout.", type: "error" })
         return;
@@ -297,10 +308,142 @@ export default {
       }));
       localStorage.setItem('checkout_items', JSON.stringify(checkoutData));
       this.$router.push('/page/account/checkout');
+    },
+
+    // ✅ ฟังก์ชันดึงข้อมูล (Logic แจ้งเตือนของหาย + แก้ไขรูปภาพ)
+    async refreshCartData() {
+      const store = useCartStore();
+      const previousCart = [...this.cart];
+
+      await store.fetchCart();
+
+      if (previousCart.length > 0) {
+        const currentIds = new Set(this.cart.map(item => item._id || item.id));
+        const removedItems = previousCart.filter(item => !currentIds.has(item._id || item.id));
+
+        if (removedItems.length > 0 && !Swal.isVisible()) {
+          let removedHtml = '<div style="text-align: left; max-height: 300px; overflow-y: auto; padding-right: 5px;">';
+
+          removedItems.forEach(item => {
+            const imageUrl = this.getProductImage(item);
+            // ✅ ใช้ div wrapper ขนาด 60x60 เพื่อบังคับขนาดรูป
+            // ✅ ใช้ onerror เปลี่ยนเป็นรูป icon-empty-cart.png ในโปรเจกต์แทน (มั่นใจว่ามีรูปแน่นอน)
+            removedHtml += `
+               <div class="d-flex align-items-center mb-3 pb-2 border-bottom" style="gap: 15px;">
+                 <div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid #eee; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
+                   <img src="${imageUrl}" alt="${item.name}" 
+                        style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                        onerror="this.onerror=null; this.src='/images/icon-empty-cart.png';">
+                 </div>
+                 <div style="flex-grow: 1; min-width: 0;">
+                   <div style="color: #333; font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                     ${item.name || 'สินค้าไม่ทราบชื่อ'}
+                   </div>
+                   <div class="text-danger" style="font-size: 0.85rem;">
+                     <i class="ti-trash"></i> สินค้าถูกลบ หรือเลิกจำหน่าย
+                   </div>
+                 </div>
+               </div>`;
+          });
+          removedHtml += '</div>';
+
+          Swal.fire({
+            icon: 'error',
+            title: 'สินค้าถูกนำออกจากตะกร้า',
+            html: `<p class="mb-4 text-muted small">ขออภัย สินค้าบางรายการถูกลบหรือเลิกจำหน่าย:</p>${removedHtml}`,
+            confirmButtonText: 'รับทราบ',
+            confirmButtonColor: '#d33',
+            allowOutsideClick: false,
+            width: '450px',
+            customClass: {
+              popup: 'rounded-4 shadow-lg',
+              confirmButton: 'px-4 py-2 rounded-pill fw-bold'
+            }
+          });
+
+          return;
+        }
+      }
+
+      if (!Swal.isVisible()) {
+        this.checkStockAvailability();
+      }
+    },
+
+    // ✅ ฟังก์ชันแจ้งเตือนสต็อก (แก้ไขรูปภาพให้เหมือนกัน)
+    checkStockAvailability() {
+      const outOfStockItems = this.cart.filter(item => item.quantity > item.stock);
+
+      if (outOfStockItems.length > 0) {
+        let itemListHtml = '<div style="text-align: left; max-height: 300px; overflow-y: auto; padding-right: 5px;">';
+
+        outOfStockItems.forEach(item => {
+          const imageUrl = this.getProductImage(item);
+          const name = item.name || item.title || 'Unknown Product';
+          const stock = item.stock;
+          const currentQty = item.quantity;
+
+          itemListHtml += `
+             <div class="d-flex align-items-center mb-3 pb-2 border-bottom" style="gap: 15px;">
+               <div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid #eee; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
+                 <img src="${imageUrl}" alt="${name}" 
+                      style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                      onerror="this.onerror=null; this.src='/images/icon-empty-cart.png';">
+               </div>
+               <div style="flex-grow: 1; min-width: 0;">
+                 <div style="color: #333; font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                   ${name}
+                 </div>
+                 <div class="text-danger" style="font-size: 0.85rem;">
+                   <i class="ti-alert"></i> ${stock === 0 ? 'สินค้าหมดแล้ว' : `เหลือเพียง ${stock} ชิ้น`} 
+                   <span class="text-muted" style="font-size: 0.8rem;">(ในตะกร้า: ${currentQty})</span>
+                 </div>
+               </div>
+             </div>`;
+        });
+        itemListHtml += '</div>';
+
+        Swal.fire({
+          icon: 'warning',
+          title: 'สินค้ามีการเปลี่ยนแปลง',
+          html: `<p class="mb-4 text-muted small">ระบบตรวจพบว่าสต็อกสินค้าบางรายการไม่เพียงพอ ระบบจะปรับปรุงจำนวนให้อัตโนมัติ:</p>${itemListHtml}`,
+          confirmButtonText: 'ตกลง',
+          confirmButtonColor: '#ff4c3b',
+          allowOutsideClick: false,
+          width: '450px',
+          customClass: {
+            popup: 'rounded-4 shadow-lg',
+            confirmButton: 'px-4 py-2 rounded-pill fw-bold'
+          }
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            const store = useCartStore();
+            for (const item of outOfStockItems) {
+              const diff = item.stock - item.quantity;
+              if (diff !== 0) {
+                await store.updateCartQuantity({ product: item, qty: diff });
+              }
+            }
+            useNuxtApp().$showToast({ msg: 'ปรับปรุงจำนวนสินค้าเรียบร้อยแล้ว', type: 'success' });
+          }
+        });
+      }
     }
   },
-  mounted() {
-    useCartStore().fetchCart();
+
+  async mounted() {
+    await this.refreshCartData();
+
+    this.refreshInterval = setInterval(async () => {
+      console.log('Real-time checking cart stock & removed items...');
+      await this.refreshCartData();
+    }, 15000);
+  },
+
+  beforeUnmount() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 }
 </script>
