@@ -92,25 +92,25 @@ const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currenc
 const chartOptions = computed(() => ({
   chart: { 
       height: 350, 
-      type: "bar", // เปลี่ยนเป็น bar
+      type: "bar", 
       toolbar: { show: false }, 
       fontFamily: 'Nunito, sans-serif' 
   },
-  // เพิ่มการตั้งค่าสำหรับกราฟแท่ง
   plotOptions: {
     bar: {
       horizontal: false,
-      columnWidth: '55%', // ความกว้างของแท่ง
-      borderRadius: 4,    // มุมมน
+      columnWidth: '55%', 
+      borderRadius: 4,    
       endingShape: 'rounded'
     },
   },
-  colors: ["#51bb25", "#f73164"], 
+  // ✅ เปลี่ยนสีแรก (Income) เป็นสีส้ม, สีสอง (Lost) เป็นสีแดงเหมือนเดิม
+  colors: ["#ff9f40", "#f73164"], 
   dataLabels: { enabled: false },
   stroke: { 
       show: true, 
       width: 2, 
-      colors: ['transparent'] // เว้นระยะห่างระหว่างแท่งนิดหน่อย
+      colors: ['transparent'] 
   },
   xaxis: {
     categories: chartData.value.categories,
@@ -121,7 +121,7 @@ const chartOptions = computed(() => ({
       labels: { formatter: (val) => val >= 1000 ? `${(val/1000).toFixed(1)}k` : val }
   },
   fill: { 
-      opacity: 1 // ใช้สีทึบเพื่อให้ดูแน่นขึ้นสำหรับกราฟแท่ง
+      opacity: 1 
   },
   grid: { borderColor: '#f1f1f1' },
   tooltip: { 

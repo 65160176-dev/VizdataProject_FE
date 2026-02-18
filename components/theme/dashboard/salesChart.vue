@@ -70,7 +70,7 @@ const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currenc
 // ตั้งค่ากราฟแท่ง
 const chartOptions = ref({
   chart: { 
-      type: "bar",  // เปลี่ยนเป็น bar
+      type: "bar",  
       height: 85, 
       sparkline: { enabled: true },
       fontFamily: 'Nunito, sans-serif'
@@ -83,7 +83,7 @@ const chartOptions = ref({
           distributed: false
       } 
   },
-  colors: ["#7366ff"], // สีม่วงเหมือนเดิม
+  colors: ["#ff9f40"], // ✅ เปลี่ยนเป็นสีส้ม
   tooltip: { 
       fixed: { enabled: false }, 
       x: { show: false }, 

@@ -133,7 +133,7 @@
                 <div class="mt-4">
                   <label class="form-label small fw-bold">สร้างหมวดหมู่ใหม่:</label>
                   <div class="input-group">
-                    <input type="text" class="form-control rounded-start-pill ps-3 border-orange-focus" placeholder="ชื่อหมวดหมู่..." v-model="newCategoryInput" @keyup.enter="addNewCategoryToSystem">
+                    <input type="text" class="form-control rounded-start-pill ps-3 border-orange-focus" placeholder="ชื่อหมวดหมู่... (สูงสุด 30 ตัวอักษร)" v-model="newCategoryInput" @keyup.enter="addNewCategoryToSystem" maxlength="30">
                     <button class="btn btn-primary rounded-end-pill px-4" @click="addNewCategoryToSystem">เพิ่ม</button>
                   </div>
                 </div>
@@ -183,7 +183,7 @@
                       </div>
                     </div>
                     <div class="col-md-7">
-                      <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="newItem.name" type="text"></div>
+                      <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="newItem.name" type="text" maxlength="30"></div>
                       <div class="row">
                         <div class="col-6 form-group mb-3">
                             <label class="small fw-bold">Stock :</label>
@@ -226,7 +226,7 @@
                           <div v-if="activeCategories.length === 0" class="text-danger small mt-1">* กรุณาไปเลือกหมวดหมู่ที่ปุ่ม Category ก่อน</div>
                       </div>
 
-                      <div class="form-group mb-0"><label class="small fw-bold">Description :</label><textarea class="form-control" rows="3" v-model="newItem.description"></textarea></div>
+                      <div class="form-group mb-0"><label class="small fw-bold">Description :</label><textarea class="form-control" rows="3" v-model="newItem.description" maxlength="30"></textarea></div>
                     </div>
                   </div>
                 </form>
@@ -260,7 +260,7 @@
                       </div>
                     </div>
                     <div class="col-md-7">
-                        <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="editItem.name"></div>
+                        <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="editItem.name" maxlength="30"></div>
                         <div class="row">
                           <div class="col-6 form-group mb-3">
                               <label class="small fw-bold">Stock :</label>
@@ -300,7 +300,7 @@
                             <option v-for="cat in activeCategories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
                           </select>
                         </div>
-                        <div class="form-group mb-3"><label class="small fw-bold">Description :</label><textarea class="form-control" rows="3" v-model="editItem.description"></textarea></div>
+                        <div class="form-group mb-3"><label class="small fw-bold">Description :</label><textarea class="form-control" rows="3" v-model="editItem.description" maxlength="30"></textarea></div>
                     </div>
                   </div>
                 </form>

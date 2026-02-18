@@ -28,6 +28,7 @@ import { useAuthStore } from '~/store/auth';
 const orderStore = useOrderStore();
 const authStore = useAuthStore();
 
+// 1. กรองเฉพาะออเดอร์ของร้านเรา
 const myOrders = computed(() => {
     const all = orderStore.allOrders || []
     const myId = authStore.user?._id || authStore.user?.id || ''
@@ -39,6 +40,7 @@ const myOrders = computed(() => {
     })
 })
 
+// 2. คำนวณจำนวนออเดอร์ 7 วัน
 const last7DaysCount = computed(() => {
   const data = Array(7).fill(0);
   const orders = myOrders.value;
@@ -68,10 +70,10 @@ const last7DaysCount = computed(() => {
 const totalOrders7Days = computed(() => last7DaysCount.value.reduce((a,b)=>a+b, 0));
 const series = computed(() => [{ name: "Orders", data: last7DaysCount.value }]);
 
+// ตั้งค่ากราฟ
 const chartOptions = ref({
-  // ปรับ height เป็น 85
   chart: { type: "bar", height: 85, sparkline: { enabled: true }, fontFamily: 'Nunito, sans-serif' },
-  colors: ["#544fff"],
+  colors: ["#ff9f40"], // ✅ เปลี่ยนเป็นสีส้ม
   plotOptions: { bar: { borderRadius: 3, columnWidth: '60%', distributed: false } },
   tooltip: { 
       fixed: { enabled: false }, 
@@ -79,7 +81,6 @@ const chartOptions = ref({
       marker: { show: false },
       y: { formatter: (val) => `${val} Orders` }
   },
-  // เพิ่ม padding
   grid: { padding: { top: 10, bottom: 10, left: 0, right: 0 } }
 });
 </script>
