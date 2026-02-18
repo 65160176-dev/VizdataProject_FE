@@ -66,6 +66,37 @@
               <input v-model="q" class="form-control" placeholder="ค้นหาสินค้า หรือ ร้านค้า" />
             </div>
 
+            <div v-if="bestLoading" class="text-center py-3">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+            <div v-else-if="bestSellersFiltered.length > 0" class="best-seller-section mb-4">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h5 class="fw-bold mb-0">สินค้าขายดี</h5>
+                <span class="text-muted small">Top {{ bestSellersFiltered.length }}</span>
+              </div>
+              <div class="best-seller-grid">
+                <div v-for="item in bestSellersFiltered" :key="item.productId" class="product-card">
+                  <div class="card h-100 shadow-sm">
+                    <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: item.product?._id || item.product?.id || item.productId } }">
+                      <img :src="getBestImg(item.product)" class="card-img-top" />
+                    </nuxt-link>
+                    <div class="card-body d-flex flex-column">
+                      <h6 class="card-title mb-1 text-truncate">{{ item.product?.name || item.product?.title || 'สินค้า' }}</h6>
+                      <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <div class="fw-bold">฿{{ item.product?.price || 0 }}</div>
+                        <span class="text-muted small">ขาย {{ item.totalSold || 0 }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h5 class="fw-bold mb-0">สินค้าในระบบ</h5>
+              <span class="text-muted small">ทั้งหมด {{ allProducts.length }} ชิ้น</span>
+            </div>
+
             <ClientOnly>
               <div v-if="productStore.loading" class="text-center py-5">
                 <div class="spinner-border text-primary" role="status">
@@ -145,6 +176,9 @@ const q = ref('')
 const selectedCategories = ref([])
 // ✅ เพิ่มตัวแปรเก็บ System Categories
 const systemCategories = ref([])
+const bestSellers = ref([])
+const bestLoading = ref(true)
+const BACKEND_URL = 'http://localhost:3001'
 
 // Banner slides
 const banners = ref([
@@ -166,6 +200,7 @@ let observer = null
 onMounted(async () => {
   await productStore.fetchProducts()
   fetchSystemCategories() // ✅ เรียกดึงหมวดหมู่ระบบ
+  fetchBestSellers()
   setupInfiniteScroll()
 })
 
@@ -187,7 +222,35 @@ const fetchSystemCategories = async () => {
   }
 }
 
+const fetchBestSellers = async () => {
+  try {
+    bestLoading.value = true
+    const res = await $fetch(`${BACKEND_URL}/api/order/best-sellers`, {
+      params: { limit: 20 },
+    })
+    bestSellers.value = Array.isArray(res) ? res : []
+  } catch (e) {
+    console.error('Error fetching best sellers:', e)
+    bestSellers.value = []
+  } finally {
+    bestLoading.value = false
+  }
+}
+
 const allProducts = computed(() => productStore.products || [])
+const bestSellersInStock = computed(() =>
+  bestSellers.value.filter(item => Number(item?.product?.stock) > 0)
+)
+
+const bestSellersFiltered = computed(() => {
+  let result = bestSellersInStock.value
+  if (selectedCategories.value.length > 0) {
+    result = result.filter(item =>
+      selectedCategories.value.includes(item?.product?.category)
+    )
+  }
+  return result.slice(0, 5)
+})
 
 // ✅ นับจำนวนสินค้าในแต่ละหมวด (นับจากสินค้าที่โหลดมาแล้ว)
 const getCategoryCount = (catName) => {
@@ -266,6 +329,14 @@ function getImgUrl(product) {
   }
   const img = (product.images && product.images[0] && product.images[0].src) ? product.images[0].src : null
   return img ? `/images/${img}` : 'https://placehold.co/400'
+}
+
+function getBestImg(product) {
+  if (product?.image) {
+    if (product.image.startsWith('http')) return product.image
+    return `${BACKEND_URL}/${product.image.replace(/^\//, '')}`
+  }
+  return 'https://placehold.co/400'
 }
 
 function discountedPrice(p) {
@@ -397,6 +468,11 @@ function addToCart(product) {
   grid-template-columns: repeat(5, 1fr); 
   gap:12px; 
 }
+.best-seller-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
 .product-card { display:block; overflow: hidden; }
 .product-card .card { overflow: hidden; }
 .product-card .card img.card-img-top { 
@@ -410,12 +486,15 @@ function addToCart(product) {
 /* Responsive Grid Adjustments */
 @media (max-width: 1400px) {
   .product-grid { grid-template-columns: repeat(4, 1fr); }
+  .best-seller-grid { grid-template-columns: repeat(4, 1fr); }
 }
 @media (max-width: 1100px) {
   .product-grid { grid-template-columns: repeat(3, 1fr); }
+  .best-seller-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 767px) {
   .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .best-seller-grid { grid-template-columns: repeat(2, 1fr); }
   .banner-swiper { height: 260px; }
   .banner-swiper :deep(.swiper-button-next),
   .banner-swiper :deep(.swiper-button-prev) {
@@ -429,6 +508,7 @@ function addToCart(product) {
 }
 @media (max-width: 480px) {
   .product-grid { grid-template-columns: repeat(1, 1fr); }
+  .best-seller-grid { grid-template-columns: repeat(1, 1fr); }
 }
 
 /* Sidebar Styles */

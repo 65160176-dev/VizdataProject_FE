@@ -65,6 +65,38 @@
               <input v-model="q" class="form-control" placeholder="ค้นหาสินค้า หรือ ร้านค้า" />
             </div>
 
+            <div v-if="bestLoading" class="text-center py-3">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+            <div v-else-if="bestSellerItems.length > 0" class="best-seller-section mb-4">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h5 class="fw-bold mb-0">สินค้าขายดี</h5>
+                <span class="text-muted small">Top {{ bestSellerItems.length }}</span>
+              </div>
+              <div class="best-seller-grid">
+                <div v-for="item in bestSellerItems" :key="item.productId" class="product-card">
+                  <div class="card h-100 shadow-sm">
+                    <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: item.product?._id || item.product?.id || item.productId, hideSeller: 'true' } }">
+                      <img :src="getSellerImage(item.product?.image) || 'https://placehold.co/400'" class="card-img-top" alt="Best Seller" />
+                    </nuxt-link>
+                    <div class="card-body d-flex flex-column">
+                      <h6 class="card-title mb-1 text-truncate">{{ item.product?.name || 'สินค้า' }}</h6>
+                      <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <div class="fw-bold">฿{{ item.product?.price?.toLocaleString() || 0 }}</div>
+                        <span class="text-muted small">ขาย {{ item.totalSold || 0 }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-muted small mb-4">ยังไม่มีสินค้าขายดีในร้านนี้</div>
+
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h5 class="fw-bold mb-0">สินค้าในระบบ</h5>
+              <span class="text-muted small">ทั้งหมด {{ allProducts.length }} ชิ้น</span>
+            </div>
+
             <div v-if="loading" class="text-center py-5">
               <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -140,23 +172,55 @@ const BACKEND_URL = 'http://localhost:3001'
 const seller = ref(null)
 const allProducts = ref([])
 const loading = ref(true)
+const bestLoading = ref(true)
+const bestSellers = ref([])
 const q = ref('')
 const selectedCategories = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 20
 
+const bestSellerItems = computed(() =>
+  bestSellers.value
+    .filter(item => Number(item?.product?.stock) > 0)
+    .slice(0, 5)
+)
+
 // Fetch Data
 const fetchData = async () => {
   try {
     loading.value = true
-    const sellerId = route.params.brand
+    bestLoading.value = true
+    const sellerParam = String(route.params.brand || '')
 
-    if (!sellerId) return
+    if (!sellerParam) {
+      loading.value = false
+      bestLoading.value = false
+      return
+    }
 
-    const sellerRes = await $fetch(`${BACKEND_URL}/api/sellers/by-user/${sellerId}`)
+    let sellerRes = null
+
+    try {
+      sellerRes = await $fetch(`${BACKEND_URL}/api/sellers/by-user/${sellerParam}`)
+      if (sellerRes && sellerRes.success === false) {
+        sellerRes = null
+      }
+    } catch (err) {
+      sellerRes = null
+    }
+
+    if (!sellerRes || !sellerRes._id) {
+      try {
+        const byIdRes = await $fetch(`${BACKEND_URL}/api/sellers/${sellerParam}`)
+        sellerRes = byIdRes?.data || null
+      } catch (err) {
+        sellerRes = null
+      }
+    }
+
     seller.value = sellerRes
 
-    if (!seller.value.avatar && seller.value.userId) {
+    if (seller.value && !seller.value.avatar && seller.value.userId) {
       try {
         const userRes = await $fetch(`${BACKEND_URL}/api/users/${seller.value.userId}`)
         if (userRes && userRes.avatar) {
@@ -167,13 +231,22 @@ const fetchData = async () => {
       }
     }
 
-    const productsRes = await $fetch(`${BACKEND_URL}/api/product/seller/${sellerId}`)
+    const sellerUserId = seller.value?.userId || sellerParam
+    const sellerUserIdString = sellerUserId?._id || sellerUserId
+
+    const productsRes = await $fetch(`${BACKEND_URL}/api/product/seller/${sellerUserIdString}`)
     allProducts.value = productsRes || []
+
+    const bestRes = await $fetch(`${BACKEND_URL}/api/order/best-sellers`, {
+      params: { sellerId: sellerUserIdString, limit: 20 },
+    })
+    bestSellers.value = Array.isArray(bestRes) ? bestRes : []
 
   } catch (error) {
     console.error('Error fetching data:', error)
   } finally {
     loading.value = false
+    bestLoading.value = false
   }
 }
 
@@ -204,6 +277,8 @@ const getCategoryCount = (catName) => {
 const filteredProducts = computed(() => {
   let result = allProducts.value
   const term = q.value.toLowerCase().trim()
+
+  result = result.filter(p => Number(p?.stock) > 0)
 
   if (term) {
     result = result.filter(p =>
@@ -374,17 +449,27 @@ function goToProduct(productId) {
   background: #f5f5f5;
 }
 
+.best-seller-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
 /* Responsive */
 @media (max-width: 1400px) {
   .product-grid { grid-template-columns: repeat(4, 1fr); }
+  .best-seller-grid { grid-template-columns: repeat(4, 1fr); }
 }
 @media (max-width: 1100px) {
   .product-grid { grid-template-columns: repeat(3, 1fr); }
+  .best-seller-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 767px) {
   .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .best-seller-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 480px) {
   .product-grid { grid-template-columns: repeat(1, 1fr); }
+  .best-seller-grid { grid-template-columns: repeat(1, 1fr); }
 }
 </style>
