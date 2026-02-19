@@ -1,7 +1,6 @@
 <template>
   <div class="affiliate-dashboard">
     
-    <!-- Header Section -->
     <div class="page-header">
       <button @click="goBack" class="back-btn">
         <i class="fa fa-arrow-left"></i>
@@ -12,7 +11,6 @@
       </div>
     </div>
 
-    <!-- Affiliate Code Card -->
     <div class="affiliate-code-card" v-if="affiliateInfo">
       <div class="card-header">
         <div class="header-icon">
@@ -64,7 +62,26 @@
       </div>
     </div>
 
-    <!-- Stats Cards -->
+    <div class="wallet-section">
+      <div class="card border-0 shadow-sm text-white overflow-hidden mb-4" 
+           style="background: linear-gradient(135deg, #ff9f43 0%, #ff6b6b 100%); border-radius: 16px;">
+        <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+          <div>
+            <h6 class="opacity-75 mb-1"><i class="fa fa-wallet me-2"></i>ยอดเงินที่ถอนได้ (Available Balance)</h6>
+            <h1 class="fw-bold mb-0 display-5">{{ formatCurrency(wallet.balance) }}</h1>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-light fw-bold rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addBankModal">
+              <i class="fa fa-plus me-1"></i> เพิ่มบัญชี
+            </button>
+            <button class="btn btn-light text-orange fw-bold rounded-pill px-4 shadow-sm" @click="openWithdrawModal">
+              <i class="fa fa-download me-1"></i> ถอนเงิน
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="stats-grid">
       <div class="stat-card stat-total">
         <div class="stat-icon">
@@ -107,7 +124,6 @@
       </div>
     </div>
 
-    <!-- Insights Section -->
     <div class="insights-section">
       <div class="section-header">
         <h3><i class="fa fa-chart-bar me-2"></i>สรุปค่าคอมยอดนิยม</h3>
@@ -143,7 +159,6 @@
       </div>
     </div>
 
-    <!-- Date Filter -->
     <div class="filter-section">
       <div class="filter-content">
         <div class="filter-header">
@@ -181,7 +196,6 @@
       </div>
     </div>
 
-    <!-- Orders Table -->
     <div class="orders-section">
       <div class="section-header">
         <h3><i class="fa fa-list me-2"></i>รายการคำสั่งซื้อ</h3>
@@ -190,7 +204,6 @@
         </div>
       </div>
       
-      <!-- Table Header -->
       <div class="orders-table-header" v-if="filteredAffiliateData.length > 0">
         <div class="th-order">รหัสออเดอร์</div>
         <div class="th-date">วันที่</div>
@@ -239,6 +252,91 @@
         <p>เมื่อมีลูกค้าซื้อสินค้าผ่านลิงก์ Affiliate ของคุณ จะแสดงที่นี่</p>
       </div>
     </div>
+
+    <ClientOnly>
+      <div class="modal fade" id="withdrawModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-gradient-orange text-white border-0">
+              <h5 class="modal-title fw-bold">ถอนเงิน 💸</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+              <div class="text-center mb-4">
+                <p class="text-muted small mb-1">ยอดเงินที่ถอนได้</p>
+                <h2 class="fw-bold text-orange">{{ formatCurrency(wallet.balance) }}</h2>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">จำนวนเงินที่ต้องการถอน</label>
+                <input type="number" class="form-control form-control-lg border-orange-focus fw-bold" 
+                       v-model="withdrawAmount" placeholder="0.00" min="100" @keydown="preventNegativeInput">
+                <div class="text-end mt-1">
+                  <small class="text-muted cursor-pointer hover-underline" @click="withdrawAmount = wallet.balance">ถอนทั้งหมด</small>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label small fw-bold mb-0">เลือกบัญชีรับเงิน</label>
+                  <a href="#" class="text-orange small text-decoration-none" data-bs-toggle="modal" data-bs-target="#addBankModal" @click="safeCloseModal('withdrawModal')">+ เพิ่มบัญชีใหม่</a>
+                </div>
+                <select class="form-select shadow-none" v-model="selectedBank">
+                  <option value="" disabled>-- โปรดเลือกบัญชี --</option>
+                  <option v-for="bank in bankAccounts" :key="bank.id" :value="bank.bankName + ' - ' + bank.accountNo">
+                    {{ bank.bankName }} ({{ bank.accountNo }})
+                  </option>
+                </select>
+                <div v-if="bankAccounts.length === 0" class="text-danger small mt-1">* กรุณาเพิ่มบัญชีธนาคารก่อนถอนเงิน</div>
+              </div>
+
+              <button class="btn btn-orange w-100 rounded-pill py-2 fw-bold shadow-sm text-white" 
+                      @click="confirmWithdraw" :disabled="!isValidWithdraw || !selectedBank">
+                ยืนยันการถอนเงิน
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ClientOnly>
+
+    <ClientOnly>
+      <div class="modal fade" id="addBankModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 bg-light">
+              <h5 class="modal-title fw-bold text-dark"><i class="fa fa-plus-circle text-orange me-1"></i> เพิ่มบัญชีธนาคาร</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+              <form @submit.prevent="saveNewBank">
+                <div class="mb-3">
+                  <label class="form-label small fw-bold">ธนาคาร</label>
+                  <select class="form-select border-orange-focus shadow-none" v-model="newBank.bankName" required>
+                    <option value="" disabled>-- เลือกธนาคาร --</option>
+                    <option value="ธนาคารกสิกรไทย">ธนาคารกสิกรไทย (KBank)</option>
+                    <option value="ธนาคารไทยพาณิชย์">ธนาคารไทยพาณิชย์ (SCB)</option>
+                    <option value="ธนาคารกรุงเทพ">ธนาคารกรุงเทพ (BBL)</option>
+                    <option value="ธนาคารกรุงไทย">ธนาคารกรุงไทย (KTB)</option>
+                    <option value="ธนาคารกรุงศรีอยุธยา">ธนาคารกรุงศรีอยุธยา (BAY)</option>
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label small fw-bold">หมายเลขบัญชี</label>
+                  <input type="text" class="form-control border-orange-focus shadow-none" 
+                         v-model="newBank.accountNo" placeholder="เลขบัญชี 10-12 หลัก" required pattern="[0-9-]+" title="กรุณากรอกเฉพาะตัวเลข">
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-light w-50 rounded-pill fw-bold" data-bs-dismiss="modal">ยกเลิก</button>
+                  <button type="submit" class="btn btn-orange w-50 rounded-pill fw-bold shadow-sm text-white" :disabled="!newBank.bankName || !newBank.accountNo">เพิ่มบัญชี</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ClientOnly>
+
   </div>
 </template>
 
@@ -247,6 +345,9 @@ import { ref, computed, onMounted } from "vue"
 import { affiliateService } from "~/services/affiliate.service"
 import { useAuthStore } from "~/store/auth"
 import { useRouter } from "vue-router"
+import { useNuxtApp } from "nuxt/app"
+import Swal from 'sweetalert2'
+import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 definePageMeta({ 
   layout: "default",
@@ -256,12 +357,13 @@ definePageMeta({
 const authStore = useAuthStore()
 const router = useRouter()
 
+// --- Affiliate State ---
 const affiliateData = ref([])
 const affiliateInfo = ref(null)
-const rawOrders = ref([]) // เก็บข้อมูล AffiliateOrder ต้นฉบับ
-const orderDetailsMap = ref(new Map()) // orderId -> order detail (มี seller)
-const sellersMap = ref(new Map()) // sellerId -> display_name
-const productMap = ref(new Map()) // productId -> {name, commission}
+const rawOrders = ref([])
+const orderDetailsMap = ref(new Map())
+const sellersMap = ref(new Map())
+const productMap = ref(new Map())
 const summary = ref({
   totalOrders: 0,
   totalCommission: 0,
@@ -270,28 +372,45 @@ const summary = ref({
 })
 const loading = ref(true)
 
-// 1. สร้างตัวแปรเก็บวันที่
 const startDate = ref('')
 const endDate = ref('')
 const statusFilter = ref('all')
 
-// 2. ฟังก์ชันกรองข้อมูล (Computed)
-// กรองตามวัน (สำหรับข้อมูลสรุป และใช้เป็นฐานให้ตาราง)
+// --- Wallet State ---
+const wallet = ref({
+  balance: 0,
+  transactions: []
+})
+
+const withdrawAmount = ref('')
+const selectedBank = ref('')
+
+const bankAccounts = ref([
+  { id: 1, bankName: 'ธนาคารกสิกรไทย', accountNo: 'xxx-x-xx890-1', verified: true }
+])
+
+const newBank = ref({
+  bankName: '',
+  accountNo: ''
+})
+
+// --- Computed ---
+const isValidWithdraw = computed(() => {
+  const amt = parseFloat(withdrawAmount.value)
+  return amt > 0 && amt <= wallet.value.balance
+})
+
 const dateOnlyAffiliateData = computed(() => {
   return affiliateData.value.filter(item => {
-    // ถ้ายังไม่ได้เลือกวันที่เลย ให้แสดงทั้งหมด
     if (!startDate.value && !endDate.value) return true
     
-    // แปลงวันที่เพื่อเปรียบเทียบ
     const itemDate = new Date(item.createdAt)
     const start = startDate.value ? new Date(startDate.value) : null
     const end = endDate.value ? new Date(endDate.value) : null
 
-    // ปรับให้ start เป็นต้นวัน และ end เป็นปลายวัน เพื่อไม่ตัดคำสั่งซื้อในวันเดียวกัน
     if (start) start.setHours(0, 0, 0, 0)
     if (end) end.setHours(23, 59, 59, 999)
 
-    // กรองตามเงื่อนไข
     if (start && itemDate < start) return false
     if (end && itemDate > end) return false
     
@@ -299,41 +418,27 @@ const dateOnlyAffiliateData = computed(() => {
   })
 })
 
-// ตารางใช้ตัวกรองวัน + สถานะ
 const filteredAffiliateData = computed(() => {
   const base = dateOnlyAffiliateData.value
   if (statusFilter.value === 'all') return base
   return base.filter(it => (it.status || '').toLowerCase() === statusFilter.value)
 })
 
-// 3. คำนวณรายได้ (รวม "จ่ายแล้ว" + "รอดำเนินการ" ไม่รวม "ยกเลิก")
-// ไม่เปลี่ยนตามตัวกรองสถานะด้านล่าง ใช้เฉพาะตัวกรองวันที่
 const totalIncome = computed(() => {
   return dateOnlyAffiliateData.value
     .filter(item => (item.status || '').toLowerCase() !== 'cancelled')
     .reduce((sum, item) => sum + Number(item.commissionAmount || 0), 0)
 })
 
-const clearDate = () => {
-    startDate.value = ''
-    endDate.value = ''
-}
-
-// ฟอร์แมตตัวเลข (เหมือนเดิม)
-const formatNumber = (value) => {
-  return new Intl.NumberFormat('th-TH', { minimumFractionDigits: 0 }).format(value);
-}
-
-// ฟอร์แมตสกุลเงิน (เหมือนเดิม)
+// --- Formatters ---
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('th-TH', { 
     style: 'currency', 
     currency: 'THB',
     minimumFractionDigits: 0 
-  }).format(value);
+  }).format(value || 0);
 }
 
-// แปลง status
 const translateStatus = (status) => {
   const statusMap = {
     pending: 'รอดำเนินการ',
@@ -343,7 +448,6 @@ const translateStatus = (status) => {
   return statusMap[status] || status
 }
 
-// แปลงวันที่
 const formatDate = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
@@ -354,12 +458,130 @@ const formatDate = (dateString) => {
   })
 }
 
-// ดึงข้อมูลจาก API
+const clearDate = () => {
+  startDate.value = ''
+  endDate.value = ''
+}
+
+// --- Wallet Functions ---
+const fetchWallet = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const res = await $fetch('http://localhost:3001/api/wallet/my-wallet', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    wallet.value = res
+  } catch (e) {
+    console.error('Fetch wallet error:', e)
+  }
+}
+
+const preventNegativeInput = (e) => {
+  if (['-', 'e', '+'].includes(e.key)) {
+    e.preventDefault()
+  }
+}
+
+const safeCloseModal = (id) => {
+  const modalEl = document.getElementById(id)
+  if (modalEl) {
+    const closeBtn = modalEl.querySelector('[data-bs-dismiss="modal"]')
+    if (closeBtn) closeBtn.click()
+    else {
+      const modalInstance = bootstrap.Modal.getInstance(modalEl)
+      if (modalInstance) modalInstance.hide()
+    }
+  }
+  setTimeout(() => {
+    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove())
+    document.body.classList.remove('modal-open')
+    document.body.style = ''
+  }, 300)
+}
+
+const openWithdrawModal = () => {
+  withdrawAmount.value = ''
+  if (bankAccounts.value.length > 0 && !selectedBank.value) {
+    selectedBank.value = bankAccounts.value[0].bankName + ' - ' + bankAccounts.value[0].accountNo
+  }
+  new bootstrap.Modal(document.getElementById('withdrawModal')).show()
+}
+
+const saveNewBank = () => {
+  if (newBank.value.bankName && newBank.value.accountNo) {
+    bankAccounts.value.push({
+      id: Date.now(),
+      bankName: newBank.value.bankName,
+      accountNo: newBank.value.accountNo,
+      verified: false 
+    })
+    
+    selectedBank.value = newBank.value.bankName + ' - ' + newBank.value.accountNo
+    newBank.value = { bankName: '', accountNo: '' }
+    safeCloseModal('addBankModal')
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'เพิ่มบัญชีสำเร็จ!',
+      showConfirmButton: false,
+      timer: 1500
+    }).then(() => {
+      setTimeout(() => openWithdrawModal(), 300)
+    })
+  }
+}
+
+const confirmWithdraw = async () => {
+  safeCloseModal('withdrawModal')
+
+  const result = await Swal.fire({
+    title: 'ยืนยันการถอนเงิน?',
+    html: `คุณต้องการถอนเงินจำนวน <b class="text-orange">${formatCurrency(withdrawAmount.value)}</b><br><span class="small text-muted">เข้าบัญชี: ${selectedBank.value}</span>`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'ยืนยัน',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#fd7e14',
+    reverseButtons: true
+  })
+
+  if (result.isConfirmed) {
+    try {
+      Swal.fire({
+        title: 'กำลังดำเนินการ...',
+        didOpen: () => Swal.showLoading()
+      })
+
+      const token = localStorage.getItem('token')
+      await $fetch('http://localhost:3001/api/wallet/withdraw', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: { amount: parseFloat(withdrawAmount.value), bankInfo: selectedBank.value }
+      })
+
+      await fetchWallet()
+      withdrawAmount.value = ''
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'ถอนเงินสำเร็จ!',
+        text: 'ยอดเงินได้ถูกหักออกจากระบบเรียบร้อยแล้ว',
+        confirmButtonColor: '#fd7e14'
+      })
+
+    } catch (e) {
+      Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.data?.message || 'ไม่สามารถถอนเงินได้' })
+    }
+  } else {
+    setTimeout(() => { openWithdrawModal() }, 300)
+  }
+}
+
+// --- Dashboard & Insights Functions ---
 const fetchDashboard = async () => {
   try {
     loading.value = true
     
-    // middleware จะจัดการ auth แล้ว เอาแค่ userId
     const userId = authStore.user?._id || authStore.user?.id
     if (!userId) {
       console.log('No user found, redirecting to login')
@@ -373,18 +595,16 @@ const fetchDashboard = async () => {
     summary.value = data.summary
     rawOrders.value = data.orders || []
     
-    // แปลงข้อมูล orders เป็น format ที่ใช้แสดงผล
     affiliateData.value = rawOrders.value.map(o => ({
       orderId: o.order?.orderId || '-',
       createdAt: o.createdAt,
       productName: o.items?.map(i => i.name).join(', ') || '-',
-      category: '-', // ถ้ามีข้อมูล category ใน items ก็เอามาแสดง
+      category: '-',
       price: o.amount || 0,
       commissionAmount: o.commissionAmount || 0,
       status: o.status
     }))
 
-    // ดึงข้อมูลเสริมสำหรับ Insight
     await enrichInsights()
   } catch (error) {
     console.error('Failed to load affiliate dashboard:', error)
@@ -396,12 +616,9 @@ const fetchDashboard = async () => {
   }
 }
 
-// ดึงข้อมูลเพื่อคำนวณ Top Shops / Top Products
 const enrichInsights = async () => {
   try {
-    // 1) ดึงรายละเอียด Order เพื่อหาตัว seller
-    const ids = rawOrders.value.map((o) => o.order?._id || o.order)
-      .filter(Boolean)
+    const ids = rawOrders.value.map((o) => o.order?._id || o.order).filter(Boolean)
     const uniqueIds = Array.from(new Set(ids))
     const details = await Promise.all(uniqueIds.map(async (id) => {
       try {
@@ -414,7 +631,6 @@ const enrichInsights = async () => {
       orderDetailsMap.value.set(key, od)
     })
 
-    // 2) ดึงรายชื่อร้านค้าทั้งหมดไว้ Map
     try {
       const sellersRes = await $fetch('http://localhost:3001/api/sellers')
       const list = sellersRes?.data || sellersRes || []
@@ -427,7 +643,6 @@ const enrichInsights = async () => {
       })
     } catch {}
 
-    // 3) ดึงข้อมูลสินค้าเพื่อรู้ค่าคอมต่อชิ้น
     const productIds = rawOrders.value.flatMap((o) => (o.items || []).map((it) => it.productId)).filter(Boolean)
     const uniqueProductIds = Array.from(new Set(productIds))
     const productDetails = await Promise.all(uniqueProductIds.map(async (pid) => {
@@ -441,7 +656,6 @@ const enrichInsights = async () => {
   }
 }
 
-// Top Shops Lifetime (รวมทั้งหมดที่เคยแชร์ลิงก์ และจ่ายแล้วเท่านั้น)
 const topShopsLifetime = computed(() => {
   const byShop = new Map()
   rawOrders.value.forEach((r) => {
@@ -461,10 +675,8 @@ const topShopsLifetime = computed(() => {
     .slice(0, 5)
 })
 
-// Top Products (เฉพาะออเดอร์จ่ายแล้ว) รวมค่าคอมต่อสินค้า = commission% * price * qty (ไม่ปัดเศษ)
 const topProducts = computed(() => {
   const totals = new Map()
-  // map orderId -> raw order
   const rawByOrderId = new Map(rawOrders.value.map((r) => [r.order?.orderId || '-', r]))
   dateOnlyAffiliateData.value.forEach((v) => {
     if ((v.status || '').toLowerCase() !== 'paid') return
@@ -475,7 +687,6 @@ const topProducts = computed(() => {
       const commissionRate = info?.commission || 0
       const qty = Number(it.qty || 1)
       const itemPrice = Number(it.price || 0)
-      // คำนวณ commission เป็น % ของราคา (ไม่ปัดเศษ)
       const amount = (itemPrice * qty * commissionRate) / 100
       const key = it.productId
       const prev = totals.get(key) || { id: key, name: info?.name || it.name || 'สินค้า', amount: 0 }
@@ -487,7 +698,6 @@ const topProducts = computed(() => {
   return Array.from(totals.values()).sort((a, b) => b.amount - a.amount).slice(0, 5)
 })
 
-// คัดลอก Affiliate Link
 const copyAffiliateLink = () => {
   if (!affiliateInfo.value) return
   
@@ -506,14 +716,6 @@ const copyAffiliateLink = () => {
   })
 }
 
-// สร้าง affiliate link สำหรับสินค้าเฉพาะ
-const generateProductAffiliateLink = (productId) => {
-  if (!affiliateInfo.value) return ''
-  const baseUrl = window.location.origin
-  return `${baseUrl}/product/three-column/thumbnail-left?id=${productId}&ref=${affiliateInfo.value.code}`
-}
-
-// แชร์ affiliate link ผ่าน social media
 const shareAffiliateLink = (platform) => {
   const baseUrl = window.location.origin
   const affiliateLink = `${baseUrl}/?ref=${affiliateInfo.value.code}`
@@ -537,17 +739,26 @@ const shareAffiliateLink = (platform) => {
   }
 }
 
-// ปุ่มย้อนกลับ
 const goBack = () => {
   router.back()
 }
 
 onMounted(() => {
   fetchDashboard()
+  fetchWallet()
 })
 </script>
 
 <style scoped>
+/* --- Modal & Wallet New Styles --- */
+.bg-gradient-orange { background: linear-gradient(135deg, #ff9f43 0%, #fd7e14 100%); }
+.text-orange { color: #fd7e14 !important; }
+.btn-orange { background-color: #fd7e14; border-color: #fd7e14; }
+.btn-orange:hover { background-color: #e36a0d; border-color: #e36a0d; }
+.border-orange-focus:focus { border-color: #fd7e14; box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25); }
+.cursor-pointer { cursor: pointer; }
+.hover-underline:hover { text-decoration: underline; }
+
 /* Base Styles */
 .affiliate-dashboard {
   width: 100%;
@@ -571,6 +782,7 @@ onMounted(() => {
 
 /* Content wrapper for cards */
 .affiliate-code-card,
+.wallet-section,
 .stats-grid,
 .insights-section,
 .filter-section,
@@ -936,28 +1148,24 @@ onMounted(() => {
   background: #e2e8f0;
 }
 
-/* สีปุ่มทั้งหมด */
 .status-chip.chip-all.active {
   background: #ff5722;
   border-color: #ff5722;
   color: white;
 }
 
-/* สีปุ่มรอดำเนินการ - เหลือง */
 .status-chip.chip-pending.active {
   background: #f6e05e;
   border-color: #d69e2e;
   color: #744210;
 }
 
-/* สีปุ่มจ่ายแล้ว - เขียว */
 .status-chip.chip-paid.active {
   background: #48bb78;
   border-color: #38a169;
   color: white;
 }
 
-/* สีปุ่มยกเลิก - แดง */
 .status-chip.chip-cancelled.active {
   background: #f56565;
   border-color: #e53e3e;
