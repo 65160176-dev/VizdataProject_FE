@@ -9,19 +9,19 @@
 
     <div class="row g-4">
       <div class="col-md-4">
-        <div class="card border-0 shadow-sm text-white overflow-hidden" 
-             style="background: linear-gradient(135deg, #ff9f43 0%, #ff6b6b 100%); border-radius: 20px;">
+        <div class="card border-0 shadow-sm text-white overflow-hidden"
+          style="background: linear-gradient(135deg, #ff9f43 0%, #ff6b6b 100%); border-radius: 20px;">
           <div class="card-body p-4 position-relative">
             <div class="position-absolute top-0 end-0 p-3 opacity-25">
-              <Icon name="feather:dollar-sign" size="120" style="transform: rotate(15deg); margin-top:-20px; margin-right:-20px;"/>
+              <Icon name="feather:dollar-sign" size="120"
+                style="transform: rotate(15deg); margin-top:-20px; margin-right:-20px;" />
             </div>
 
             <h6 class="opacity-75 mb-1">ยอดเงินที่ถอนได้</h6>
             <h1 class="fw-bold mb-4 display-5">{{ formatCurrency(wallet.balance) }}</h1>
 
-            <button class="btn btn-light text-orange fw-bold rounded-pill w-100 shadow-sm" 
-                    @click="openWithdrawModal">
-              <Icon name="feather:download" class="me-2"/> ถอนเงินเข้าบัญชี
+            <button class="btn btn-light text-orange fw-bold rounded-pill w-100 shadow-sm" @click="openWithdrawModal">
+              <Icon name="feather:download" class="me-2" /> ถอนเงินเข้าบัญชี
             </button>
           </div>
         </div>
@@ -30,18 +30,20 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h6 class="fw-bold text-dark mb-0 small text-uppercase">บัญชีรับเงินของคุณ</h6>
-              <button class="btn btn-sm btn-outline-orange rounded-pill py-1 px-3" data-bs-toggle="modal" data-bs-target="#addBankModal">
-                <Icon name="feather:plus" size="14"/> เพิ่มบัญชี
+              <button class="btn btn-sm btn-outline-orange rounded-pill py-1 px-3" data-bs-toggle="modal"
+                data-bs-target="#addBankModal">
+                <Icon name="feather:plus" size="14" /> เพิ่มบัญชี
               </button>
             </div>
-            
+
             <div v-if="bankAccounts.length === 0" class="text-center py-4 bg-light rounded-3 border">
               <p class="text-muted small mb-0">ยังไม่มีบัญชีรับเงิน</p>
             </div>
 
-            <div v-for="bank in bankAccounts" :key="bank.id" class="d-flex align-items-center p-3 bg-light rounded-3 border mb-2 transition-all">
+            <div v-for="bank in bankAccounts" :key="bank.id"
+              class="d-flex align-items-center p-3 bg-light rounded-3 border mb-2 transition-all">
               <div class="bg-white p-2 rounded border me-3">
-                <Icon name="feather:credit-card" size="24" class="text-secondary"/>
+                <Icon name="feather:credit-card" size="24" class="text-secondary" />
               </div>
               <div>
                 <div class="fw-bold text-dark" style="font-size: 14px;">{{ bank.bankName }}</div>
@@ -58,29 +60,31 @@
 
       <div class="col-md-8">
         <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column">
-          <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div
+            class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h6 class="fw-bold mb-0">ประวัติธุรกรรมล่าสุด</h6>
-            
-            <div class="d-flex align-items-center gap-2">
-              <input type="date" class="form-control form-control-sm shadow-none border-secondary-subtle text-secondary" 
-                     style="border-radius: 8px; max-width: 140px;" v-model="filterDate">
 
-              <select class="form-select form-select-sm shadow-none border-secondary-subtle fw-bold text-secondary" 
-                      style="border-radius: 8px; min-width: 110px;" v-model="transactionFilter">
+            <div class="d-flex align-items-center gap-2">
+              <input type="date" class="form-control form-control-sm shadow-none border-secondary-subtle text-secondary"
+                style="border-radius: 8px; max-width: 140px;" v-model="filterDate">
+
+              <select class="form-select form-select-sm shadow-none border-secondary-subtle fw-bold text-secondary"
+                style="border-radius: 8px; min-width: 110px;" v-model="transactionFilter">
                 <option value="all">ทั้งหมด</option>
                 <option value="income">รายรับ</option>
                 <option value="withdraw">ถอนเงิน</option>
               </select>
 
-              <button class="btn btn-sm btn-light rounded-pill" @click="resetFilters" title="ล้างตัวกรอง" v-if="filterDate || transactionFilter !== 'all'">
-                <Icon name="feather:x-circle" class="text-danger"/>
+              <button class="btn btn-sm btn-light rounded-pill" @click="resetFilters" title="ล้างตัวกรอง"
+                v-if="filterDate || transactionFilter !== 'all'">
+                <Icon name="feather:x-circle" class="text-danger" />
               </button>
               <button class="btn btn-sm btn-light rounded-pill" @click="fetchWallet" title="รีเฟรช">
-                <Icon name="feather:refresh-cw"/>
+                <Icon name="feather:refresh-cw" />
               </button>
             </div>
           </div>
-          
+
           <div class="card-body p-0 flex-grow-1">
             <div class="table-responsive">
               <table class="table align-middle mb-0">
@@ -99,19 +103,23 @@
                     <td class="ps-4 py-3">
                       <div class="d-flex align-items-center">
                         <div class="rounded-circle p-2 me-3 d-flex align-items-center justify-content-center"
-                             :class="tx.type === 'income' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'"
-                             style="width: 40px; height: 40px;">
-                          <Icon :name="tx.type === 'income' ? 'feather:arrow-down-left' : 'feather:arrow-up-right'" size="18"/>
+                          :class="tx.type === 'income' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'"
+                          style="width: 40px; height: 40px;">
+                          <Icon :name="tx.type === 'income' ? 'feather:arrow-down-left' : 'feather:arrow-up-right'"
+                            size="18" />
                         </div>
                         <div>
                           <div class="fw-bold text-dark small">{{ tx.description }}</div>
-                          <div class="text-xs" :class="tx.status === 'Completed' ? 'text-success' : 'text-muted'">{{ tx.status }}</div>
+                          <div class="text-xs" :class="tx.status === 'Completed' ? 'text-success' : 'text-muted'">{{
+                            tx.status }}</div>
                         </div>
                       </div>
                     </td>
                     <td class="py-3">
                       <div class="small fw-bold text-dark">{{ formatDateStr(tx.createdAt) }}</div>
-                      <div class="text-xs text-secondary mt-1"><Icon name="feather:clock" size="10" class="me-1"/>{{ formatTimeStr(tx.createdAt) }}</div>
+                      <div class="text-xs text-secondary mt-1">
+                        <Icon name="feather:clock" size="10" class="me-1" />{{ formatTimeStr(tx.createdAt) }}
+                      </div>
                     </td>
                     <td class="text-end pe-4 fw-bold" :class="tx.type === 'income' ? 'text-success' : 'text-danger'">
                       {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
@@ -122,9 +130,11 @@
             </div>
           </div>
 
-          <div class="card-footer bg-white border-top-0 py-3 d-flex justify-content-between align-items-center" v-if="totalPages > 1">
+          <div class="card-footer bg-white border-top-0 py-3 d-flex justify-content-between align-items-center"
+            v-if="totalPages > 1">
             <div class="small text-muted">
-              แสดงรายการที่ {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredTransactions.length) }} จากทั้งหมด {{ filteredTransactions.length }}
+              แสดงรายการที่ {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage,
+              filteredTransactions.length) }} จากทั้งหมด {{ filteredTransactions.length }}
             </div>
             <nav aria-label="Page navigation">
               <ul class="pagination pagination-sm mb-0">
@@ -161,10 +171,11 @@
 
               <div class="mb-3">
                 <label class="form-label small fw-bold">จำนวนเงินที่ต้องการถอน</label>
-                <input type="number" class="form-control form-control-lg border-orange-focus fw-bold" 
-                       v-model="withdrawAmount" placeholder="0.00" min="100" @keydown="preventNegativeInput">
+                <input type="number" class="form-control form-control-lg border-orange-focus fw-bold"
+                  v-model="withdrawAmount" placeholder="0.00" min="100" @keydown="preventNegativeInput">
                 <div class="text-end mt-1">
-                  <small class="text-muted cursor-pointer hover-underline" @click="withdrawAmount = wallet.balance">ถอนทั้งหมด</small>
+                  <small class="text-muted cursor-pointer hover-underline"
+                    @click="withdrawAmount = wallet.balance">ถอนทั้งหมด</small>
                 </div>
               </div>
 
@@ -176,11 +187,12 @@
                     {{ bank.bankName }} ({{ bank.accountNo }})
                   </option>
                 </select>
-                <div v-if="bankAccounts.length === 0" class="text-danger small mt-1">* กรุณาเพิ่มบัญชีธนาคารก่อนถอนเงิน</div>
+                <div v-if="bankAccounts.length === 0" class="text-danger small mt-1">* กรุณาเพิ่มบัญชีธนาคารก่อนถอนเงิน
+                </div>
               </div>
 
-              <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm" 
-                      @click="confirmWithdraw" :disabled="!isValidWithdraw || !selectedBank">
+              <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm" @click="confirmWithdraw"
+                :disabled="!isValidWithdraw || !selectedBank">
                 ยืนยันการถอนเงิน
               </button>
             </div>
@@ -194,7 +206,9 @@
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 bg-light">
-              <h5 class="modal-title fw-bold text-dark"><Icon name="feather:plus-circle" class="me-1 text-orange"/> เพิ่มบัญชีธนาคาร</h5>
+              <h5 class="modal-title fw-bold text-dark">
+                <Icon name="feather:plus-circle" class="me-1 text-orange" /> เพิ่มบัญชีธนาคาร
+              </h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
@@ -212,12 +226,14 @@
                 </div>
                 <div class="mb-4">
                   <label class="form-label small fw-bold">หมายเลขบัญชี</label>
-                  <input type="text" class="form-control border-orange-focus shadow-none" 
-                         v-model="newBank.accountNo" placeholder="เลขบัญชี 10-12 หลัก" required pattern="[0-9-]+" title="กรุณากรอกเฉพาะตัวเลข">
+                  <input type="text" class="form-control border-orange-focus shadow-none" v-model="newBank.accountNo"
+                    placeholder="เลขบัญชี 10-12 หลัก" required pattern="[0-9-]+" title="กรุณากรอกเฉพาะตัวเลข">
                 </div>
                 <div class="d-flex gap-2">
-                  <button type="button" class="btn btn-light w-50 rounded-pill fw-bold" data-bs-dismiss="modal">ยกเลิก</button>
-                  <button type="submit" class="btn btn-primary w-50 rounded-pill fw-bold shadow-sm" :disabled="!newBank.bankName || !newBank.accountNo">เพิ่มบัญชี</button>
+                  <button type="button" class="btn btn-light w-50 rounded-pill fw-bold"
+                    data-bs-dismiss="modal">ยกเลิก</button>
+                  <button type="submit" class="btn btn-primary w-50 rounded-pill fw-bold shadow-sm"
+                    :disabled="!newBank.bankName || !newBank.accountNo">เพิ่มบัญชี</button>
                 </div>
               </form>
             </div>
@@ -244,8 +260,8 @@ const wallet = ref({
 
 const withdrawAmount = ref('')
 const selectedBank = ref('')
-const transactionFilter = ref('all') 
-const filterDate = ref('')           
+const transactionFilter = ref('all')
+const filterDate = ref('')
 
 // Pagination State
 const currentPage = ref(1)
@@ -371,13 +387,13 @@ const saveNewBank = () => {
       id: Date.now(),
       bankName: newBank.value.bankName,
       accountNo: newBank.value.accountNo,
-      verified: false 
+      verified: false
     })
-    
+
     selectedBank.value = newBank.value.bankName + ' - ' + newBank.value.accountNo
     newBank.value = { bankName: '', accountNo: '' }
     safeCloseModal('addBankModal')
-    
+
     Swal.fire({
       icon: 'success',
       title: 'เพิ่มบัญชีสำเร็จ!',
@@ -417,7 +433,7 @@ const confirmWithdraw = async () => {
 
       await fetchWallet()
       withdrawAmount.value = ''
-      
+
       Swal.fire({
         icon: 'success',
         title: 'ถอนเงินสำเร็จ!',
@@ -443,7 +459,7 @@ const formatDateStr = (d) => {
 
 const formatTimeStr = (d) => {
   if (!d) return '-'
-  return new Date(d).toLocaleTimeString('th-TH', { hour: '2-digit', minute:'2-digit' }) + ' น.'
+  return new Date(d).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.'
 }
 
 onMounted(() => {
@@ -452,33 +468,82 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.bg-gradient-orange { background: linear-gradient(135deg, #ff9f43 0%, #fd7e14 100%); }
-.text-orange { color: #fd7e14 !important; }
-.btn-outline-orange { color: #fd7e14; border-color: #fd7e14; background-color: transparent; }
-.btn-outline-orange:hover { color: #fff; background-color: #fd7e14; }
+.bg-gradient-orange {
+  background: linear-gradient(135deg, #ff9f43 0%, #fd7e14 100%);
+}
 
-.border-orange-focus:focus { border-color: #fd7e14; box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25); }
-.hover-underline:hover { text-decoration: underline; }
-.border-bottom-dashed { border-bottom: 1px dashed #dee2e6; }
-.text-xs { font-size: 0.75rem; }
+.text-orange {
+  color: #fd7e14 !important;
+}
 
-.btn-primary { 
-  background-color: #fd7e14 !important; 
-  border-color: #fd7e14 !important; 
+.btn-outline-orange {
+  color: #fd7e14;
+  border-color: #fd7e14;
+  background-color: transparent;
+}
+
+.btn-outline-orange:hover {
+  color: #fff;
+  background-color: #fd7e14;
+}
+
+.border-orange-focus:focus {
+  border-color: #fd7e14;
+  box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25);
+}
+
+.hover-underline:hover {
+  text-decoration: underline;
+}
+
+.border-bottom-dashed {
+  border-bottom: 1px dashed #dee2e6;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.btn-primary {
+  background-color: #fd7e14 !important;
+  border-color: #fd7e14 !important;
   color: white !important;
 }
-.btn-primary:hover { 
-  background-color: #e36a0d !important; 
-  border-color: #e36a0d !important; 
+
+.btn-primary:hover {
+  background-color: #e36a0d !important;
+  border-color: #e36a0d !important;
 }
 
 /* Pagination Customization (Orange Theme) */
-.pagination .page-link { color: #fd7e14; border-color: #dee2e6; cursor: pointer; }
-.pagination .active .page-link { background-color: #fd7e14; border-color: #fd7e14; color: white; }
-.pagination .page-link:focus { box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25); }
-.pagination .disabled .page-link { color: #6c757d; cursor: not-allowed; }
+.pagination .page-link {
+  color: #fd7e14;
+  border-color: #dee2e6;
+  cursor: pointer;
+}
+
+.pagination .active .page-link {
+  background-color: #fd7e14;
+  border-color: #fd7e14;
+  color: white;
+}
+
+.pagination .page-link:focus {
+  box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25);
+}
+
+.pagination .disabled .page-link {
+  color: #6c757d;
+  cursor: not-allowed;
+}
 
 /* Scrollbar สำหรับหน้าจอเล็ก */
-.table-responsive::-webkit-scrollbar { height: 6px; }
-.table-responsive::-webkit-scrollbar-thumb { background: #eee; border-radius: 4px; }
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #eee;
+  border-radius: 4px;
+}
 </style>

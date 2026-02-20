@@ -1,6 +1,6 @@
 <template>
   <div class="affiliate-dashboard">
-    
+
     <div class="page-header">
       <button @click="goBack" class="back-btn">
         <i class="fa fa-arrow-left"></i>
@@ -21,19 +21,19 @@
           <p>นำไปใช้ในการแชร์สินค้าเพื่อรับค่าคอมมิชชั่น</p>
         </div>
       </div>
-      
+
       <div class="code-section">
         <div class="code-display">
           <span class="code-label">Affiliate Code</span>
           <div class="code-value">{{ affiliateInfo.code }}</div>
         </div>
-        
+
         <div class="action-buttons">
           <button @click="copyAffiliateLink" class="copy-btn">
             <i class="fa fa-copy"></i>
             <span>Copy Link</span>
           </button>
-          
+
           <div class="share-dropdown">
             <button class="share-btn">
               <i class="fa fa-share-alt"></i>
@@ -53,7 +53,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="usage-info">
         <div class="info-item">
           <i class="fa fa-info-circle"></i>
@@ -62,21 +62,141 @@
       </div>
     </div>
 
-    <div class="wallet-section">
-      <div class="card border-0 shadow-sm text-white overflow-hidden mb-4" 
-           style="background: linear-gradient(135deg, #ff9f43 0%, #ff6b6b 100%); border-radius: 16px;">
-        <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-          <div>
-            <h6 class="opacity-75 mb-1"><i class="fa fa-wallet me-2"></i>ยอดเงินที่ถอนได้ (Available Balance)</h6>
-            <h1 class="fw-bold mb-0 display-5">{{ formatCurrency(wallet.balance) }}</h1>
+    <div class="wallet-section mb-4">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm text-white overflow-hidden h-100 rounded-0"
+            style="background: linear-gradient(135deg, #ff9f43 0%, #ff6b6b 100%);">
+            <div class="card-body p-4 d-flex flex-column justify-content-center position-relative">
+              <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                <i class="fa fa-dollar-sign fa-5x"
+                  style="transform: rotate(15deg); margin-top:-10px; margin-right:-20px;"></i>
+              </div>
+
+              <div class="mb-4">
+                <h6 class="opacity-75 mb-2"><i class="fa fa-wallet me-2"></i>ยอดเงินที่ถอนได้ (Available Balance)</h6>
+                <h1 class="fw-bold mb-0 display-4">{{ formatCurrency(wallet.balance) }}</h1>
+              </div>
+
+              <div class="d-flex gap-2 mt-auto pt-2">
+                <button class="btn btn-outline-light fw-bold rounded-0 px-3 flex-grow-1" data-bs-toggle="modal"
+                  data-bs-target="#addBankModal">
+                  <i class="fa fa-plus me-1"></i> เพิ่มบัญชี
+                </button>
+                <button class="btn btn-light text-orange fw-bold rounded-0 px-3 shadow-sm flex-grow-1"
+                  @click="openWithdrawModal">
+                  <i class="fa fa-download me-1"></i> ถอนเงิน
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-light fw-bold rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addBankModal">
-              <i class="fa fa-plus me-1"></i> เพิ่มบัญชี
-            </button>
-            <button class="btn btn-light text-orange fw-bold rounded-pill px-4 shadow-sm" @click="openWithdrawModal">
-              <i class="fa fa-download me-1"></i> ถอนเงิน
-            </button>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm rounded-0 h-100 d-flex flex-column">
+            <div
+              class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h6 class="fw-bold mb-0"><i class="fa fa-history me-2 text-orange"></i>ประวัติธุรกรรม</h6>
+
+              <div class="d-flex align-items-center gap-2">
+                <input type="date"
+                  class="form-control form-control-sm shadow-none border-secondary-subtle text-secondary"
+                  style="border-radius: 8px; max-width: 130px;" v-model="filterDate">
+
+                <select class="form-select form-select-sm shadow-none border-secondary-subtle fw-bold text-secondary"
+                  style="border-radius: 8px; min-width: 100px;" v-model="transactionFilter">
+                  <option value="all">ทั้งหมด</option>
+                  <option value="income">รายรับ</option>
+                  <option value="withdraw">ถอนเงิน</option>
+                </select>
+
+                <button class="btn btn-sm btn-light rounded-pill" @click="resetFilters" title="ล้างตัวกรอง"
+                  v-if="filterDate || transactionFilter !== 'all'">
+                  <Icon name="feather:x-circle" class="text-danger" />
+                </button>
+                <button class="btn btn-sm btn-light rounded-pill" @click="fetchWallet" title="รีเฟรช">
+                  <Icon name="feather:refresh-cw" />
+                </button>
+              </div>
+            </div>
+
+            <div class="card-body p-0" style="height: 250px; overflow-y: auto;">
+
+              <div v-if="!filteredTransactions || filteredTransactions.length === 0"
+                class="text-center text-muted d-flex flex-column align-items-center justify-content-center"
+                style="height: 100%;">
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
+                  style="width: 60px; height: 60px;">
+                  <i class="fa fa-receipt fa-2x opacity-50"></i>
+                </div>
+                <p class="mb-0 small">ไม่พบรายการที่ค้นหา</p>
+              </div>
+
+              <div class="list-group list-group-flush" v-else>
+                <div v-for="tx in paginatedTransactions" :key="tx._id"
+                  class="list-group-item border-0 border-bottom py-3 d-flex align-items-center justify-content-between hover-bg-light transition-all">
+
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center"
+                      :class="tx.type === 'income' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'"
+                      style="width: 42px; height: 42px;">
+                      <i :class="tx.type === 'income' ? 'fa fa-arrow-down' : 'fa fa-arrow-up'"></i>
+                    </div>
+                    <div>
+                      <div class="fw-bold text-dark small mb-1"
+                        style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ tx.description }}
+                      </div>
+                      <div class="text-xs text-secondary">{{ formatDateStr(tx.createdAt) }} {{
+                        formatTimeStr(tx.createdAt) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="text-end">
+                    <div class="fw-bold" :class="tx.type === 'income' ? 'text-success' : 'text-danger'">
+                      {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+                    </div>
+                    <div class="text-xs mt-1"
+                      :class="tx.status === 'completed' || tx.status === 'Completed' ? 'text-success' : 'text-warning'">
+                      {{ tx.status === 'completed' || tx.status === 'Completed' ? 'สำเร็จ' : 'รอดำเนินการ' }}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center"
+              v-if="totalPages > 1">
+              <div class="small text-muted">
+                หน้า {{ currentPage }} จาก {{ totalPages }}
+              </div>
+
+              <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                  <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                    <button class="page-link border-0 text-orange" @click="prevPage" style="background: transparent;">
+                      <i class="fa fa-chevron-left"></i>
+                    </button>
+                  </li>
+
+                  <li class="page-item" v-for="page in totalPages" :key="page"
+                    :class="{ active: currentPage === page }">
+                    <button class="page-link rounded-circle mx-1 border-0 fw-bold"
+                      :style="currentPage === page ? 'background-color: #fd7e14; color: white;' : 'color: #495057; background: transparent;'"
+                      @click="goToPage(page)">
+                      {{ page }}
+                    </button>
+                  </li>
+
+                  <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                    <button class="page-link border-0 text-orange" @click="nextPage" style="background: transparent;">
+                      <i class="fa fa-chevron-right"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </div>
         </div>
       </div>
@@ -92,7 +212,7 @@
           <p class="stat-label">รายได้ทั้งหมด(บาท)</p>
         </div>
       </div>
-      
+
       <div class="stat-card stat-paid">
         <div class="stat-icon">
           <i class="fa fa-check-circle"></i>
@@ -102,7 +222,7 @@
           <p class="stat-label">ได้รับแล้ว(บาท)</p>
         </div>
       </div>
-      
+
       <div class="stat-card stat-pending">
         <div class="stat-icon">
           <i class="fa fa-clock"></i>
@@ -112,7 +232,7 @@
           <p class="stat-label">รอดำเนินการ</p>
         </div>
       </div>
-      
+
       <div class="stat-card stat-orders">
         <div class="stat-icon">
           <i class="fa fa-shopping-cart"></i>
@@ -164,22 +284,22 @@
         <div class="filter-header">
           <h4><i class="fa fa-filter me-2"></i>กรองตามช่วงวันที่</h4>
         </div>
-        
+
         <div class="date-inputs">
           <div class="date-input">
             <label>วันที่เริ่มต้น</label>
             <input type="date" v-model="startDate" class="date-field">
           </div>
-          
+
           <div class="date-separator">
             <i class="fa fa-arrow-right"></i>
           </div>
-          
+
           <div class="date-input">
             <label>วันที่สิ้นสุด</label>
             <input type="date" v-model="endDate" class="date-field">
           </div>
-          
+
           <button v-if="startDate || endDate" @click="clearDate" class="clear-btn">
             <i class="fa fa-times"></i>
             ล้าง
@@ -188,10 +308,14 @@
 
         <div class="status-filters">
           <span class="status-filter-label">สถานะ:</span>
-          <button :class="['status-chip', 'chip-all', statusFilter === 'all' ? 'active' : '']" @click="statusFilter = 'all'">ทั้งหมด</button>
-          <button :class="['status-chip', 'chip-pending', statusFilter === 'pending' ? 'active' : '']" @click="statusFilter = 'pending'">รอดำเนินการ</button>
-          <button :class="['status-chip', 'chip-paid', statusFilter === 'paid' ? 'active' : '']" @click="statusFilter = 'paid'">จ่ายแล้ว</button>
-          <button :class="['status-chip', 'chip-cancelled', statusFilter === 'cancelled' ? 'active' : '']" @click="statusFilter = 'cancelled'">ยกเลิก</button>
+          <button :class="['status-chip', 'chip-all', statusFilter === 'all' ? 'active' : '']"
+            @click="statusFilter = 'all'">ทั้งหมด</button>
+          <button :class="['status-chip', 'chip-pending', statusFilter === 'pending' ? 'active' : '']"
+            @click="statusFilter = 'pending'">รอดำเนินการ</button>
+          <button :class="['status-chip', 'chip-paid', statusFilter === 'paid' ? 'active' : '']"
+            @click="statusFilter = 'paid'">จ่ายแล้ว</button>
+          <button :class="['status-chip', 'chip-cancelled', statusFilter === 'cancelled' ? 'active' : '']"
+            @click="statusFilter = 'cancelled'">ยกเลิก</button>
         </div>
       </div>
     </div>
@@ -203,7 +327,7 @@
           <span class="order-count">{{ filteredAffiliateData.length }} รายการ</span>
         </div>
       </div>
-      
+
       <div class="orders-table-header" v-if="filteredAffiliateData.length > 0">
         <div class="th-order">รหัสออเดอร์</div>
         <div class="th-date">วันที่</div>
@@ -212,7 +336,7 @@
         <div class="th-commission">คอมมิชชั่น</div>
         <div class="th-status">สถานะ</div>
       </div>
-      
+
       <div class="orders-container" v-if="filteredAffiliateData.length > 0">
         <div class="order-row" v-for="(item, index) in filteredAffiliateData" :key="index">
           <div class="td-order">
@@ -231,19 +355,17 @@
             <span class="commission-value">{{ formatCurrency(item.commissionAmount) }}</span>
           </div>
           <div class="td-status">
-            <span 
-              :class="[
-                'status-badge', 
-                item.status === 'paid' ? 'status-paid' : 
+            <span :class="[
+              'status-badge',
+              item.status === 'paid' ? 'status-paid' :
                 item.status === 'pending' ? 'status-pending' : 'status-cancelled'
-              ]"
-            >
+            ]">
               {{ translateStatus(item.status) }}
             </span>
           </div>
         </div>
       </div>
-      
+
       <div class="empty-state" v-else>
         <div class="empty-icon">
           <i class="fa fa-inbox"></i>
@@ -269,17 +391,19 @@
 
               <div class="mb-3">
                 <label class="form-label small fw-bold">จำนวนเงินที่ต้องการถอน</label>
-                <input type="number" class="form-control form-control-lg border-orange-focus fw-bold" 
-                       v-model="withdrawAmount" placeholder="0.00" min="100" @keydown="preventNegativeInput">
+                <input type="number" class="form-control form-control-lg border-orange-focus fw-bold"
+                  v-model="withdrawAmount" placeholder="0.00" min="100" @keydown="preventNegativeInput">
                 <div class="text-end mt-1">
-                  <small class="text-muted cursor-pointer hover-underline" @click="withdrawAmount = wallet.balance">ถอนทั้งหมด</small>
+                  <small class="text-muted cursor-pointer hover-underline"
+                    @click="withdrawAmount = wallet.balance">ถอนทั้งหมด</small>
                 </div>
               </div>
 
               <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                   <label class="form-label small fw-bold mb-0">เลือกบัญชีรับเงิน</label>
-                  <a href="#" class="text-orange small text-decoration-none" data-bs-toggle="modal" data-bs-target="#addBankModal" @click="safeCloseModal('withdrawModal')">+ เพิ่มบัญชีใหม่</a>
+                  <a href="#" class="text-orange small text-decoration-none" data-bs-toggle="modal"
+                    data-bs-target="#addBankModal" @click="safeCloseModal('withdrawModal')">+ เพิ่มบัญชีใหม่</a>
                 </div>
                 <select class="form-select shadow-none" v-model="selectedBank">
                   <option value="" disabled>-- โปรดเลือกบัญชี --</option>
@@ -287,11 +411,12 @@
                     {{ bank.bankName }} ({{ bank.accountNo }})
                   </option>
                 </select>
-                <div v-if="bankAccounts.length === 0" class="text-danger small mt-1">* กรุณาเพิ่มบัญชีธนาคารก่อนถอนเงิน</div>
+                <div v-if="bankAccounts.length === 0" class="text-danger small mt-1">* กรุณาเพิ่มบัญชีธนาคารก่อนถอนเงิน
+                </div>
               </div>
 
-              <button class="btn btn-orange w-100 rounded-pill py-2 fw-bold shadow-sm text-white" 
-                      @click="confirmWithdraw" :disabled="!isValidWithdraw || !selectedBank">
+              <button class="btn btn-orange w-100 rounded-pill py-2 fw-bold shadow-sm text-white"
+                @click="confirmWithdraw" :disabled="!isValidWithdraw || !selectedBank">
                 ยืนยันการถอนเงิน
               </button>
             </div>
@@ -305,7 +430,8 @@
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 bg-light">
-              <h5 class="modal-title fw-bold text-dark"><i class="fa fa-plus-circle text-orange me-1"></i> เพิ่มบัญชีธนาคาร</h5>
+              <h5 class="modal-title fw-bold text-dark"><i class="fa fa-plus-circle text-orange me-1"></i>
+                เพิ่มบัญชีธนาคาร</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
@@ -323,12 +449,14 @@
                 </div>
                 <div class="mb-4">
                   <label class="form-label small fw-bold">หมายเลขบัญชี</label>
-                  <input type="text" class="form-control border-orange-focus shadow-none" 
-                         v-model="newBank.accountNo" placeholder="เลขบัญชี 10-12 หลัก" required pattern="[0-9-]+" title="กรุณากรอกเฉพาะตัวเลข">
+                  <input type="text" class="form-control border-orange-focus shadow-none" v-model="newBank.accountNo"
+                    placeholder="เลขบัญชี 10-12 หลัก" required pattern="[0-9-]+" title="กรุณากรอกเฉพาะตัวเลข">
                 </div>
                 <div class="d-flex gap-2">
-                  <button type="button" class="btn btn-light w-50 rounded-pill fw-bold" data-bs-dismiss="modal">ยกเลิก</button>
-                  <button type="submit" class="btn btn-orange w-50 rounded-pill fw-bold shadow-sm text-white" :disabled="!newBank.bankName || !newBank.accountNo">เพิ่มบัญชี</button>
+                  <button type="button" class="btn btn-light w-50 rounded-pill fw-bold"
+                    data-bs-dismiss="modal">ยกเลิก</button>
+                  <button type="submit" class="btn btn-orange w-50 rounded-pill fw-bold shadow-sm text-white"
+                    :disabled="!newBank.bankName || !newBank.accountNo">เพิ่มบัญชี</button>
                 </div>
               </form>
             </div>
@@ -341,7 +469,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { affiliateService } from "~/services/affiliate.service"
 import { useAuthStore } from "~/store/auth"
 import { useRouter } from "vue-router"
@@ -349,7 +477,7 @@ import { useNuxtApp } from "nuxt/app"
 import Swal from 'sweetalert2'
 import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
-definePageMeta({ 
+definePageMeta({
   layout: "default",
   middleware: "auth"
 })
@@ -377,6 +505,8 @@ const endDate = ref('')
 const statusFilter = ref('all')
 
 // --- Wallet State ---
+const transactionFilter = ref('all')
+const filterDate = ref('')
 const wallet = ref({
   balance: 0,
   transactions: []
@@ -400,10 +530,36 @@ const isValidWithdraw = computed(() => {
   return amt > 0 && amt <= wallet.value.balance
 })
 
+const filteredTransactions = computed(() => {
+  if (!wallet.value.transactions) return []
+  let list = wallet.value.transactions
+
+  if (transactionFilter.value !== 'all') {
+    if (transactionFilter.value === 'withdraw') {
+      list = list.filter(tx => tx.type === 'withdraw' || tx.type === 'expense')
+    } else {
+      list = list.filter(tx => tx.type === transactionFilter.value)
+    }
+  }
+
+  if (filterDate.value) {
+    list = list.filter(tx => {
+      const date = new Date(tx.createdAt)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const localDateStr = `${year}-${month}-${day}`
+      return localDateStr === filterDate.value
+    })
+  }
+
+  return list
+})
+
 const dateOnlyAffiliateData = computed(() => {
   return affiliateData.value.filter(item => {
     if (!startDate.value && !endDate.value) return true
-    
+
     const itemDate = new Date(item.createdAt)
     const start = startDate.value ? new Date(startDate.value) : null
     const end = endDate.value ? new Date(endDate.value) : null
@@ -413,7 +569,7 @@ const dateOnlyAffiliateData = computed(() => {
 
     if (start && itemDate < start) return false
     if (end && itemDate > end) return false
-    
+
     return true
   })
 })
@@ -432,10 +588,10 @@ const totalIncome = computed(() => {
 
 // --- Formatters ---
 const formatCurrency = (value) => {
-  return new Intl.NumberFormat('th-TH', { 
-    style: 'currency', 
+  return new Intl.NumberFormat('th-TH', {
+    style: 'currency',
     currency: 'THB',
-    minimumFractionDigits: 0 
+    minimumFractionDigits: 0
   }).format(value || 0);
 }
 
@@ -451,16 +607,26 @@ const translateStatus = (status) => {
 const formatDate = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
-  return date.toLocaleDateString('th-TH', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
+  return date.toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   })
 }
 
 const clearDate = () => {
   startDate.value = ''
   endDate.value = ''
+}
+
+const formatDateStr = (d) => {
+  if (!d) return '-'
+  return new Date(d).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+const formatTimeStr = (d) => {
+  if (!d) return '-'
+  return new Date(d).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.'
 }
 
 // --- Wallet Functions ---
@@ -513,13 +679,13 @@ const saveNewBank = () => {
       id: Date.now(),
       bankName: newBank.value.bankName,
       accountNo: newBank.value.accountNo,
-      verified: false 
+      verified: false
     })
-    
+
     selectedBank.value = newBank.value.bankName + ' - ' + newBank.value.accountNo
     newBank.value = { bankName: '', accountNo: '' }
     safeCloseModal('addBankModal')
-    
+
     Swal.fire({
       icon: 'success',
       title: 'เพิ่มบัญชีสำเร็จ!',
@@ -561,7 +727,7 @@ const confirmWithdraw = async () => {
 
       await fetchWallet()
       withdrawAmount.value = ''
-      
+
       Swal.fire({
         icon: 'success',
         title: 'ถอนเงินสำเร็จ!',
@@ -577,11 +743,16 @@ const confirmWithdraw = async () => {
   }
 }
 
+const resetFilters = () => {
+  transactionFilter.value = 'all'
+  filterDate.value = ''
+}
+
 // --- Dashboard & Insights Functions ---
 const fetchDashboard = async () => {
   try {
     loading.value = true
-    
+
     const userId = authStore.user?._id || authStore.user?.id
     if (!userId) {
       console.log('No user found, redirecting to login')
@@ -594,7 +765,7 @@ const fetchDashboard = async () => {
     affiliateInfo.value = data.affiliate
     summary.value = data.summary
     rawOrders.value = data.orders || []
-    
+
     affiliateData.value = rawOrders.value.map(o => ({
       orderId: o.order?.orderId || '-',
       createdAt: o.createdAt,
@@ -641,7 +812,7 @@ const enrichInsights = async () => {
         if (sid) sellersMap.value.set(String(sid), name)
         if (uid) sellersMap.value.set(String(uid), name)
       })
-    } catch {}
+    } catch { }
 
     const productIds = rawOrders.value.flatMap((o) => (o.items || []).map((it) => it.productId)).filter(Boolean)
     const uniqueProductIds = Array.from(new Set(productIds))
@@ -700,15 +871,15 @@ const topProducts = computed(() => {
 
 const copyAffiliateLink = () => {
   if (!affiliateInfo.value) return
-  
+
   const baseUrl = window.location.origin
   const sampleLink = `${baseUrl}/?ref=${affiliateInfo.value.code}`
-  
+
   navigator.clipboard.writeText(sampleLink).then(() => {
     if (useNuxtApp().$showToast) {
-      useNuxtApp().$showToast({ 
-        msg: `คัดลอกลิงก์แล้ว! ใช้ลิงก์นี้: ${sampleLink}`, 
-        type: 'success' 
+      useNuxtApp().$showToast({
+        msg: `คัดลอกลิงก์แล้ว! ใช้ลิงก์นี้: ${sampleLink}`,
+        type: 'success'
       })
     }
   }).catch(err => {
@@ -720,9 +891,9 @@ const shareAffiliateLink = (platform) => {
   const baseUrl = window.location.origin
   const affiliateLink = `${baseUrl}/?ref=${affiliateInfo.value.code}`
   const message = `เช็คสินค้าเจ๋งๆ ได้ที่นี่เลย! ${affiliateLink}`
-  
+
   let shareUrl = ''
-  switch(platform) {
+  switch (platform) {
     case 'line':
       shareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(affiliateLink)}`
       break
@@ -733,7 +904,7 @@ const shareAffiliateLink = (platform) => {
       shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}`
       break
   }
-  
+
   if (shareUrl) {
     window.open(shareUrl, '_blank', 'width=600,height=400')
   }
@@ -747,17 +918,62 @@ onMounted(() => {
   fetchDashboard()
   fetchWallet()
 })
+
+// --- Pagination สำหรับประวัติธุรกรรม ---
+const currentPage = ref(1)
+const itemsPerPage = 10 // แสดง 10 รายการต่อหน้า
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredTransactions.value.length / itemsPerPage) || 1
+})
+
+const paginatedTransactions = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredTransactions.value.slice(start, end)
+})
+
+const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+const goToPage = (page) => { currentPage.value = page }
+
+watch([transactionFilter, filterDate], () => {
+  currentPage.value = 1
+})
 </script>
 
 <style scoped>
 /* --- Modal & Wallet New Styles --- */
-.bg-gradient-orange { background: linear-gradient(135deg, #ff9f43 0%, #fd7e14 100%); }
-.text-orange { color: #fd7e14 !important; }
-.btn-orange { background-color: #fd7e14; border-color: #fd7e14; }
-.btn-orange:hover { background-color: #e36a0d; border-color: #e36a0d; }
-.border-orange-focus:focus { border-color: #fd7e14; box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25); }
-.cursor-pointer { cursor: pointer; }
-.hover-underline:hover { text-decoration: underline; }
+.bg-gradient-orange {
+  background: linear-gradient(135deg, #ff9f43 0%, #fd7e14 100%);
+}
+
+.text-orange {
+  color: #fd7e14 !important;
+}
+
+.btn-orange {
+  background-color: #fd7e14;
+  border-color: #fd7e14;
+}
+
+.btn-orange:hover {
+  background-color: #e36a0d;
+  border-color: #e36a0d;
+}
+
+.border-orange-focus:focus {
+  border-color: #fd7e14;
+  box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.hover-underline:hover {
+  text-decoration: underline;
+}
 
 /* Base Styles */
 .affiliate-dashboard {
@@ -905,7 +1121,8 @@ onMounted(() => {
   gap: 10px;
 }
 
-.copy-btn, .share-btn {
+.copy-btn,
+.share-btn {
   background: #ff5722;
   border: none;
   color: white;
@@ -918,7 +1135,8 @@ onMounted(() => {
   transition: all 0.2s ease;
 }
 
-.copy-btn:hover, .share-btn:hover {
+.copy-btn:hover,
+.share-btn:hover {
   background: #e64a19;
 }
 
@@ -932,7 +1150,7 @@ onMounted(() => {
   right: 0;
   background: white;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   min-width: 150px;
   z-index: 1000;
   transform: translateY(8px);
@@ -1012,7 +1230,7 @@ onMounted(() => {
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-icon {
@@ -1025,10 +1243,21 @@ onMounted(() => {
   color: white;
 }
 
-.stat-total .stat-icon { background: #e53e3e; }
-.stat-paid .stat-icon { background: #38a169; }
-.stat-pending .stat-icon { background: #d69e2e; }
-.stat-orders .stat-icon { background: #3182ce; }
+.stat-total .stat-icon {
+  background: #e53e3e;
+}
+
+.stat-paid .stat-icon {
+  background: #38a169;
+}
+
+.stat-pending .stat-icon {
+  background: #d69e2e;
+}
+
+.stat-orders .stat-icon {
+  background: #3182ce;
+}
 
 .stat-content {
   flex: 1;
@@ -1407,15 +1636,15 @@ onMounted(() => {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .insights-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .orders-table-header {
     display: none;
   }
-  
+
   .order-row {
     display: flex;
     flex-wrap: wrap;
@@ -1423,17 +1652,20 @@ onMounted(() => {
     border: 1px solid #e2e8f0;
     margin-bottom: 12px;
   }
-  
-  .td-order, .td-date {
+
+  .td-order,
+  .td-date {
     width: 50%;
   }
-  
+
   .td-product {
     width: 100%;
     margin: 8px 0;
   }
-  
-  .td-price, .td-commission, .td-status {
+
+  .td-price,
+  .td-commission,
+  .td-status {
     width: 33.33%;
   }
 }
@@ -1463,11 +1695,11 @@ onMounted(() => {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
-  
+
   .stat-card {
     padding: 16px;
   }
-  
+
   .stat-value {
     font-size: 1.25rem;
   }
@@ -1481,8 +1713,9 @@ onMounted(() => {
     width: 100%;
     justify-content: stretch;
   }
-  
-  .copy-btn, .share-btn {
+
+  .copy-btn,
+  .share-btn {
     flex: 1;
     justify-content: center;
   }
@@ -1496,7 +1729,7 @@ onMounted(() => {
     min-width: auto;
     width: 100%;
   }
-  
+
   .date-separator {
     display: none;
   }
@@ -1506,12 +1739,12 @@ onMounted(() => {
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .status-filters {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .status-chip {
     width: 100%;
     text-align: center;
