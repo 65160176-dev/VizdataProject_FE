@@ -25,7 +25,7 @@ export const useCartStore = defineStore({
           this.loading = false
           return
         }
-        const response = await $fetch('http://localhost:3001/api/cart', {
+        const response = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/cart', {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -65,9 +65,9 @@ export const useCartStore = defineStore({
               if (product.image.startsWith('http')) {
                 imageUrl = product.image
               } else if (product.image.startsWith('/')) {
-                imageUrl = `http://localhost:3001${product.image}`
+                imageUrl = `https://vizdataprojectbe-production.up.railway.app${product.image}`
               } else {
-                imageUrl = `http://localhost:3001/${product.image}`
+                imageUrl = `https://vizdataprojectbe-production.up.railway.app/${product.image}`
               }
             }
             
@@ -159,7 +159,7 @@ export const useCartStore = defineStore({
         const productId = payload._id || payload.id
         const qty = payload.quantity || 1
         
-        await $fetch('http://localhost:3001/api/cart', {
+        await $fetch('https://vizdataprojectbe-production.up.railway.app/api/cart', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -221,7 +221,7 @@ export const useCartStore = defineStore({
           return
         }
         
-        const response = await $fetch(`http://localhost:3001/api/cart/${productId}`, {
+        const response = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/cart/${productId}`, {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -267,7 +267,7 @@ export const useCartStore = defineStore({
         
         console.log('Deleting product from cart, productId:', productId)
         
-        const response = await $fetch(`http://localhost:3001/api/cart/${productId}`, {
+        const response = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/cart/${productId}`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`
@@ -307,7 +307,7 @@ export const useCartStore = defineStore({
           return
         }
         
-        await $fetch('http://localhost:3001/api/cart', {
+        await $fetch('https://vizdataprojectbe-production.up.railway.app/api/cart', {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`

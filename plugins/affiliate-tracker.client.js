@@ -34,7 +34,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         
         // ตรวจสอบกับ backend ว่า affiliate code นี้ถูกต้องหรือไม่
         const normalized = String(code).toUpperCase();
-        const response = await $fetch(`http://localhost:3001/api/affiliate/verify/${normalized}`);
+        const response = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/affiliate/verify/${normalized}`);
         
         console.log('✅ Affiliate verification response:', response);
         

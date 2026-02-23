@@ -23,7 +23,7 @@ export const useProductStore = defineStore({
       async fetchProducts() {
         this.loading = true
         try {
-          const response = await $fetch('http://localhost:3001/api/product')
+          const response = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/product')
           console.log('Fetched products:', response)
           if (response && response.length > 0) {
             console.log('First product sample:', response[0])
@@ -64,7 +64,7 @@ export const useProductStore = defineStore({
             const id = item._id || item.id
             if (!id) return item
             try {
-              const latest = await $fetch(`http://localhost:3001/api/product/${id}`)
+              const latest = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${id}`)
               return {
                 ...item,
                 stock: (latest && typeof latest.stock === 'number') ? latest.stock : item.stock,
@@ -80,7 +80,7 @@ export const useProductStore = defineStore({
           try { localStorage.setItem('guestWishlist', JSON.stringify(refreshed)) } catch (e) {}
           return
         }
-        const response = await $fetch('http://localhost:3001/api/wishlist', {
+        const response = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/wishlist', {
           headers: { Authorization: `Bearer ${token}` }
         })
         this.wishlist = Array.isArray(response?.products) ? response.products : []
@@ -130,7 +130,7 @@ export const useProductStore = defineStore({
         }
         
         // Logged in user - save to server
-        await $fetch(`http://localhost:3001/api/wishlist/${productId}`, {
+        await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/wishlist/${productId}`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`
@@ -171,7 +171,7 @@ export const useProductStore = defineStore({
         }
         
         // Logged in user - remove from server
-        await $fetch(`http://localhost:3001/api/wishlist/${productId}`, {
+        await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/wishlist/${productId}`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`

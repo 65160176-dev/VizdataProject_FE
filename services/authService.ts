@@ -1,6 +1,6 @@
 import { $fetch } from 'ofetch';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'https://vizdataprojectbe-production.up.railway.app/api';
 
 export interface RegisterData {
   username: string;

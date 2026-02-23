@@ -426,7 +426,7 @@ const showError = (message) => {
 const fetchCategories = async () => {
   try {
     const token = localStorage.getItem('token')
-    const res = await $fetch('http://localhost:3001/api/category', { 
+    const res = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/category', { 
        headers: { 'Authorization': `Bearer ${token}` } 
     })
     if (res) allCategories.value = res 
@@ -447,12 +447,12 @@ const toggleCategory = async (cat) => {
     }
     cat.isSelected = false 
     try {
-      await $fetch(`http://localhost:3001/api/category/${cat.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+      await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/category/${cat.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
     } catch (e) { cat.isSelected = true; showError('เกิดข้อผิดพลาดในการยกเลิกหมวดหมู่') }
   } else {
     cat.isSelected = true
     try {
-      await $fetch('http://localhost:3001/api/category', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: { name: cat.name } })
+      await $fetch('https://vizdataprojectbe-production.up.railway.app/api/category', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: { name: cat.name } })
       if(!cat.isSystem) fetchCategories() 
     } catch (e) { cat.isSelected = false; showError('ไม่สามารถเลือกหมวดหมู่นี้ได้') }
   }
@@ -468,7 +468,7 @@ const addNewCategoryToSystem = async () => {
   }
   try {
     const token = localStorage.getItem('token')
-    await $fetch('http://localhost:3001/api/category', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: { name: trimmed } })
+    await $fetch('https://vizdataprojectbe-production.up.railway.app/api/category', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: { name: trimmed } })
     showToast('สร้างหมวดหมู่ใหม่สำเร็จ'); newCategoryInput.value = ''; fetchCategories() 
   } catch (e) { console.error(e); showError(e.data?.message || 'สร้างหมวดหมู่ไม่สำเร็จ') }
 }
@@ -489,7 +489,7 @@ const executeDeleteCategory = async () => {
   const modalInstance = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'))
   const token = localStorage.getItem('token')
   try {
-    await $fetch(`http://localhost:3001/api/category/${item.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+    await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/category/${item.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
     allCategories.value = allCategories.value.filter(c => c.id !== item.id)
     showToast('ลบหมวดหมู่ถาวรเรียบร้อย')
   } catch (e) { console.error(e); showError(e.data?.message || 'ลบไม่สำเร็จ') }
@@ -500,7 +500,7 @@ const fetchProducts = async () => {
   try {
     const token = localStorage.getItem('token')
     if (!token) return
-    const res = await $fetch('http://localhost:3001/api/product/my-products', { headers: { 'Authorization': `Bearer ${token}` } })
+    const res = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/product/my-products', { headers: { 'Authorization': `Bearer ${token}` } })
     products.value = res || []
   } catch (e) { console.error(e) }
 }
@@ -601,7 +601,7 @@ const saveNewItem = async () => {
   if (newItem.value.rawFile) fd.append('file', newItem.value.rawFile)
   
   try {
-    await $fetch('http://localhost:3001/api/product', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
+    await $fetch('https://vizdataprojectbe-production.up.railway.app/api/product', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
     showToast('เพิ่มสินค้าใหม่เรียบร้อยแล้ว')
     refresh(); resetNewItemForm(); safeCloseModal('addModal')
   } catch(e) { console.error(e); showError('เพิ่มสินค้าไม่สำเร็จ'); }
@@ -632,7 +632,7 @@ async function saveEdit() {
   if (editItem.value.rawFile) fd.append('file', editItem.value.rawFile)
   
   try {
-    await $fetch(`http://localhost:3001/api/product/${editItem.value._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
+    await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${editItem.value._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
     showToast('แก้ไขข้อมูลสินค้าเรียบร้อยแล้ว')
     refresh(); safeCloseModal('editModal')
   } catch(e) { console.error(e); showError('แก้ไขไม่สำเร็จ'); }
@@ -641,7 +641,7 @@ async function saveEdit() {
 async function deleteItem(id) {
   if (confirm('ลบสินค้า?')) {
     const token = localStorage.getItem('token')
-    await $fetch(`http://localhost:3001/api/product/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
+    await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
     showToast('ลบสินค้าเรียบร้อยแล้ว')
     refresh()
   }
@@ -688,7 +688,7 @@ async function saveAddStock() {
     const fd = new FormData(); fd.append('stock', n)
     
     try {
-      await $fetch(`http://localhost:3001/api/product/${t._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
+      await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${t._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
       showToast('เพิ่มสต็อกเรียบร้อยแล้ว')
       
       // ดึงข้อมูลตารางใหม่

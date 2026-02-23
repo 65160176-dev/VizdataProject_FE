@@ -65,14 +65,14 @@ cd vizdataproject
 npm run dev
 ```
 
-The frontend will run at `http://localhost:3001` (or the next available port)
+The frontend will run at `https://vizdataprojectbe-production.up.railway.app` (or the next available port)
 
 ### 5. Test the Setup
 
 Visit the test page in your browser:
 
 ```
-http://localhost:3001/test_user
+https://vizdataprojectbe-production.up.railway.app/test_user
 ```
 
 This page will:
@@ -222,7 +222,7 @@ Make sure your NestJS backend has CORS enabled for your frontend URL. Check `src
 
 ```typescript
 app.enableCors({
-  origin: ['http://localhost:3001', 'http://localhost:3000'],
+  origin: ['https://vizdataprojectbe-production.up.railway.app', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   credentials: true,
 });

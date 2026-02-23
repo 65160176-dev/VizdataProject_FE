@@ -154,7 +154,7 @@ const route = useRoute()
 const auth = useAuthStore()
 const notiStore = useNotificationStore()
 const config = useRuntimeConfig()
-const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
+const API_BASE_URL = config.public.apiBase || 'https://vizdataprojectbe-production.up.railway.app'
 const { $showToast } = useNuxtApp()
 
 const displayName = computed(() => auth.userName || 'ร้านของฉัน')

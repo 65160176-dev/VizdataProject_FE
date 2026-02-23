@@ -97,8 +97,8 @@ export default {
       const resolveUrl = (url) => {
         if (!url || (typeof url === 'string' && url.trim() === '')) return null
         if (url.startsWith('http')) return url
-        if (url.startsWith('/')) return `http://localhost:3001${url}`
-        return `http://localhost:3001/${url}`
+        if (url.startsWith('/')) return `https://vizdataprojectbe-production.up.railway.app${url}`
+        return `https://vizdataprojectbe-production.up.railway.app/${url}`
       }
       
       const fromImage = resolveUrl(product.image)

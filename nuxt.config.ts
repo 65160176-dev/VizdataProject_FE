@@ -33,7 +33,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3001', // Backend API port
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || 'https://vizdataprojectbe-production.up.railway.app', // Backend API port
     }
   },
 

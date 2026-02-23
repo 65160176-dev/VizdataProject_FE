@@ -225,7 +225,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'updated'])
 
 const config = useRuntimeConfig()
-const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
+const API_BASE_URL = config.public.apiBase || 'https://vizdataprojectbe-production.up.railway.app'
 const orderStore = useOrderStore()
 const { $showToast } = useNuxtApp()
 

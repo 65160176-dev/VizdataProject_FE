@@ -146,7 +146,7 @@ const orderStore = useOrderStore() // ✅ ประกาศใช้ Store
 const router = useRouter()
 const route = useRoute()
 const config = useRuntimeConfig()
-const API_BASE = config.public?.apiBase || 'http://localhost:3001/api'
+const API_BASE = config.public?.apiBase || 'https://vizdataprojectbe-production.up.railway.app/api'
 
 const isAuthenticated = computed(() => !!auth.isLoggedIn || (!!auth.user && Object.keys(auth.user).length > 0))
 const selectedOrder = ref(null)

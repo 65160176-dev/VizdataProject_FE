@@ -633,7 +633,7 @@ const formatTimeStr = (d) => {
 const fetchWallet = async () => {
   try {
     const token = localStorage.getItem('token')
-    const res = await $fetch('http://localhost:3001/api/wallet/my-wallet', {
+    const res = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/wallet/my-wallet', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     wallet.value = res
@@ -719,7 +719,7 @@ const confirmWithdraw = async () => {
       })
 
       const token = localStorage.getItem('token')
-      await $fetch('http://localhost:3001/api/wallet/withdraw', {
+      await $fetch('https://vizdataprojectbe-production.up.railway.app/api/wallet/withdraw', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: { amount: parseFloat(withdrawAmount.value), bankInfo: selectedBank.value }
@@ -793,7 +793,7 @@ const enrichInsights = async () => {
     const uniqueIds = Array.from(new Set(ids))
     const details = await Promise.all(uniqueIds.map(async (id) => {
       try {
-        const res = await $fetch(`http://localhost:3001/api/order/${id}`)
+        const res = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/order/${id}`)
         return res
       } catch (e) { return null }
     }))
@@ -803,7 +803,7 @@ const enrichInsights = async () => {
     })
 
     try {
-      const sellersRes = await $fetch('http://localhost:3001/api/sellers')
+      const sellersRes = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/sellers')
       const list = sellersRes?.data || sellersRes || []
       list.forEach((s) => {
         const name = s.display_name || s.name || 'ร้านค้า'
@@ -817,7 +817,7 @@ const enrichInsights = async () => {
     const productIds = rawOrders.value.flatMap((o) => (o.items || []).map((it) => it.productId)).filter(Boolean)
     const uniqueProductIds = Array.from(new Set(productIds))
     const productDetails = await Promise.all(uniqueProductIds.map(async (pid) => {
-      try { return await $fetch(`http://localhost:3001/api/product/${pid}`) } catch { return null }
+      try { return await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${pid}`) } catch { return null }
     }))
     productDetails.filter(Boolean).forEach((p) => {
       productMap.value.set(p._id || p.id, { name: p.name, commission: Number(p.commission || 0) })

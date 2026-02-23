@@ -20,7 +20,7 @@ export const useNotificationStore = defineStore('notification', {
 
             try {
                 // ✅ แก้ไข URL ให้ใช้ตัวแปร config หรือ hardcode ตามเดิม
-                const res = await fetch(`http://localhost:3001/api/notifications/user/${userId}`)
+                const res = await fetch(`https://vizdataprojectbe-production.up.railway.app/api/notifications/user/${userId}`)
                 if (res.ok) {
                     this.notifications = await res.json()
                 }
@@ -35,7 +35,7 @@ export const useNotificationStore = defineStore('notification', {
             if (target) target.isRead = true
 
             try {
-                await fetch(`http://localhost:3001/api/notifications/${item._id}/read`, { method: 'PATCH' })
+                await fetch(`https://vizdataprojectbe-production.up.railway.app/api/notifications/${item._id}/read`, { method: 'PATCH' })
             } catch (e) {
                 console.error("Mark read failed")
             }
@@ -46,7 +46,7 @@ export const useNotificationStore = defineStore('notification', {
             const userId = authStore.user?._id || authStore.user?.id
             if (!userId || this.socket) return
 
-            this.socket = io('http://localhost:3001', { query: { userId } })
+            this.socket = io('https://vizdataprojectbe-production.up.railway.app', { query: { userId } })
 
             this.socket.on('receive_notification', (newNoti) => {
                 this.notifications.unshift(newNoti)
@@ -69,7 +69,7 @@ export const useNotificationStore = defineStore('notification', {
 
             try {
                 // ✅ ใช้ fetch แบบเดิมเพื่อความ Consistent
-                await fetch(`http://localhost:3001/api/notifications/read-all/${userId}`, {
+                await fetch(`https://vizdataprojectbe-production.up.railway.app/api/notifications/read-all/${userId}`, {
                     method: 'PATCH'
                 })
             } catch (error) {
@@ -90,7 +90,7 @@ export const useNotificationStore = defineStore('notification', {
             try {
                 // 3. ยิง API ไปลบที่ Backend
                 // (URL นี้ต้องตรงกับ Controller ที่คุณมีใน Backend)
-                const res = await fetch(`http://localhost:3001/api/notifications/${id}`, {
+                const res = await fetch(`https://vizdataprojectbe-production.up.railway.app/api/notifications/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -122,7 +122,7 @@ export const useNotificationStore = defineStore('notification', {
             try {
                 // 4. ยิง API ไปลบที่ Backend
                 const config = useRuntimeConfig()
-                const API_BASE_URL = config.public.apiBase || 'http://localhost:3001'
+                const API_BASE_URL = config.public.apiBase || 'https://vizdataprojectbe-production.up.railway.app'
 
                 const res = await fetch(`${API_BASE_URL}/api/notifications/delete-all/${userId}`, {
                     method: 'DELETE',

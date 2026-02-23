@@ -101,7 +101,7 @@ const orderStore = useOrderStore() // ✅ ประกาศใช้ Store
 const router = useRouter()
 const route = useRoute()
 const config = useRuntimeConfig()
-const BACKEND_URL = 'http://localhost:3001'
+const BACKEND_URL = 'https://vizdataprojectbe-production.up.railway.app'
 
 const isAuthenticated = computed(() => !!auth.isLoggedIn || (!!auth.user && Object.keys(auth.user).length > 0))
 const userName = computed(() => auth.userName || auth.user?.username || 'User')
@@ -194,7 +194,7 @@ onMounted(async () => {
 
           if (diffMinutes >= 3) {
             console.log(`Order ${order.orderId} is over 3 mins, auto-completing...`);
-            await $fetch(`http://localhost:3001/api/order/${order._id}`, {
+            await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/order/${order._id}`, {
               method: 'PUT',
               headers: { Authorization: `Bearer ${auth.token}` },
               body: { status: 'completed' }

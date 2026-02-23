@@ -47,7 +47,7 @@ definePageMeta({ layout: 'seller' })
 const router = useRouter()
 const auth = useAuthStore()
 const config = useRuntimeConfig()
-const API_BASE = config.public.apiBase || 'http://localhost:3001'
+const API_BASE = config.public.apiBase || 'https://vizdataprojectbe-production.up.railway.app'
 
 const name = ref('')
 const selectedFile = ref(null)
@@ -91,7 +91,7 @@ const initAvatarFromAuth = () => {
         return
     }
 
-    // ถ้าเป็น Path จาก Server ต้องเติม http://localhost:3001
+    // ถ้าเป็น Path จาก Server ต้องเติม https://vizdataprojectbe-production.up.railway.app
     const cleanPath = userAvatar.startsWith('/') ? userAvatar : `/${userAvatar}`
     const finalUrl = `${API_BASE}${cleanPath}`
     console.log('🔍 [editProfile] Building server URL:', finalUrl)

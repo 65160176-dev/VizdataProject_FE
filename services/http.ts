@@ -3,7 +3,7 @@ import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosErr
 import { useAuthStore } from '~/store/auth';
 
 // ✅ 2. แก้ Port เป็น 3001 และเติม /api
-let API_BASE_URL = 'http://localhost:3001/api';
+let API_BASE_URL = 'https://vizdataprojectbe-production.up.railway.app/api';
 
 // Function to set API URL from runtime config
 export const initializeHttpClient = (apiUrl: string) => {

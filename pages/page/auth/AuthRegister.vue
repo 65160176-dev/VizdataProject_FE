@@ -114,12 +114,12 @@ const messageType = ref('')
 
 // OAuth Login Functions
 function loginWithFacebook() {
-  const apiUrl = useRuntimeConfig().public.apiUrl || 'http://localhost:3001'
+  const apiUrl = useRuntimeConfig().public.apiUrl || 'https://vizdataprojectbe-production.up.railway.app'
   window.location.href = `${apiUrl}/api/auth/facebook`
 }
 
 function loginWithGoogle() {
-  const apiUrl = useRuntimeConfig().public.apiUrl || 'http://localhost:3001'
+  const apiUrl = useRuntimeConfig().public.apiUrl || 'https://vizdataprojectbe-production.up.railway.app'
   window.location.href = `${apiUrl}/api/auth/google`
 }
 

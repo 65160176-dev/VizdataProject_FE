@@ -14,7 +14,7 @@ export const useOrderStore = defineStore('orders', {
     async fetchOrders() {
       this.isLoading = true
       try {
-        const data = await $fetch('http://localhost:3001/api/order')
+        const data = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/order')
         if (data) {
           this.allOrders = data.map(o => ({
             ...o,
@@ -33,7 +33,7 @@ export const useOrderStore = defineStore('orders', {
       this.isLoading = true;
       try {
         const token = localStorage.getItem('token');
-        const data = await $fetch('http://localhost:3001/api/order', {
+        const data = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/order', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -60,7 +60,7 @@ export const useOrderStore = defineStore('orders', {
         }
         if (note) payload.note = note
 
-        await $fetch(`http://localhost:3001/api/order/${id}`, {
+        await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/order/${id}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,

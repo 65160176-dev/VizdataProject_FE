@@ -305,12 +305,12 @@ export default {
       try {
         this.loading = true
         const productId = this.$route.query.id
-        const response = await $fetch(`http://localhost:3001/api/product/${productId}`)
+        const response = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${productId}`)
         this.product = response
         
         if (this.product.userId && this.$route.query.hideSeller !== 'true') {
           try {
-            const sellerResponse = await $fetch(`http://localhost:3001/api/sellers/by-user/${this.product.userId}`)
+            const sellerResponse = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/sellers/by-user/${this.product.userId}`)
             this.seller = sellerResponse
           } catch (error) { console.error('Failed to fetch seller:', error) }
         }
@@ -365,7 +365,7 @@ export default {
         if (!this.product || !this.product.category) return
         
         // ดึงสินค้าในหมวดเดียวกัน
-        const allProducts = await $fetch('http://localhost:3001/api/product')
+        const allProducts = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/product')
         const related = allProducts.filter(p => 
           p.category === this.product.category && 
           (p._id !== this.product._id && p.id !== this.product.id) &&
@@ -383,7 +383,7 @@ export default {
     async fetchRandomProducts() {
       try {
         // ดึงสินค้าทั้งหมด
-        const allProducts = await $fetch('http://localhost:3001/api/product')
+        const allProducts = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/product')
         const filtered = allProducts.filter(p => 
           p._id !== this.product._id && p.id !== this.product.id &&
           p.stock && p.stock > 0  // ซ่อนสินค้าที่หมด

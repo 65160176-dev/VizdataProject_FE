@@ -364,7 +364,7 @@ const safeCloseModal = (id) => {
 const fetchWallet = async () => {
   try {
     const token = localStorage.getItem('token')
-    const res = await $fetch('http://localhost:3001/api/wallet/my-wallet', {
+    const res = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/wallet/my-wallet', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     wallet.value = res
@@ -425,7 +425,7 @@ const confirmWithdraw = async () => {
       })
 
       const token = localStorage.getItem('token')
-      await $fetch('http://localhost:3001/api/wallet/withdraw', {
+      await $fetch('https://vizdataprojectbe-production.up.railway.app/api/wallet/withdraw', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: { amount: parseFloat(withdrawAmount.value), bankInfo: selectedBank.value }

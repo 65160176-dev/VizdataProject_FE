@@ -166,7 +166,7 @@ const route = useRoute()
 const cart = useCartStore()
 const productStore = useProductStore()
 const router = useRouter()
-const BACKEND_URL = 'http://localhost:3001'
+const BACKEND_URL = 'https://vizdataprojectbe-production.up.railway.app'
 
 // State
 const seller = ref(null)

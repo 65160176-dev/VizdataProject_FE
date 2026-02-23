@@ -99,8 +99,8 @@ defineEmits(['change-tab'])
 const auth = useAuthStore()
 const addressStore = useAddressStore()
 const config = useRuntimeConfig()
-const API_BASE = config.public?.apiBase || 'http://localhost:3001/api'
-const BACKEND_URL = 'http://localhost:3001'
+const API_BASE = config.public?.apiBase || 'https://vizdataprojectbe-production.up.railway.app/api'
+const BACKEND_URL = 'https://vizdataprojectbe-production.up.railway.app'
 
 const isAuthenticated = computed(() => !!auth.isLoggedIn || (!!auth.user && Object.keys(auth.user).length > 0))
 const userName = computed(() => auth.userName || auth.user?.username || 'User')

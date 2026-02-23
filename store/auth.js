@@ -32,7 +32,7 @@ export const useAuthStore = defineStore('auth', {
 
       if (savedUser && savedToken) {
         try {
-          const verify = await $fetch('http://localhost:3001/api/auth/me', {
+          const verify = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/auth/me', {
             headers: { Authorization: `Bearer ${savedToken}` }
           })
           if (verify && verify.success) {
@@ -127,7 +127,7 @@ export const useAuthStore = defineStore('auth', {
                   const localQty = item.quantity || 1
                   
                   // Get current product info to check stock
-                  const productResponse = await $fetch(`http://localhost:3001/api/product/${productId}`)
+                  const productResponse = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${productId}`)
                   const productStock = productResponse?.stock || 0
                   
                   // Check if product already in server cart
@@ -143,7 +143,7 @@ export const useAuthStore = defineStore('auth', {
                   if (totalQty <= productStock && productStock > 0) {
                     const qtyToAdd = Math.min(localQty, productStock - existingQty)
                     if (qtyToAdd > 0) {
-                      await $fetch('http://localhost:3001/api/cart', {
+                      await $fetch('https://vizdataprojectbe-production.up.railway.app/api/cart', {
                         method: 'POST',
                         headers: {
                           Authorization: `Bearer ${token}`,
@@ -176,7 +176,7 @@ export const useAuthStore = defineStore('auth', {
                     const prodId = item?._id || item?.id
                     if (!prodId || seen.has(prodId)) continue
                     seen.add(prodId)
-                    await $fetch(`http://localhost:3001/api/wishlist/${prodId}`, {
+                    await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/wishlist/${prodId}`, {
                       method: 'POST',
                       headers: { Authorization: `Bearer ${token}` }
                     })
@@ -250,7 +250,7 @@ export const useAuthStore = defineStore('auth', {
                     const prodId = item?._id || item?.id
                     if (!prodId || seen.has(prodId)) continue
                     seen.add(prodId)
-                    await $fetch(`http://localhost:3001/api/wishlist/${prodId}`, {
+                    await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/wishlist/${prodId}`, {
                       method: 'POST',
                       headers: { Authorization: `Bearer ${token}` }
                     })
