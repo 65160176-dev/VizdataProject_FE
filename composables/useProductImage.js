@@ -4,6 +4,7 @@ export const useProductImage = () => {
 
     const resolveUrl = (url) => {
       if (!url || (typeof url === 'string' && url.trim() === '')) return null
+      if (url.startsWith('data:')) return url  // base64 data URL จาก MongoDB
       if (url.startsWith('http')) return url
       if (url.startsWith('/')) return `http://localhost:3001${url}`
       return `http://localhost:3001/${url}`
