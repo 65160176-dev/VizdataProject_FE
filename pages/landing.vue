@@ -136,9 +136,9 @@
       <div class="row feature_row">
         <div class="col-xl-3 col-md-6">
           <div class="feature-box">
-            <div class="feature-image">
+            <!-- <div class="feature-image">
               <img class="img-fluid" src="/images/landing-page/main-features/nuxt_ssr.png" alt="img" />
-            </div>
+            </div> -->
             <div class="feature-content">
               <ul class="color-varient">
                 <li class="red"></li>
