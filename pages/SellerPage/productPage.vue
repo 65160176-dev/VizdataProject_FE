@@ -375,7 +375,9 @@
 
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue'
-import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+
+// 🟢 1. ประกาศตัวแปรเปล่าๆ ไว้รอรับค่า Bootstrap (ป้องกัน SSR Error)
+let bootstrap;
 
 definePageMeta({ layout: 'seller' })
 
@@ -414,13 +416,13 @@ const errorMessage = ref('')
 const showToast = (message) => {
   toastMessage.value = message
   const toastEl = document.getElementById('liveToast')
-  if(toastEl) new bootstrap.Toast(toastEl).show()
+  if(toastEl && bootstrap) new bootstrap.Toast(toastEl).show()
 }
 
 const showError = (message) => {
   errorMessage.value = message
   const toastEl = document.getElementById('errorToast')
-  if(toastEl) new bootstrap.Toast(toastEl).show()
+  if(toastEl && bootstrap) new bootstrap.Toast(toastEl).show()
 }
 
 const fetchCategories = async () => {
@@ -480,13 +482,13 @@ const openConfirmDelete = (catObj) => {
       return 
   }
   categoryToDelete.value = catObj
-  new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show()
+  if(bootstrap) new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show()
 }
 
 const executeDeleteCategory = async () => {
   const item = categoryToDelete.value
   if (!item) return
-  const modalInstance = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'))
+  const modalInstance = bootstrap ? bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal')) : null
   const token = localStorage.getItem('token')
   try {
     await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/category/${item.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
@@ -505,7 +507,11 @@ const fetchProducts = async () => {
   } catch (e) { console.error(e) }
 }
 
-onMounted(() => {
+// 🟢 2. แก้ไข onMounted ให้เป็นแบบ async และดึง Bootstrap มาใช้ตอนที่เบราว์เซอร์พร้อมแล้วเท่านั้น
+onMounted(async () => {
+  const bsModule = await import('bootstrap/dist/js/bootstrap.bundle.min.js')
+  bootstrap = bsModule.default || bsModule
+
   fetchProducts()
   fetchCategories()
 })
@@ -558,8 +564,6 @@ watch(() => editItem.value.weight, (v) => {
   availableOptionsEdit.value = calculateOptions(v)
 })
 
-// ✅ วิธีที่ชัวร์ที่สุด: สั่งจำลองการคลิกที่ปุ่มกากบาทของ Modal นั้นๆ เลย
-// เพื่อให้ Bootstrap รันกระบวนการทำลายหน้าจอเทาของมันเอง 100%
 const safeCloseModal = (id) => {
   const modalEl = document.getElementById(id)
   if (modalEl) {
@@ -567,13 +571,13 @@ const safeCloseModal = (id) => {
     if (closeBtn) {
       closeBtn.click()
     } else {
-      // แผนสำรอง เผื่อหาปุ่มไม่เจอ
-      const modalInstance = bootstrap.Modal.getInstance(modalEl)
-      if (modalInstance) modalInstance.hide()
+      if(bootstrap){
+         const modalInstance = bootstrap.Modal.getInstance(modalEl)
+         if (modalInstance) modalInstance.hide()
+      }
     }
   }
   
-  // กวาดล้างเผื่อเหนียวอีกชั้น
   setTimeout(() => {
     document.querySelectorAll('.modal-backdrop').forEach(b => b.remove())
     document.body.classList.remove('modal-open')
@@ -612,7 +616,7 @@ function goEdit(id) {
   if (f) {
     editItem.value = { ...f, previewImage: null, rawFile: null }
     availableOptionsEdit.value = calculateOptions(editItem.value.weight) 
-    new bootstrap.Modal(document.getElementById('editModal')).show()
+    if(bootstrap) new bootstrap.Modal(document.getElementById('editModal')).show()
   }
 }
 
@@ -673,7 +677,6 @@ const resetStockForm = () => {
   stockForm.value.quantity = ''
 }
 
-// ✅ อัปเดตการลำดับเหตุการณ์ ล้างก่อน ปิดตาม แล้วค่อยดึงข้อมูล
 async function saveAddStock() {
   const t = products.value.find(p => p._id === stockForm.value.id)
   if (t) {
@@ -691,13 +694,8 @@ async function saveAddStock() {
       await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${t._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
       showToast('เพิ่มสต็อกเรียบร้อยแล้ว')
       
-      // ดึงข้อมูลตารางใหม่
       refresh()
-      
-      // สั่งปิดด้วยการกระตุ้นปุ่มปิด
       safeCloseModal('addStockModal')
-      
-      // ล้างค่าในฟอร์มทิ้ง
       resetStockForm() 
       
     } catch(e) {
