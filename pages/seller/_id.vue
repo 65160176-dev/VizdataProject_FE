@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import ProductBox1 from '~/components/product-box/product-box1.vue'
+
 import { useSellerStore } from '~~/store/sellers'
 import { useProductStore } from '~~/store/products'
 export default {

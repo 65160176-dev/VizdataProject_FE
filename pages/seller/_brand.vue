@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import ProductBox1 from '~/components/product-box/product-box1.vue'
+
 import { useProductStore } from '~~/store/products'
 export default {
   components: { Header: () => import('~~/components/header/index.vue'), Footer: () => import('~~/components/footer/index.vue'), ProductBox1 },
