@@ -318,8 +318,12 @@ export default {
       } finally { this.loading = false }
     },
     getProductImage(image) {
-      if (!image) return '/images/placeholder.jpg'
-      return image.startsWith('http') ? image : `/images/${image}`
+      const BACKEND_URL = 'https://vizdataprojectbe-production.up.railway.app'
+      if (!image) return 'https://placehold.co/400'
+      if (image.startsWith('data:')) return image  // base64 จาก MongoDB
+      if (image.startsWith('http')) return image
+      if (image.startsWith('/')) return `${BACKEND_URL}${image}`
+      return `${BACKEND_URL}/${image}`
     },
     // เพิ่มฟังก์ชัน Wishlist กลับมา
     addToWishlist(product) {
