@@ -184,12 +184,12 @@
                           </span>
 
                           <span class="text-end" style="width: 100px;">
-                            ฿{{ (calcPrice(item) * curr.curr).toFixed(2) }}
+                            ฿{{ (calcPrice(item) * item.quantity * curr.curr).toFixed(2) }}
                           </span>
 
                           <span class="ms-3 text-end" style="width: 80px;">
                             <template v-if="item.shippingCost && String(item.shippingCost).toLowerCase() !== 'free'">
-                              ฿{{ (Number(item.shippingCost) * curr.curr).toFixed(2) }}
+                              ฿{{ (Number(item.shippingCost) * item.quantity * curr.curr).toFixed(2) }}
                             </template>
                             <template v-else>
                               Free
@@ -355,20 +355,14 @@ export default {
 
       checkoutItems: [],
       selectedPayment: 'promptpay',
-      note: '', // ✅ เพิ่มตัวแปร note
+      note: '',
       isLoading: false,
       isQRVisible: false,
       isAddressListVisible: false,
       isFormVisible: false,
       formTemp: { _id: null, name: '', phone: '', address: '', subDistrict: '', district: '', province: '', zipCode: '', isDefault: false },
       errors: {
-        name: '',
-        phone: '',
-        address: '',
-        subDistrict: '',
-        district: '',
-        province: '',
-        zipCode: ''
+        name: '', phone: '', address: '', subDistrict: '', district: '', province: '', zipCode: ''
       },
       user: {
         firstName: { value: '', errormsg: '' },
@@ -437,57 +431,49 @@ export default {
       return sorted;
     },
     cartTotal() {
-      return this.checkoutItems.reduce((total, item) => total + (this.calcPrice(item) * item.quantity), 0);
-    },
-    totalQuantity() {
-      return this.checkoutItems.reduce((total, item) => total + item.quantity, 0);
+      // รวมราคาสินค้าเพียวๆ
+      return this.checkoutItems.reduce((total, item) => {
+        const q = Number(item.quantity) || Number(item.qty) || 1;
+        return total + (this.calcPrice(item) * q);
+      }, 0);
     },
     shippingBeforeDiscount() {
+      // รวมค่าส่งราคาเต็ม (เอาค่าส่ง x จำนวนชิ้นของทุกชิ้นในตะกร้า)
       return this.checkoutItems.reduce((total, item) => {
-        let shipping = 0;
-        if (item.shippingCost) {
-          const cost = String(item.shippingCost).toLowerCase();
-          shipping = (cost === 'free' || cost === '0') ? 0 : (Number(item.shippingCost) || 0);
+        let cost = 0;
+        if (item.shippingCost && String(item.shippingCost).toLowerCase() !== 'free') {
+          cost = Number(item.shippingCost) || 0;
         }
-        return total + (shipping * item.quantity);
+        const q = Number(item.quantity) || Number(item.qty) || 1;
+        return total + (cost * q);
       }, 0);
     },
     shippingDiscount() {
       let discount = 0;
-      let originalShipping = this.shippingBeforeDiscount;
-      
-      // ถ้ายอดรวม >= 2000 บาท ส่งฟรีทั้งหมด (ลำดับความสำคัญสูงสุด)
-      if (this.cartTotal >= 2000) {
-        return originalShipping;
-      }
-      
-      // ถ้ายอดรวม >= 1000 บาท ลดค่าส่ง 50% (ลำดับความสำคัญรองลงมา)
-      if (this.cartTotal >= 1000) {
-        return originalShipping * 0.5;
-      }
-      
-      // ถ้าซื้อ >= 5 ชิ้น และยอดไม่ถึง 1000 บาท ฟรีค่าส่ง 1 ชิ้น (ชิ้นที่ถูกที่สุดที่ไม่ใช่ free)
-      if (this.totalQuantity >= 5 && this.cartTotal < 1000) {
-        const shippingCosts = this.checkoutItems
-          .map(item => {
-            if (item.shippingCost) {
-              const cost = String(item.shippingCost).toLowerCase();
-              if (cost !== 'free' && cost !== '0') {
-                return Number(item.shippingCost) || 0;
-              }
-            }
-            return 0;
-          })
-          .filter(cost => cost > 0)
-          .sort((a, b) => a - b);
-        
-        if (shippingCosts.length > 0) {
-          discount = shippingCosts[0];
+      const isFreeShipping = this.cartTotal >= 2000;
+      const isHalfShipping = this.cartTotal >= 1000 && this.cartTotal < 2000;
+
+      // ✅ คำนวณส่วนลดแบบระบุทีละรายการ
+      this.checkoutItems.forEach(item => {
+        let unitShippingCost = 0;
+        if (item.shippingCost && String(item.shippingCost).toLowerCase() !== 'free') {
+          unitShippingCost = Number(item.shippingCost) || 0;
         }
-      }
-      
-      // ส่วนลดไม่เกินค่าส่งเต็ม
-      return Math.min(discount, originalShipping);
+
+        const q = Number(item.quantity) || Number(item.qty) || 1;
+        const itemTotalShipping = unitShippingCost * q;
+
+        if (isFreeShipping) {
+          discount += itemTotalShipping;
+        } else if (isHalfShipping) {
+          discount += itemTotalShipping * 0.5;
+        } else if (q >= 5) {
+          // ถ้ายอดรวมไม่ถึง 1,000 แต่สินค้านี้สั่ง 5 ชิ้นขึ้นไป ให้ลดค่าส่ง 1 ชิ้น
+          discount += unitShippingCost;
+        }
+      });
+
+      return discount;
     },
     shippingTotal() {
       return Math.max(0, this.shippingBeforeDiscount - this.shippingDiscount);
@@ -497,8 +483,15 @@ export default {
         return 'ฟรีค่าส่ง (ยอดซื้อครบ 2,000 บาท)';
       } else if (this.cartTotal >= 1000) {
         return 'ลดค่าส่ง 50% (ยอดซื้อครบ 1,000 บาท)';
-      } else if (this.totalQuantity >= 5 && this.cartTotal < 1000) {
-        return 'ฟรีค่าส่ง 1 ชิ้น (ซื้อครบ 5 ชิ้น)';
+      } else {
+        // เช็คว่ามีสินค้าไหนเข้าเงื่อนไข >= 5 ชิ้นไหม
+        const has5Items = this.checkoutItems.some(item => {
+          const q = Number(item.quantity) || Number(item.qty) || 1;
+          return q >= 5;
+        });
+        if (has5Items) {
+          return 'ฟรีค่าจัดส่ง 1 ชิ้น (สำหรับสินค้าที่ซื้อ 5 ชิ้นขึ้นไป)';
+        }
       }
       return '';
     },
@@ -725,7 +718,7 @@ export default {
         }
 
         const ordersBySeller = {};
-        this.checkoutItems.forEach((item, index) => {
+        this.checkoutItems.forEach((item) => {
           let sellerId = 'official_store';
           if (item.seller) {
             const safeId = getSafeStringId(item.seller);
@@ -737,17 +730,60 @@ export default {
           ordersBySeller[sellerId].items.push(item);
         });
 
+        // 🚨 1. คำนวณราคาสินค้ารวม "ทั้งตะกร้า" (เพื่อเช็คเงื่อนไขโปรโมชั่นระดับ Global)
+        const globalCartTotal = this.checkoutItems.reduce((sum, item) => {
+          const q = Number(item.quantity) || Number(item.qty) || 1;
+          return sum + (this.calcPrice(item) * q);
+        }, 0);
+
+        const isFreeShipping = globalCartTotal >= 2000;
+        const isHalfShipping = globalCartTotal >= 1000 && globalCartTotal < 2000;
+
         const orderPromises = Object.keys(ordersBySeller).map(async (sellerId, index) => {
           const group = ordersBySeller[sellerId];
-          const subTotal = group.items.reduce((sum, item) => sum + (this.calcPrice(item) * item.quantity), 0);
-          const shippingCost = group.items.reduce((sum, item) => {
-            let cost = 0;
+
+          let subTotal = 0;
+          let sellerRawShippingCost = 0;
+          let sellerShippingDiscount = 0;
+
+          // ✅ 2. วนลูปคำนวณเงิน "ทีละสินค้า" ภายในร้านค้านี้
+          group.items.forEach((item) => {
+            const q = Number(item.quantity) || Number(item.qty) || 1;
+            const price = this.calcPrice(item);
+
+            // รวมค่าสินค้า
+            subTotal += price * q;
+
+            // ดึงค่าส่งต่อ 1 ชิ้น
+            let unitShippingCost = 0;
             if (item.shippingCost && String(item.shippingCost).toLowerCase() !== 'free') {
-              cost = Number(item.shippingCost) || 0;
+              unitShippingCost = Number(item.shippingCost) || 0;
             }
-            return sum + cost;
-          }, 0);
-          const total = subTotal + shippingCost;
+
+            // รวมค่าส่งตั้งต้นของสินค้านี้ (คูณจำนวนชิ้น)
+            const totalItemShipping = unitShippingCost * q;
+            sellerRawShippingCost += totalItemShipping;
+
+            // 🚨 3. คำนวณส่วนลดของสินค้านี้ (อิงตาม Global Cart Total)
+            let itemDiscount = 0;
+            if (isFreeShipping) {
+              itemDiscount = totalItemShipping; // ลด 100%
+            } else if (isHalfShipping) {
+              itemDiscount = totalItemShipping * 0.5; // ลด 50%
+            } else if (q >= 5) {
+              // ถ้ายอดรวมไม่ถึง 1,000 แต่สั่งชิ้นนี้ 5 ชิ้นขึ้นไป ให้หักค่าส่งออก 1 ชิ้น
+              itemDiscount = unitShippingCost;
+            }
+
+            sellerShippingDiscount += itemDiscount;
+          });
+
+          // ✅ 4. คำนวณค่าส่งสุทธิของร้านนี้
+          const finalShippingCost = sellerRawShippingCost - sellerShippingDiscount;
+
+          // ยอดรวม = (ค่าสินค้า) + (ค่าส่งสุทธิที่หักส่วนลดแล้ว)
+          const total = subTotal + finalShippingCost;
+
           const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000) + '-' + (index + 1);
           const finalSellerId = (sellerId === 'official_store') ? null : sellerId;
 
@@ -760,36 +796,26 @@ export default {
             customer: `${this.user.firstName.value} ${this.user.lastName.value}`,
             date: dateString,
             status: 'Pending',
-            total: total,
-            shippingCost: shippingCost,
-            // ✅✅ ส่ง paymentMethod และ note ไป Backend ✅✅
+            total: total, // 👈 ยอดรวมที่หักส่วนลดแล้ว
+            shippingCost: finalShippingCost, // 👈 ค่าส่งสุทธิที่หักส่วนลดแล้ว
             paymentMethod: this.selectedPayment === 'cod' ? 'COD' : 'PromptPay',
             note: this.note,
             item: group.items.map(p => {
               const productId = getSafeStringId(p.id) || getSafeStringId(p._id);
               const affiliateCode = this.getAffiliateCodeForProduct(productId);
-              
-              console.log('🔍 Checkout item:', {
-                productId,
-                productName: p.name || p.title,
-                affiliateCode,
-                affiliateMap: this.getAffiliateMap(),
-                fallback: localStorage.getItem('affiliateFallback')
-              });
-              
+
               return {
                 productId,
                 name: p.name || p.title,
                 price: this.calcPrice(p),
-                qty: p.quantity,
+                qty: Number(p.quantity) || Number(p.qty) || 1,
                 image: p.image || (p.images && p.images[0]?.src) || '',
-                // แนบ affiliate แบบต่อสินค้า หากมี
                 refAffiliateId: affiliateCode || undefined
               };
             })
           };
-          
-          console.log('📦 Order payload:', payload);
+
+          console.log(`📦 Order payload for ${sellerId}:`, payload);
           return await this.orderStore.placeOrder(payload);
         });
 
@@ -823,7 +849,7 @@ export default {
         this.isLoading = false;
       }
     },
-    // ... (ส่วนอื่นๆ เหมือนเดิม)
+
     onSubmit() {
       if (!this.user.firstName.value || this.user.firstName.value.length <= 1) this.user.firstName.errormsg = 'required'; else this.user.firstName.errormsg = '';
       if (!this.user.phone.value) this.user.phone.errormsg = 'required'; else this.user.phone.errormsg = '';
@@ -880,7 +906,6 @@ export default {
       }
     },
 
-    // อ่าน mapping affiliate ต่อสินค้า (เปลี่ยนเป็น localStorage)
     getAffiliateMap() {
       try {
         const raw = localStorage.getItem('affiliateProductMap') || '{}';
@@ -895,30 +920,17 @@ export default {
         console.warn('⚠️ getAffiliateCodeForProduct called without productId');
         return null;
       }
-      
-      console.log(`🔍 Looking for affiliate for product ${productId}`);
-      console.log('📋 Current affiliate map:', map);
-      
-      // ถ้ามี specific mapping สำหรับ product นี้ ให้ใช้เลย
       if (map[productId]) {
-        console.log(`✅ Found specific mapping: ${map[productId]} for product ${productId}`);
         return map[productId];
       }
-      
-      // ถ้าไม่มี specific mapping ให้ใช้ fallback affiliate (ถ้ามี)
       try {
         const fallback = localStorage.getItem('affiliateFallback');
         if (fallback) {
-          console.log(`📌 Using fallback affiliate ${fallback} for product ${productId}`);
           return fallback;
-        } else {
-          console.log(`❌ No fallback affiliate found`);
         }
       } catch (e) {
         console.error('Error getting fallback affiliate:', e);
       }
-      
-      console.log(`❌ No affiliate code found for product ${productId}`);
       return null;
     },
 
@@ -926,19 +938,15 @@ export default {
       try {
         const mapRaw = localStorage.getItem('affiliateProductMap');
         const startTime = localStorage.getItem('affiliateStartTime');
-
         if (!mapRaw || !startTime) {
           return false;
         }
-
         const sessionDuration = Date.now() - parseInt(startTime);
         const maxSessionTime = 30 * 60 * 1000;
-
         if (sessionDuration > maxSessionTime) {
           this.clearAffiliateSession();
           return false;
         }
-
         return true;
       } catch (e) {
         return false;
