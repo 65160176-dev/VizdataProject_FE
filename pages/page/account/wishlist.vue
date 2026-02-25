@@ -112,14 +112,21 @@ export default {
       return ('/images/' + path)
     },
     getProductImage(product) {
+      const BACKEND_URL = 'https://vizdataprojectbe-production.up.railway.app'
       if (!product) return 'https://placehold.co/400'
-      if (product.image) {
-        if (product.image.startsWith('http')) return product.image
-        return `/images/${product.image}`
+      const resolveUrl = (url) => {
+        if (!url || (typeof url === 'string' && url.trim() === '')) return null
+        if (url.startsWith('data:')) return url  // base64 จาก MongoDB
+        if (url.startsWith('http')) return url
+        if (url.startsWith('/')) return `${BACKEND_URL}${url}`
+        return `${BACKEND_URL}/${url}`
       }
-      if (product.images && product.images[0]) {
+      const fromImage = resolveUrl(product.image)
+      if (fromImage) return fromImage
+      if (product.images && product.images.length > 0) {
         const img = product.images[0].src || product.images[0]
-        return `/images/${img}`
+        const fromImages = resolveUrl(img)
+        if (fromImages) return fromImages
       }
       return 'https://placehold.co/400'
     },

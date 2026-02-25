@@ -205,6 +205,7 @@ export default {
 
       const resolveUrl = (url) => {
         if (!url || (typeof url === 'string' && url.trim() === '')) return null
+        if (url.startsWith('data:')) return url  // base64 จาก MongoDB
         if (url.startsWith('http')) return url
         if (url.startsWith('/')) return `https://vizdataprojectbe-production.up.railway.app${url}`
         return `https://vizdataprojectbe-production.up.railway.app/${url}`

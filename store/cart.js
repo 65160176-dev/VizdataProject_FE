@@ -62,7 +62,9 @@ export const useCartStore = defineStore({
             // Build proper image URL
             let imageUrl = ''
             if (product.image) {
-              if (product.image.startsWith('http')) {
+              if (product.image.startsWith('data:')) {
+                imageUrl = product.image  // base64 จาก MongoDB
+              } else if (product.image.startsWith('http')) {
                 imageUrl = product.image
               } else if (product.image.startsWith('/')) {
                 imageUrl = `https://vizdataprojectbe-production.up.railway.app${product.image}`

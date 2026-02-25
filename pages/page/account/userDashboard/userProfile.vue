@@ -117,7 +117,11 @@ const imageError = ref(false)
 const avatarSrc = computed(() => {
     imageError.value = false
     if (auth.user && auth.user.avatar) {
-        return auth.user.avatar.startsWith('http') ? auth.user.avatar : `${BACKEND_URL}${auth.user.avatar}`
+        const av = auth.user.avatar
+        if (av.startsWith('data:')) return av               // base64 จาก MongoDB
+        if (av.startsWith('http')) return av                // full URL
+        if (av.startsWith('/')) return `${BACKEND_URL}${av}`
+        return `${BACKEND_URL}/${av}`
     }
     return null
 })
@@ -140,7 +144,7 @@ const cancelEditName = () => { editingName.value = false; editableName.value = a
 const saveName = async () => { if (!editableName.value || !isAuthenticated.value) return; const userId = auth.user?.id || auth.user?._id; if (!userId) return; try { const res = await $fetch(`${API_BASE}/users/${userId}`, { method: 'PATCH', body: { username: editableName.value }, headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }); if (res) { updateLocalAuth(res); editingName.value = false; useNuxtApp().$showToast({ msg: "เปลี่ยนชื่อสำเร็จ", type: "success" }); } } catch (e) { useNuxtApp().$showToast({ msg: "เปลี่ยนชื่อไม่สำเร็จ", type: "error" }); } }
 const onAvatarSelected = (e) => { const file = e.target.files && e.target.files[0]; if (!file) return; pendingAvatarFile.value = file; const reader = new FileReader(); reader.onload = () => { pendingAvatarPreview.value = reader.result }; reader.readAsDataURL(file) }
 const cancelAvatar = () => { pendingAvatarFile.value = null; pendingAvatarPreview.value = null }
-const saveAvatar = async () => { const file = pendingAvatarFile.value; if (!file) return; const form = new FormData(); form.append('file', file); const endpoint = Number(auth.userType) === 0 ? `${API_BASE}/sellers/upload-avatar` : `${API_BASE}/users/upload-avatar`; try { const uploadRes = await fetch(endpoint, { method: 'POST', headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : {}, body: form }); if (!uploadRes.ok) throw new Error('Upload failed'); const data = await uploadRes.json(); if (data && data.success && data.data) { const fullUrl = data.data.fullUrl || (BACKEND_URL + data.data.avatar); if (auth.user) auth.user.avatar = data.data.avatar; updateLocalAuth(auth.user); cancelAvatar(); useNuxtApp().$showToast({ msg: "อัปโหลดรูปสำเร็จ", type: "success" }); } } catch (err) { useNuxtApp().$showToast({ msg: "อัปโหลดรูปไม่สำเร็จ", type: "error" }); } }
+const saveAvatar = async () => { const file = pendingAvatarFile.value; if (!file) return; const form = new FormData(); form.append('file', file); const endpoint = Number(auth.userType) === 0 ? `${API_BASE}/sellers/upload-avatar` : `${API_BASE}/users/upload-avatar`; try { const uploadRes = await fetch(endpoint, { method: 'POST', headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : {}, body: form }); if (!uploadRes.ok) throw new Error('Upload failed'); const data = await uploadRes.json(); if (data && data.data && data.data.avatar) { if (auth.user) auth.user.avatar = data.data.avatar; imageError.value = false; updateLocalAuth(auth.user); cancelAvatar(); useNuxtApp().$showToast({ msg: "อัปโหลดรูปสำเร็จ", type: "success" }); } else { throw new Error('No avatar in response') } } catch (err) { console.error('Avatar upload error:', err); useNuxtApp().$showToast({ msg: "อัปโหลดรูปไม่สำเร็จ", type: "error" }); } }
 
 // ✅ 1. ฟังก์ชันโหลดข้อมูล
 const loadProfileData = async () => {

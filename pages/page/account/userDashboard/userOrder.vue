@@ -50,7 +50,7 @@
                                         <NuxtLink
                                             :to="`/product/three-column/thumbnail-left?id=${order.items[0]?.productId?._id || order.items[0]?.productId}`"
                                             @click.stop>
-                                            <img :src="order.items[0]?.image || '/images/placeholder.png'"
+                                            <img :src="getOrderItemImage(order.items[0])"
                                                 alt="product">
                                         </NuxtLink>
                                     </div>
@@ -279,6 +279,24 @@ const formatStatus = (status) => {
     const s = status.toLowerCase();
     if (s === 'return_requested' || s === 'return requested' || s === 'cancel requested') { return 'Cancel Requested' }
     return status
+}
+
+const BACKEND_URL = 'https://vizdataprojectbe-production.up.railway.app'
+const getOrderItemImage = (item) => {
+    if (!item) return 'https://placehold.co/400'
+    const resolve = (url) => {
+        if (!url || url.trim() === '' || url === '/images/dashboard/default.png') return null
+        if (url.startsWith('data:')) return url   // base64 จาก MongoDB
+        if (url.startsWith('http')) return url
+        if (url.startsWith('/')) return `${BACKEND_URL}${url}`
+        return `${BACKEND_URL}/${url}`
+    }
+    // prioritize populate productId.image (real-time จาก MongoDB) ก่อน
+    const fromProduct = resolve(item?.productId?.image)
+    if (fromProduct) return fromProduct
+    const fromItem = resolve(item?.image)
+    if (fromItem) return fromItem
+    return 'https://placehold.co/400'
 }
 
 const updateOrderFilter = (filterVal) => {

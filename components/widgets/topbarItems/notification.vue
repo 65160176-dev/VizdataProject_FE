@@ -36,9 +36,9 @@
                         <div class="notif-dot" :class="{ 'active': !item.isRead }"></div>
 
                         <div class="notif-img">
-                            <img v-if="item.image" :src="getImgUrl(item.image)"
-                                @error="$event.target.src = '/images/icon/logo.png'" alt="icon">
-                            <div v-else class="default-icon-bg">
+                            <img v-if="resolvedImage(item.image)" :src="resolvedImage(item.image)"
+                                @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='flex'" alt="icon">
+                            <div :style="resolvedImage(item.image) ? 'display:none' : ''" class="default-icon-bg">
                                 <i class="fa fa-info" aria-hidden="true"></i>
                             </div>
                         </div>
@@ -145,9 +145,22 @@ export default {
             }
         },
         getImgUrl(path) {
-            if (!path) return '/images/icon/logo.png';
-            if (path.startsWith('http')) return path;
-            return '/images/' + path;
+            const BACKEND = 'https://vizdataprojectbe-production.up.railway.app'
+            if (!path) return '/images/icon/logo.png'
+            if (path.startsWith('data:')) return path           // base64 จาก MongoDB
+            if (path.startsWith('http')) return path            // full URL
+            if (path.startsWith('/')) return `${BACKEND}${path}`
+            return `${BACKEND}/${path}`
+        },
+        resolvedImage(path) {
+            // กรอง path ที่เป็น local fallback หรือว่าง ออกไปเลย → แสดง default icon แทน
+            const LOCAL_FALLBACKS = ['/images/dashboard/default.png', '/images/icon/logo.png', '/images/placeholder.png']
+            if (!path || LOCAL_FALLBACKS.includes(path)) return null
+            const BACKEND = 'https://vizdataprojectbe-production.up.railway.app'
+            if (path.startsWith('data:')) return path   // base64 จาก MongoDB
+            if (path.startsWith('http')) return path    // full URL
+            if (path.startsWith('/')) return `${BACKEND}${path}`
+            return `${BACKEND}/${path}`
         },
         formatDate(dateString) {
             if (!dateString) return '';

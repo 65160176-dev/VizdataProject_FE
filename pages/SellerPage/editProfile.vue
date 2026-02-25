@@ -78,7 +78,7 @@ const initAvatarFromAuth = () => {
     if (!userAvatar) {
         console.log('🔍 [editProfile] No avatar found, using default')
         // Only set default if we don't already have a server avatar URL
-        if (!avatarSrc.value.includes('localhost:3001')) {
+        if (!avatarSrc.value.includes(API_BASE)) {
             avatarSrc.value = '/images/avtar.jpg'
         }
         return

@@ -81,7 +81,7 @@
               :to="`/product/three-column/thumbnail-left?id=${item.productId?._id || item.productId || item.id || '1'}`"
               class="bg-light rounded d-flex align-items-center justify-content-center me-3 flex-shrink-0 border"
               style="width: 70px; height: 70px; overflow: hidden; text-decoration: none;">
-              <img v-if="item.image" :src="item.image" style="width: 100%; height: 100%; object-fit: cover;">
+              <img v-if="getItemImage(item)" :src="getItemImage(item)" style="width: 100%; height: 100%; object-fit: cover;">
               <i v-else class="fa fa-box text-secondary fs-4"></i>
             </NuxtLink>
 
@@ -205,6 +205,24 @@ const showConfirmReceivedModal = ref(false)
 const { $showToast } = useNuxtApp()
 const config = useRuntimeConfig()
 const API_BASE_URL = config.public.apiBase || 'https://vizdataprojectbe-production.up.railway.app'
+
+const getItemImage = (item) => {
+  const BACKEND = 'https://vizdataprojectbe-production.up.railway.app'
+  const resolve = (url) => {
+    if (!url || url.trim() === '' || url === '/images/dashboard/default.png') return null
+    if (url.startsWith('data:')) return url   // base64 จาก MongoDB
+    if (url.startsWith('http')) return url    // full URL
+    if (url.startsWith('/')) return `${BACKEND}${url}`
+    return `${BACKEND}/${url}`
+  }
+  // ให้ productId.image (populate จาก product จริง) เป็น priority แรก
+  const fromProduct = resolve(item?.productId?.image)
+  if (fromProduct) return fromProduct
+  // fallback ไปใช้ image ที่ snapshot ไว้ตอน order
+  const fromItem = resolve(item?.image)
+  if (fromItem) return fromItem
+  return ''
+}
 
 const checkStatus = (status, type) => {
   const s = (status || '').toLowerCase();

@@ -83,7 +83,7 @@
                                 <tr v-for="(it, idx) in getItems(order)" :key="idx" class="border-bottom last:border-0">
                                     <td class="ps-3">
                                         <div class="d-flex align-items-center">
-                                            <img :src="getImgUrl(it.image)" class="rounded border me-2"
+                                            <img :src="getImgUrl(it)" class="rounded border me-2"
                                                 style="width: 40px; height: 40px; object-fit: cover;">
                                             <div class="small fw-bold text-dark text-wrap">{{ it.name }}</div>
                                         </div>
@@ -376,14 +376,19 @@ const handleAction = async (newStatus, reason = null) => {
 }
 
 // --- Helpers ---
-const getImgUrl = (path) => {
-    if (!path) return '/images/dashboard/default.png';
-    if (path.startsWith('http')) return path;
-    if (path.startsWith('uploads') || path.startsWith('/uploads')) {
-        const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-        return `${API_BASE_URL}/${cleanPath}`;
+const getImgUrl = (it) => {
+    const resolve = (path) => {
+        if (!path || path === '/images/dashboard/default.png') return null
+        if (path.startsWith('data:')) return path  // base64 จาก MongoDB
+        if (path.startsWith('http')) return path
+        if (path.startsWith('/')) return `${API_BASE_URL}${path}`
+        return `${API_BASE_URL}/${path}`
     }
-    return '/images/' + path;
+    // productId.image (populate) ก่อน, fallback ไปที่ it.image
+    const fromProduct = resolve(it?.productId?.image)
+    if (fromProduct) return fromProduct
+    const fromItem = resolve(it?.image || (typeof it === 'string' ? it : null))
+    return fromItem || 'https://placehold.co/40'
 }
 
 const formatDate = (dateString) => {

@@ -112,9 +112,8 @@ export default {
                 const userId = this.authStore.user?._id || this.authStore.user?.id;
                 if (!userId) return;
 
-                // 2. ยิง API ไปที่ Backend (ปรับ URL Port ตามจริง เช่น http://localhost:3000)
-                // หรือถ้าตั้ง Proxy ใน nuxt.config ไว้แล้วใช้แค่ /notifications/... ก็ได้
-                const response = await fetch(`http://localhost:3000/notifications/user/${userId}`);
+                // 2. ยิง API ไปที่ Backend
+                const response = await fetch(`https://vizdataprojectbe-production.up.railway.app/notifications/user/${userId}`);
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch notifications');
