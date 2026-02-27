@@ -72,15 +72,10 @@
         />
         Login with Facebook
       </a>
-      <a href="#" class="social-btn tg-btn" @click.prevent="loginWithTelegram">
-        <svg class="social-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="12" fill="#229ED9"/>
-          <path d="M5.5 11.8l2.9 1.1 1.1 3.6c.1.2.3.3.5.1l1.6-1.3 3.1 2.3c.3.2.7 0 .8-.3l2.8-10.5c.1-.4-.3-.7-.6-.5L5.3 11.2c-.3.1-.3.5.2.6z" fill="white"/>
-        </svg>
-        Login with Telegram
-      </a>
-      <!-- Hidden container where Telegram widget script is injected -->
-      <div ref="telegramWidgetContainer" style="display:none"></div>
+      <!-- Telegram Login Widget (real button rendered by Telegram) -->
+      <div class="tg-widget-wrap">
+        <div ref="telegramWidgetContainer" class="tg-widget-inner"></div>
+      </div>
     </div>
   </form>
 </template>
@@ -107,6 +102,23 @@ onMounted(() => {
   redirectUrl.value = route.query.redirect || ''
   email.value = 'user@gmail.com'
   password.value = '123456'
+
+  // Load Telegram Login Widget
+  const config = useRuntimeConfig()
+  const botName = config.public.telegramBotName || 'BDNShopBot'
+  window.onTelegramAuth = handleTelegramAuth
+
+  const script = document.createElement('script')
+  script.src = 'https://telegram.org/js/telegram-widget.js?22'
+  script.setAttribute('data-telegram-login', botName)
+  script.setAttribute('data-size', 'large')
+  script.setAttribute('data-radius', '8')
+  script.setAttribute('data-onauth', 'onTelegramAuth(user)')
+  script.setAttribute('data-request-access', 'write')
+  script.async = true
+  if (telegramWidgetContainer.value) {
+    telegramWidgetContainer.value.appendChild(script)
+  }
 })
 
 function togglePassword() {
@@ -194,37 +206,7 @@ async function handleTelegramAuth(telegramUser) {
   }
 }
 
-function loginWithTelegram() {
-  const config = useRuntimeConfig()
-  const botName = config.public.telegramBotName || 'YOUR_BOT_USERNAME'
 
-  // Expose global callback for Telegram widget
-  window.onTelegramAuth = handleTelegramAuth
-
-  // Remove previous widget if any
-  if (telegramWidgetContainer.value) {
-    telegramWidgetContainer.value.innerHTML = ''
-  }
-
-  const script = document.createElement('script')
-  script.src = 'https://telegram.org/js/telegram-widget.js?22'
-  script.setAttribute('data-telegram-login', botName)
-  script.setAttribute('data-size', 'large')
-  script.setAttribute('data-onauth', 'onTelegramAuth(user)')
-  script.setAttribute('data-request-access', 'write')
-  script.setAttribute('data-auth-url', window.location.href)
-  script.async = true
-
-  if (telegramWidgetContainer.value) {
-    telegramWidgetContainer.value.appendChild(script)
-  }
-
-  // Wait for widget to load, then auto-click its button
-  script.onload = () => {
-    const btn = telegramWidgetContainer.value?.querySelector('iframe')
-    if (btn) btn.click()
-  }
-}
 </script>
 
 <style scoped lang="scss">
@@ -382,6 +364,25 @@ function loginWithTelegram() {
         border-color: #c8e8f7;
         background: #f0f9ff;
         &:hover { background: #e0f4ff; border-color: #229ED9; }
+      }
+    }
+
+    /* Telegram widget wrapper — centers the iframe button Telegram renders */
+    .tg-widget-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 4px;
+
+      .tg-widget-inner {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        min-height: 44px;
+
+        /* Make the iframe Telegram renders fill/center nicely */
+        :deep(iframe) {
+          border-radius: 8px !important;
+        }
       }
     }
   }
