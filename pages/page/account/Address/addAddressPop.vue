@@ -1,91 +1,98 @@
 <template>
-    <div v-if="show" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 p-3">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title">{{ isEditMode ? 'แก้ไขที่อยู่' : 'เพิ่มที่อยู่ใหม่' }}</h5>
-                    <button type="button" class="btn-close" @click="closeModal"></button>
-                </div>
+    <Teleport to="body">
+        <div v-if="show" class="modal fade show d-block" tabindex="-1"
+            style="background: rgba(0,0,0,0.5);z-index: 10000;">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 p-3">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title">{{ isEditMode ? 'แก้ไขที่อยู่' : 'เพิ่มที่อยู่ใหม่' }}</h5>
+                        <button type="button" class="btn-close" @click="closeModal"></button>
+                    </div>
 
-                <div class="modal-body pt-3">
-                    <form @submit.prevent="submitForm" class="theme-form">
-                        <div class="row g-3">
-                            <div class="col-md-12">
-                                <label class="form-label text-muted mb-1">ชื่อ-นามสกุล (Name) <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" v-model="form.name"
-                                    :class="{ 'is-invalid': errors.name }">
-                                <div class="invalid-feedback">{{ errors.name }}</div>
-                            </div>
+                    <div class="modal-body pt-3">
+                        <form @submit.prevent="submitForm" class="theme-form">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label text-muted mb-1">ชื่อ-นามสกุล (Name) <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" v-model="form.name"
+                                        :class="{ 'is-invalid': errors.name }">
+                                    <div class="invalid-feedback">{{ errors.name }}</div>
+                                </div>
 
-                            <div class="col-md-12">
-                                <label class="form-label text-muted mb-1">เบอร์โทรศัพท์ (Phone) <span
-                                        class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" v-model="form.phone"
-                                    :class="{ 'is-invalid': errors.phone }" placeholder="08xxxxxxxx">
-                                <div class="invalid-feedback">{{ errors.phone }}</div>
-                            </div>
+                                <div class="col-md-12">
+                                    <label class="form-label text-muted mb-1">เบอร์โทรศัพท์ (Phone) <span
+                                            class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control" v-model="form.phone"
+                                        :class="{ 'is-invalid': errors.phone }" placeholder="08xxxxxxxx">
+                                    <div class="invalid-feedback">{{ errors.phone }}</div>
+                                </div>
 
-                            <div class="col-12">
-                                <label class="form-label text-muted mb-1">ที่อยู่ (Address) <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" v-model="form.address"
-                                    :class="{ 'is-invalid': errors.address }" placeholder="บ้านเลขที่ หมู่ ซอย ถนน">
-                                <div class="invalid-feedback">{{ errors.address }}</div>
-                            </div>
+                                <div class="col-12">
+                                    <label class="form-label text-muted mb-1">ที่อยู่ (Address) <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" v-model="form.address"
+                                        :class="{ 'is-invalid': errors.address }" placeholder="บ้านเลขที่ หมู่ ซอย ถนน">
+                                    <div class="invalid-feedback">{{ errors.address }}</div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label text-muted mb-1">จังหวัด (Province) <span
-                                        class="text-danger">*</span></label>
-                                <SearchSelect v-model="form.province" :options="provinceList" placeholder="เลือกจังหวัด"
-                                    :error="!!errors.province" @change="onProvinceChange(false)" />
-                                <div v-if="errors.province" class="text-danger small mt-1">{{ errors.province }}</div>
-                            </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted mb-1">จังหวัด (Province) <span
+                                            class="text-danger">*</span></label>
+                                    <SearchSelect v-model="form.province" :options="provinceList"
+                                        placeholder="เลือกจังหวัด" :error="!!errors.province"
+                                        @change="onProvinceChange(false)" />
+                                    <div v-if="errors.province" class="text-danger small mt-1">{{ errors.province }}
+                                    </div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label text-muted mb-1">อำเภอ/เขต (District) <span
-                                        class="text-danger">*</span></label>
-                                <SearchSelect v-model="form.district" :options="districtList"
-                                    placeholder="เลือกอำเภอ/เขต" :disabled="!form.province" :error="!!errors.district"
-                                    @change="onDistrictChange(false)" />
-                                <div v-if="errors.district" class="text-danger small mt-1">{{ errors.district }}</div>
-                            </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted mb-1">อำเภอ/เขต (District) <span
+                                            class="text-danger">*</span></label>
+                                    <SearchSelect v-model="form.district" :options="districtList"
+                                        placeholder="เลือกอำเภอ/เขต" :disabled="!form.province"
+                                        :error="!!errors.district" @change="onDistrictChange(false)" />
+                                    <div v-if="errors.district" class="text-danger small mt-1">{{ errors.district }}
+                                    </div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label text-muted mb-1">ตำบล/แขวง (Sub-district) <span
-                                        class="text-danger">*</span></label>
-                                <SearchSelect v-model="form.subDistrict" :options="subDistrictList"
-                                    placeholder="เลือกตำบล/แขวง" :disabled="!form.district"
-                                    :error="!!errors.subDistrict" @change="onSubDistrictChange" />
-                                <div v-if="errors.subDistrict" class="text-danger small mt-1">{{ errors.subDistrict }}
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted mb-1">ตำบล/แขวง (Sub-district) <span
+                                            class="text-danger">*</span></label>
+                                    <SearchSelect v-model="form.subDistrict" :options="subDistrictList"
+                                        placeholder="เลือกตำบล/แขวง" :disabled="!form.district"
+                                        :error="!!errors.subDistrict" @change="onSubDistrictChange" />
+                                    <div v-if="errors.subDistrict" class="text-danger small mt-1">{{ errors.subDistrict
+                                    }}
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted mb-1">รหัสไปรษณีย์ (Zip Code) <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" v-model="form.zipCode"
+                                        :class="{ 'is-invalid': errors.zipCode }" :disabled="!form.subDistrict">
+                                        <option value="" disabled>เลือกรหัสไปรษณีย์</option>
+                                        <option v-for="z in zipCodeList" :key="z" :value="z">{{ z }}</option>
+                                    </select>
+                                    <div class="invalid-feedback">{{ errors.zipCode }}</div>
                                 </div>
                             </div>
+                        </form>
+                    </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label text-muted mb-1">รหัสไปรษณีย์ (Zip Code) <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-select" v-model="form.zipCode"
-                                    :class="{ 'is-invalid': errors.zipCode }" :disabled="!form.subDistrict">
-                                    <option value="" disabled>เลือกรหัสไปรษณีย์</option>
-                                    <option v-for="z in zipCodeList" :key="z" :value="z">{{ z }}</option>
-                                </select>
-                                <div class="invalid-feedback">{{ errors.zipCode }}</div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="modal-footer border-0 pt-0 justify-content-end gap-2">
-                    <button type="button" class="btn btn-outline-secondary" @click="closeModal">
-                        ยกเลิก
-                    </button>
-                    <button type="button" class="btn btn-solid btn-sm" @click="submitForm">
-                        {{ isEditMode ? 'อัปเดต' : 'บันทึก' }}
-                    </button>
+                    <div class="modal-footer border-0 pt-0 justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary" @click="closeModal">
+                            ยกเลิก
+                        </button>
+                        <button type="button" class="btn btn-solid btn-sm" @click="submitForm">
+                            {{ isEditMode ? 'อัปเดต' : 'บันทึก' }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </Teleport>
 </template>
 
 <script setup>
@@ -278,6 +285,17 @@ const submitForm = () => {
 </script>
 
 <style scoped>
+/* ✅ ดันพื้นหลังสีดำให้ทะลุเพดาน (เหนือ Header ที่อาจจะตั้งไว้ 9999) */
+:deep(.modal-backdrop),
+:deep(.modal-backdrop.show) {
+    z-index: 99998 !important;
+}
+
+/* ✅ ดันตัว Popup ให้อยู่สูงกว่าพื้นหลังสีดำ */
+:deep(.modal) {
+    z-index: 99999 !important;
+}
+
 /* เลือกปุ่มทุกอันใน Footer */
 .modal-footer .btn {
     min-width: 130px !important;
