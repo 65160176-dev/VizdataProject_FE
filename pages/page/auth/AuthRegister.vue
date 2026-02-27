@@ -1,89 +1,112 @@
-<template>
-  <div class="tab-pane fade" id="top-contact" role="tabpanel" aria-labelledby="contact-top-tab">
-    <form class="form-horizontal auth-form" @submit.prevent="doRegister">
-      <!-- Error/Success Message -->
-      <div v-if="message" class="alert" :class="messageType === 'success' ? 'alert-success' : 'alert-danger'">
-        {{ message }}
+﻿<template>
+  <form class="auth-form" @submit.prevent="doRegister">
+    <!-- Alert -->
+    <div v-if="message" class="alert" :class="messageType === 'success' ? 'alert-success' : 'alert-danger'">
+      {{ message }}
+    </div>
+
+    <!-- Username / Shop Name -->
+    <div class="form-group">
+      <Icon name="mdi:store-outline" size="18" class="input-icon" />
+      <input
+        required
+        type="text"
+        v-model="username"
+        class="form-control"
+        :placeholder="userType == 0 ? 'Shop Name' : 'Username'"
+        :disabled="loading"
+      />
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <Icon name="mdi:email-outline" size="18" class="input-icon" />
+      <input
+        required
+        type="email"
+        v-model="email"
+        class="form-control"
+        placeholder="Email"
+        :disabled="loading"
+      />
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <Icon name="mdi:lock-outline" size="18" class="input-icon" />
+      <input
+        required
+        v-model="password"
+        :type="showPassword ? 'text' : 'password'"
+        class="form-control"
+        placeholder="Password"
+        :disabled="loading"
+      />
+      <div class="show-hide" @click="showPassword = !showPassword">
+        <Icon :name="showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" size="18" />
       </div>
-      <div class="form-group">
-        <label class="form-label mb-2">{{ userType == 0 ? 'Shop Name' : 'Username' }}</label>
-        <input 
-          required 
-          type="text" 
-          v-model="username" 
-          class="form-control" 
-          :placeholder="userType == 0 ? 'Enter shop name' : 'Username'"
-          :disabled="loading"
-        >
+    </div>
+
+    <!-- Confirm Password -->
+    <div class="form-group">
+      <Icon name="mdi:lock-check-outline" size="18" class="input-icon" />
+      <input
+        required
+        v-model="confirmPassword"
+        :type="showPassword ? 'text' : 'password'"
+        class="form-control"
+        placeholder="Confirm Password"
+        :disabled="loading"
+      />
+    </div>
+
+    <!-- Register as -->
+    <div class="register-type">
+      <label class="type-label">Register as</label>
+      <div class="type-options">
+        <label class="type-option" :class="{ active: userType == 1 }">
+          <input type="radio" value="1" v-model="userType" :disabled="loading" />
+          <Icon name="mdi:account-outline" size="16" />
+          User
+        </label>
+        <label class="type-option" :class="{ active: userType == 0 }">
+          <input type="radio" value="0" v-model="userType" :disabled="loading" />
+          <Icon name="mdi:store-outline" size="16" />
+          Seller
+        </label>
       </div>
-      <div class="form-group">
-        <label class="form-label mb-2">Email</label>
-        <input 
-          required 
-          type="email" 
-          v-model="email" 
-          class="form-control" 
-          placeholder="Email"
-          :disabled="loading"
-        >
+    </div>
+
+    <!-- Terms -->
+    <div class="form-terms">
+      <div class="check-wrap">
+        <input type="checkbox" id="agreeTerms" v-model="agreeTerms" required />
+        <label for="agreeTerms">
+          I agree to <a href="#">Terms &amp; Conditions</a>
+        </label>
       </div>
-          
-      <div class="form-group">
-        <label class="form-label mb-2">Password</label>
-        <input 
-          required 
-          v-model="password" 
-          :type="passwordType" 
-          class="form-control" 
-          placeholder="Password"
-          :disabled="loading"
-        >
-      </div>
-      <div class="form-group">
-        <label class="form-label mb-2">Confirm Password</label>
-        <input 
-          required 
-          v-model="confirmPassword" 
-          :type="passwordType" 
-          class="form-control" 
-          placeholder="Confirm Password"
-          :disabled="loading"
-        >
-      </div>
-      <div class="form-group">
-            <label class="d-block mb-2">Register as</label>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" id="userTypeUser" value="1" v-model="userType" :disabled="loading">
-              <label class="form-check-label" for="userTypeUser">User</label>
-            </div>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" id="userTypeSeller" value="0" v-model="userType" :disabled="loading">
-              <label class="form-check-label" for="userTypeSeller">Seller</label>
-            </div>
-          </div>
-      <div class="form-terms">
-        <div class="form-check mesm-2">
-          <input type="checkbox" class="form-check-input" id="agreeTerms" v-model="agreeTerms" required>
-          <label class="form-check-label ps-2" for="agreeTerms">
-            <span>I agree to all statements in <a href="#" class="pull-right">Terms &amp; Conditions</a></span>
-          </label>
-        </div>
-      </div>
-      <div class="form-button">
-        <button class="btn btn-primary" type="submit" :disabled="loading || !agreeTerms">
-          <span v-if="loading">Registering...</span>
-          <span v-else>Register</span>
-        </button>
-      </div>
-      <div class="form-footer">
-        <span>Or Sign up with social platforms</span>
-        <ul class="social">
-          <li><a class="ti-facebook" href="#" @click.prevent="loginWithFacebook"></a></li>
-          <li><a class="ti-google" href="#" @click.prevent="loginWithGoogle"></a></li>
-        </ul>
-      </div>
-    </form>
-  </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="form-button">
+      <button class="btn-next" type="submit" :disabled="loading || !agreeTerms">
+        {{ loading ? 'à¸à¸³à¸¥à¸±à¸‡à¸ªà¸¡à¸±à¸„à¸£...' : 'REGISTER' }}
+      </button>
+    </div>
+
+    <!-- Social -->
+    <div class="form-footer">
+      <div class="divider">Or sign up with</div>
+      <a href="#" class="social-btn" @click.prevent="loginWithGoogle">
+        <img class="social-logo" src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
+        Sign up with Google
+      </a>
+      <a href="#" class="social-btn fb-btn" @click.prevent="loginWithFacebook">
+        <img class="social-logo" src="https://www.svgrepo.com/show/448224/facebook.svg" alt="Facebook" />
+        Sign up with Facebook
+      </a>
+    </div>
+  </form>
 </template>
 
 <script setup>
@@ -91,28 +114,22 @@ import { ref } from "vue"
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '~/store/auth'
 
-// Router & Route
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-// userType: default to user (1). seller = 0
 const userType = ref(1)
 const username = ref('')
-
-// Form data
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const agreeTerms = ref(false)
-const passwordType = ref('password')
+const showPassword = ref(false)
 
-// UI state
 const loading = ref(false)
 const message = ref('')
 const messageType = ref('')
 
-// OAuth Login Functions
 function loginWithFacebook() {
   const apiUrl = useRuntimeConfig().public.apiUrl || 'https://vizdataprojectbe-production.up.railway.app'
   window.location.href = `${apiUrl}/api/auth/facebook`
@@ -123,64 +140,32 @@ function loginWithGoogle() {
   window.location.href = `${apiUrl}/api/auth/google`
 }
 
-// Register function
 async function doRegister() {
-  // Reset message
   message.value = ''
   loading.value = true
-  
   try {
-    // Validate terms agreement
     if (!agreeTerms.value) {
       message.value = 'Please agree to the Terms & Conditions'
       messageType.value = 'error'
-      loading.value = false
       return
     }
-    
-    console.log('Registering with:', {
-      username: username.value,
-      email: email.value,
-      userType: Number(userType.value)
-    })
-    
-    // Call auth store register (username, email, password, confirmPassword, userType)
     const result = await authStore.register(username.value, email.value, password.value, confirmPassword.value, Number(userType.value))
-    
-    console.log('Register result:', result)
-    
     if (result.success) {
       message.value = result.message
       messageType.value = 'success'
-      
-      // Small delay to show success message
       setTimeout(() => {
-        // Check for redirect URL
         const redirectUrl = route.query.redirect
         if (redirectUrl) {
-          // redirectUrl may be encoded by middleware, decode it first
-          try {
-            const decoded = decodeURIComponent(String(redirectUrl))
-            router.replace(decoded)
-          } catch (e) {
-            router.replace(String(redirectUrl))
-          }
+          try { router.replace(decodeURIComponent(String(redirectUrl))) } catch { router.replace(String(redirectUrl)) }
           return
         }
-
-        // If userType is seller (0) send to seller dashboard
-        if (Number(userType.value) === 0) {
-          router.replace('/SellerPage/dashboard')
-          return
-        }
-
-        router.replace('/')
+        router.replace(Number(userType.value) === 0 ? '/SellerPage/dashboard' : '/')
       }, 500)
     } else {
       message.value = result.message
       messageType.value = 'error'
     }
-  } catch (error) {
+  } catch {
     message.value = 'An error occurred. Please try again.'
     messageType.value = 'error'
   } finally {
@@ -188,195 +173,199 @@ async function doRegister() {
   }
 }
 </script>
-<style scoped lang="scss">
-/* Alert Messages */
-.alert {
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  
-  &.alert-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-  
-  &.alert-danger {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-  }
-}
 
-/* Auth Register Form Styles */
+<style scoped lang="scss">
 .auth-form {
   .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 14px;
     position: relative;
-  }
-  
-  .form-control {
-    border-radius: 25px;
-    padding: 12px 25px;
-    border: 1px solid #eaeaea;
-    font-size: 14px;
-    height: auto;
-    transition: all 0.3s ease;
-    
-    &:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #f9a57a;
+      pointer-events: none;
+    }
+
+    .form-control {
+      width: 100%;
+      border: 1.5px solid #ffddcc;
+      border-radius: 10px;
+      padding: 12px 44px 12px 42px;
+      font-size: 14px;
+      color: #333;
+      background: #fff7f0;
       outline: none;
+      transition: all 0.25s;
+
+      &:focus {
+        border-color: #f97316;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+      }
+      &::placeholder { color: #d0b8a8; }
     }
-    
-    &::placeholder {
+
+    .show-hide {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #d0b8a8;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+      &:hover { color: #f97316; }
+    }
+  }
+
+  /* Alerts */
+  .alert {
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    &.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    &.alert-danger  { background: #fff0eb; color: #c0392b; border: 1px solid #ffb8a0; }
+  }
+
+  /* Register type selector */
+  .register-type {
+    margin-bottom: 14px;
+
+    .type-label {
+      font-size: 12px;
       color: #aaa;
+      display: block;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-  }
-}
 
-/* Form Terms */
-.form-terms {
-  margin-bottom: 20px;
-  
-  .form-check {
-    display: flex;
-    align-items: flex-start;
-  }
-  
-  .form-check-input {
-    margin-top: 3px;
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    
-    &:checked {
-      background-color: #667eea;
-      border-color: #667eea;
+    .type-options {
+      display: flex;
+      gap: 10px;
     }
-    
-    &:focus {
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-    }
-  }
-  
-  .form-check-label {
-    color: #666;
-    font-size: 14px;
-    line-height: 1.5;
-    
-    span {
-      display: inline;
-    }
-    
-    a {
-      color: #667eea;
-      text-decoration: none;
+
+    .type-option {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px;
+      border: 1.5px solid #ffddcc;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
       font-weight: 500;
-      transition: color 0.3s ease;
-      
-      &:hover {
-        color: #764ba2;
-        text-decoration: underline;
+      color: #aaa;
+      background: #fff7f0;
+      transition: all 0.2s;
+
+      input[type='radio'] { display: none; }
+
+      &.active {
+        border-color: #f97316;
+        color: #f97316;
+        background: #fff;
+      }
+
+      &:hover:not(.active) { border-color: #f9a57a; color: #f97316; }
+    }
+  }
+
+  /* Terms */
+  .form-terms {
+    margin-bottom: 18px;
+
+    .check-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      input[type='checkbox'] {
+        width: 16px; height: 16px;
+        accent-color: #f97316;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+
+      label {
+        font-size: 13px;
+        color: #999;
+        cursor: pointer;
+        a { color: #f97316; text-decoration: none; &:hover { text-decoration: underline; } }
       }
     }
   }
-}
 
-/* Form Button */
-.form-button {
-  margin-bottom: 25px;
-  
-  .btn-primary {
-    width: 100%;
-    padding: 12px 30px;
-    border-radius: 25px;
-    font-weight: 600;
-    font-size: 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-    }
-    
-    &:active {
-      transform: translateY(0);
-    }
-  }
-}
-
-/* Form Footer / Social */
-.form-footer {
-  text-align: center;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-  
-  > span {
-    color: #888;
-    font-size: 13px;
-    display: block;
-    margin-bottom: 15px;
-  }
-  
-  .social {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    
-    li {
-      a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #f5f5f5;
-        color: #666;
-        text-decoration: none !important;
-        transition: all 0.3s ease;
-        font-size: 16px;
-        
-        &:hover {
-          transform: translateY(-3px);
-          color: #fff;
-        }
-        
-        &.ti-facebook:hover { background: #3b5998; }
-        &.ti-twitter:hover { background: #1da1f2; }
-        &.ti-google:hover { background: #db4437; }
-        &.ti-instagram:hover { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
-        &.ti-pinterest:hover { background: #bd081c; }
-      }
-    }
-  }
-}
-
-/* Responsive */
-@media only screen and (max-width: 991px) {
-  .form-footer,
+  /* Register button */
   .form-button {
-    text-align: center;
-  }
-}
+    margin-bottom: 20px;
 
-@media only screen and (max-width: 575px) {
-  .auth-form .form-control {
-    padding: 10px 20px;
+    .btn-next {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      background: #f97316;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.25s, transform 0.2s;
+
+      &:hover:not(:disabled) { background: #ea6c0a; transform: translateY(-1px); }
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+    }
   }
-  
-  .form-terms .form-check-label {
-    font-size: 13px;
+
+  /* Social */
+  .form-footer {
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #d0b8a8;
+      &::before, &::after { content: ''; flex: 1; height: 1px; background: #ffddcc; }
+    }
+
+    .social-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 11px;
+      border: 1.5px solid #ffddcc;
+      border-radius: 10px;
+      background: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+      text-decoration: none;
+
+      .social-logo { width: 20px; height: 20px; object-fit: contain; }
+      &:hover { border-color: #f97316; background: #fff7f0; transform: translateY(-1px); }
+
+      &.fb-btn {
+        color: #1877f2;
+        border-color: #d0e4ff;
+        background: #f5f8ff;
+        &:hover { background: #edf2ff; border-color: #1877f2; }
+      }
+    }
   }
 }
 </style>
+

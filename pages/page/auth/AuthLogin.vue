@@ -1,160 +1,148 @@
-<template>
-  <div class="tab-pane fade show active" id="top-profile" role="tabpanel" aria-labelledby="top-profile-tab">
-    <form class="form-horizontal auth-form" @submit.prevent="doLogin">
-      <!-- Error/Success Message -->
-      <div v-if="message" class="alert" :class="messageType === 'success' ? 'alert-success' : 'alert-danger'">
-        {{ message }}
+﻿<template>
+  <form class="auth-form" @submit.prevent="doLogin">
+    <!-- Alerts -->
+    <div v-if="message" class="alert" :class="messageType === 'success' ? 'alert-success' : 'alert-danger'">
+      {{ message }}
+    </div>
+    <div v-if="redirectUrl" class="alert alert-info">
+      <small>กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</small>
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <Icon name="mdi:account-outline" size="18" class="input-icon" />
+      <input
+        required
+        type="email"
+        v-model="email"
+        class="form-control"
+        placeholder="Username or Email"
+        :disabled="loading"
+      />
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <Icon name="mdi:lock-outline" size="18" class="input-icon" />
+      <input
+        required
+        v-model="password"
+        :type="passwordType"
+        class="form-control"
+        placeholder="Password"
+        :disabled="loading"
+      />
+      <div class="show-hide" @click="togglePassword">
+        <Icon :name="passwordType === 'password' ? 'mdi:eye-outline' : 'mdi:eye-off-outline'" size="18" />
       </div>
-      
-      <!-- Redirect Notice -->
-      <div v-if="redirectUrl" class="alert alert-info">
-        <small>กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</small>
+    </div>
+
+    <!-- Remember + Forgot -->
+    <div class="form-terms">
+      <div class="check-wrap">
+        <input type="checkbox" id="rememberMe" v-model="rememberMe" />
+        <label for="rememberMe">Remember me</label>
       </div>
-      
-      <div class="form-group">
-        <input 
-          required 
-          type="email" 
-          v-model="email" 
-          class="form-control" 
-          placeholder="Email"
-          :disabled="loading"
-        >
-      </div>
-      <div class="form-group">
-        <input 
-          required 
-          v-model="password" 
-          :type="passwordType" 
-          class="form-control" 
-          placeholder="Password"
-          :disabled="loading"
-        >
-        <div class="show-hide">
-          <span :class="passwordType === 'password' ? 'show' : ''" @click="togglePassword"></span>
-        </div>
-      </div>
-      <div class="form-terms">
-        <div class="form-check mesm-2">
-          <input type="checkbox" class="form-check-input" id="rememberMe" v-model="rememberMe">
-          <label class="form-check-label ps-2" for="rememberMe">Remember me</label>
-          <nuxt-link to="/forgot-password" class="btn btn-default forgot-pass">Lost your password?</nuxt-link>
-        </div>
-      </div>
-      <div class="form-button">
-        <button class="btn btn-primary" type="submit" :disabled="loading">
-          <span v-if="loading">Logging in...</span>
-          <span v-else>Login</span>
-        </button>
-      </div>
-      <div class="form-footer">
-        <span>Or Login with social platforms</span>
-        <ul class="social">
-          <li><a class="ti-facebook" href="#" @click.prevent="loginWithFacebook"></a></li>
-          <li><a class="ti-google" href="#" @click.prevent="loginWithGoogle"></a></li>
-        </ul>
-      </div>
-    </form>
-  </div>
+      <NuxtLink to="/forgot-password" class="forgot-pass">Lost your password?</NuxtLink>
+    </div>
+
+    <!-- Submit -->
+    <div class="form-button">
+      <button class="btn-next" type="submit" :disabled="loading">
+        {{ loading ? 'กำลังเข้าสู่ระบบ...' : 'NEXT' }}
+      </button>
+    </div>
+
+    <!-- Social -->
+    <div class="form-footer">
+      <div class="divider">Login with Others</div>
+      <a href="#" class="social-btn" @click.prevent="loginWithGoogle">
+        <img
+          class="social-logo"
+          src="https://www.svgrepo.com/show/475656/google-color.svg"
+          alt="Google"
+        />
+        Login with Google
+      </a>
+      <a href="#" class="social-btn fb-btn" @click.prevent="loginWithFacebook">
+        <img
+          class="social-logo"
+          src="https://www.svgrepo.com/show/448224/facebook.svg"
+          alt="Facebook"
+        />
+        Login with Facebook
+      </a>
+      <a href="#" class="social-btn tg-btn" @click.prevent="loginWithTelegram">
+        <svg class="social-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="12" fill="#229ED9"/>
+          <path d="M5.5 11.8l2.9 1.1 1.1 3.6c.1.2.3.3.5.1l1.6-1.3 3.1 2.3c.3.2.7 0 .8-.3l2.8-10.5c.1-.4-.3-.7-.6-.5L5.3 11.2c-.3.1-.3.5.2.6z" fill="white"/>
+        </svg>
+        Login with Telegram
+      </a>
+      <!-- Hidden container where Telegram widget script is injected -->
+      <div ref="telegramWidgetContainer" style="display:none"></div>
+    </div>
+  </form>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue"
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '~/store/auth'
-import { useCartStore } from '~/store/cart'
 
-// Router & Route
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-// Form data
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const passwordType = ref('password')
-
-// UI state
 const loading = ref(false)
 const message = ref('')
 const messageType = ref('')
 const redirectUrl = ref('')
 
-// Check for redirect URL on mount
 onMounted(() => {
   redirectUrl.value = route.query.redirect || ''
-  
-  // Pre-fill demo credentials for convenience
   email.value = 'user@gmail.com'
   password.value = '123456'
 })
 
-// Toggle password visibility
 function togglePassword() {
   passwordType.value = passwordType.value === 'password' ? 'text' : 'password'
 }
 
-// Login function
 async function doLogin() {
-  // Reset message
   message.value = ''
   loading.value = true
-  
   try {
-    // Validate inputs
     if (!email.value || !password.value) {
       message.value = 'Please enter email and password'
       messageType.value = 'error'
-      loading.value = false
       return
     }
-    
-    // Call auth store login (await in case it's async / API-backed)
     const result = await authStore.login(email.value, password.value)
-    
     if (result.success) {
       message.value = result.message
       messageType.value = 'success'
-      
-      // Small delay to show success message
       setTimeout(() => {
-        // If a redirect query is present (e.g., from checkout), only follow it
-        // when it's appropriate for the logged-in userType. Otherwise prefer
-        // userType-based default destinations.
         const currentUserType = authStore.userType || Number(localStorage.getItem('userType') || 1)
-
         if (redirectUrl.value) {
-          // redirectUrl may be encoded by middleware, decode it first
           let decoded = String(redirectUrl.value)
           try { decoded = decodeURIComponent(decoded) } catch (e) {}
-
-          // Helper to detect seller-only paths
-          const isSellerPath = (p) => {
-            if (!p) return false
-            return p.includes('/SellerPage') || p.includes('/seller') || p.includes('seller-dashboard') || p.includes('/page/account/seller')
-          }
-
-          // Only follow the redirect if it makes sense for the userType
+          const isSellerPath = (p) => p && (p.includes('/SellerPage') || p.includes('/seller') || p.includes('seller-dashboard') || p.includes('/page/account/seller'))
           if ((currentUserType === 0 && isSellerPath(decoded)) || (currentUserType !== 0 && !isSellerPath(decoded))) {
-            router.replace(decoded)
-            return
+            router.replace(decoded); return
           }
-          // otherwise fall through to userType defaults
         }
-
-        // Redirect based on user type
-        if (currentUserType === 0) {
-          router.replace('/SellerPage/dashboard')
-        } else {
-          router.replace('/')
-        }
+        router.replace(currentUserType === 0 ? '/SellerPage/dashboard' : '/')
       }, 500)
     } else {
       message.value = result.message
       messageType.value = 'error'
     }
-  } catch (error) {
+  } catch {
     message.value = 'An error occurred. Please try again.'
     messageType.value = 'error'
   } finally {
@@ -162,7 +150,6 @@ async function doLogin() {
   }
 }
 
-// OAuth Login Functions
 function loginWithFacebook() {
   const apiUrl = useRuntimeConfig().public.apiUrl || 'https://vizdataprojectbe-production.up.railway.app'
   window.location.href = `${apiUrl}/api/auth/facebook`
@@ -173,251 +160,231 @@ function loginWithGoogle() {
   window.location.href = `${apiUrl}/api/auth/google`
 }
 
+// Telegram Login Widget
+const telegramWidgetContainer = ref(null)
+
+async function handleTelegramAuth(telegramUser) {
+  loading.value = true
+  message.value = ''
+  try {
+    const apiUrl = useRuntimeConfig().public.apiUrl || 'https://vizdataprojectbe-production.up.railway.app'
+    const res = await fetch(`${apiUrl}/api/auth/telegram`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(telegramUser),
+    })
+    const data = await res.json()
+    if (data.success) {
+      await authStore.loginWithOAuth(data.data.user, data.data.token)
+      message.value = 'เข้าสู่ระบบสำเร็จ'
+      messageType.value = 'success'
+      setTimeout(() => {
+        const currentUserType = authStore.userType || Number(localStorage.getItem('userType') || 1)
+        router.replace(currentUserType === 0 ? '/SellerPage/dashboard' : '/')
+      }, 500)
+    } else {
+      message.value = data.message || 'Telegram login failed'
+      messageType.value = 'error'
+    }
+  } catch (e) {
+    message.value = 'เกิดข้อผิดพลาด กรุณาลองใหม่'
+    messageType.value = 'error'
+  } finally {
+    loading.value = false
+  }
+}
+
+function loginWithTelegram() {
+  const config = useRuntimeConfig()
+  const botName = config.public.telegramBotName || 'YOUR_BOT_USERNAME'
+
+  // Expose global callback for Telegram widget
+  window.onTelegramAuth = handleTelegramAuth
+
+  // Remove previous widget if any
+  if (telegramWidgetContainer.value) {
+    telegramWidgetContainer.value.innerHTML = ''
+  }
+
+  const script = document.createElement('script')
+  script.src = 'https://telegram.org/js/telegram-widget.js?22'
+  script.setAttribute('data-telegram-login', botName)
+  script.setAttribute('data-size', 'large')
+  script.setAttribute('data-onauth', 'onTelegramAuth(user)')
+  script.setAttribute('data-request-access', 'write')
+  script.setAttribute('data-auth-url', window.location.href)
+  script.async = true
+
+  if (telegramWidgetContainer.value) {
+    telegramWidgetContainer.value.appendChild(script)
+  }
+
+  // Wait for widget to load, then auto-click its button
+  script.onload = () => {
+    const btn = telegramWidgetContainer.value?.querySelector('iframe')
+    if (btn) btn.click()
+  }
+}
 </script>
+
 <style scoped lang="scss">
-/* Alert Messages */
-.alert {
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  
-  &.alert-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-  
-  &.alert-danger {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-  }
-  
-  &.alert-info {
-    background-color: #e7f3ff;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
-  }
-}
-
-/* Demo Credentials */
-.demo-credentials {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  text-align: center;
-  
-  p {
-    margin: 0 0 5px 0;
-    color: #666;
-  }
-  
-  small {
-    color: #888;
-  }
-}
-
-/* Auth Login Form Styles */
 .auth-form {
   .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     position: relative;
-  }
-  
-  .form-control {
-    border-radius: 25px;
-    padding: 12px 25px;
-    border: 1px solid #eaeaea;
-    font-size: 14px;
-    height: auto;
-    transition: all 0.3s ease;
-    
-    &:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-      outline: none;
-    }
-    
-    &::placeholder {
-      color: #aaa;
-    }
-  }
-  
-  .show-hide {
-    position: absolute;
-    right: 20px;
-    top: 12px;
-    cursor: pointer;
-    z-index: 5;
-    
-    span {
-      color: #999;
-      font-size: 14px;
-      
-      &::before {
-        content: '👁';
-      }
-      
-      &.show::before {
-        content: '🙈';
-      }
-    }
-  }
-}
 
-/* Form Terms */
-.form-terms {
-  margin-bottom: 20px;
-  
-  .form-check {
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #f9a57a;
+      pointer-events: none;
+    }
+
+    .form-control {
+      width: 100%;
+      border: 1.5px solid #ffddcc;
+      border-radius: 10px;
+      padding: 13px 44px 13px 42px;
+      font-size: 14px;
+      color: #333;
+      background: #fff7f0;
+      outline: none;
+      transition: all 0.25s;
+
+      &:focus {
+        border-color: #f97316;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+      }
+      &::placeholder { color: #d0b8a8; }
+    }
+
+    .show-hide {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #d0b8a8;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+      &:hover { color: #f97316; }
+    }
+  }
+
+  /* Alerts */
+  .alert {
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    &.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    &.alert-danger  { background: #fff0eb; color: #c0392b; border: 1px solid #ffb8a0; }
+    &.alert-info    { background: #fff7f0; color: #c05000; border: 1px solid #ffddcc; }
+  }
+
+  /* Remember + Forgot */
+  .form-terms {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-  }
-  
-  .form-check-input {
-    margin-top: 0;
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
-    
-    &:checked {
-      background-color: #667eea;
-      border-color: #667eea;
-    }
-    
-    &:focus {
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-    }
-  }
-  
-  .form-check-label {
-    color: #666;
-    font-size: 14px;
-    margin-left: 5px;
-  }
-}
+    justify-content: space-between;
+    margin-bottom: 20px;
 
-/* Forgot Password */
-.forgot-pass {
-  padding: 0;
-  float: right;
-  color: #ff8084;
-  font-size: 13px;
-  text-decoration: none;
-  background: none;
-  border: none;
-  margin-left: auto;
-  transition: color 0.3s ease;
-  
-  &:hover {
-    color: #e85c60;
-    text-decoration: underline;
-  }
-}
-
-/* Form Button */
-.form-button {
-  margin-bottom: 25px;
-  
-  .btn-primary {
-    width: 100%;
-    padding: 12px 30px;
-    border-radius: 25px;
-    font-weight: 600;
-    font-size: 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    .check-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      input[type='checkbox'] {
+        width: 16px; height: 16px;
+        accent-color: #f97316;
+        cursor: pointer;
+      }
+      label { font-size: 13px; color: #999; cursor: pointer; }
     }
-    
-    &:active {
-      transform: translateY(0);
+
+    .forgot-pass {
+      font-size: 13px;
+      color: #f97316;
+      text-decoration: none;
+      font-weight: 500;
+      &:hover { text-decoration: underline; opacity: 0.8; }
     }
   }
-}
 
-/* Form Footer / Social */
-.form-footer {
-  text-align: center;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-  
-  > span {
-    color: #888;
-    font-size: 13px;
-    display: block;
-    margin-bottom: 15px;
+  /* NEXT button */
+  .form-button {
+    margin-bottom: 22px;
+
+    .btn-next {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      background: #f97316;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.25s, transform 0.2s;
+
+      &:hover { background: #ea6c0a; transform: translateY(-1px); }
+      &:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    }
   }
-  
-  .social {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    
-    li {
-      a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #f5f5f5;
-        color: #666;
-        text-decoration: none !important;
-        transition: all 0.3s ease;
-        font-size: 16px;
-        
-        &:hover {
-          transform: translateY(-3px);
-          color: #fff;
-        }
-        
-        &.ti-facebook:hover { background: #3b5998; }
-        &.ti-google:hover { background: #db4437; }
+
+  /* Social */
+  .form-footer {
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #d0b8a8;
+      &::before, &::after { content: ''; flex: 1; height: 1px; background: #ffddcc; }
+    }
+
+    .social-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #ffddcc;
+      border-radius: 10px;
+      background: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+      text-decoration: none;
+
+      .social-logo { width: 20px; height: 20px; object-fit: contain; }
+
+      &:hover { border-color: #f97316; background: #fff7f0; transform: translateY(-1px); }
+
+      &.fb-btn {
+        color: #1877f2;
+        border-color: #d0e4ff;
+        background: #f5f8ff;
+        &:hover { background: #edf2ff; border-color: #1877f2; }
+      }
+
+      &.tg-btn {
+        color: #229ED9;
+        border-color: #c8e8f7;
+        background: #f0f9ff;
+        &:hover { background: #e0f4ff; border-color: #229ED9; }
       }
     }
-  }
-}
-
-/* Responsive */
-@media only screen and (max-width: 991px) {
-  .form-footer,
-  .form-button {
-    text-align: center;
-  }
-}
-
-@media only screen and (max-width: 575px) {
-  .auth-form .form-control {
-    padding: 10px 20px;
-  }
-  
-  .form-button .btn-primary {
-    margin-top: 10px;
-  }
-  
-  .form-terms .form-check {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  
-  .forgot-pass {
-    float: none;
-    margin-left: 0;
   }
 }
 </style>
+

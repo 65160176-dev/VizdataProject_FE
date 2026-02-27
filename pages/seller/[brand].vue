@@ -256,6 +256,7 @@ onMounted(() => {
 
 const getSellerImage = (path) => {
   if (!path) return null
+  if (path.startsWith('data:')) return path  // base64 data URL จาก MongoDB
   if (path.startsWith('http')) return path
   const cleanPath = path.startsWith('/') ? path.slice(1) : path
   return `${BACKEND_URL}/${cleanPath}`

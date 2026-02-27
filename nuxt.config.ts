@@ -34,6 +34,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiUrl: process.env.NUXT_PUBLIC_API_URL || 'https://vizdataprojectbe-production.up.railway.app', // Backend API port
+      telegramBotName: process.env.NUXT_PUBLIC_TELEGRAM_BOT_NAME || '', // e.g. 'MyShopBot'
     }
   },
 

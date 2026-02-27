@@ -205,6 +205,29 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
+    // OAuth Login (Telegram, etc.) - set user and token directly
+    async loginWithOAuth(user, token) {
+      this.user = user
+      this.userName = user.username
+      this.userType = user.userType ?? 1
+      this.token = token
+      this.isLoggedIn = true
+
+      if (import.meta.client) {
+        localStorage.setItem('user', JSON.stringify(user))
+        localStorage.setItem('userName', user.username)
+        localStorage.setItem('userType', String(this.userType))
+        localStorage.setItem('token', token)
+        try {
+          const expires = new Date()
+          expires.setDate(expires.getDate() + 7)
+          document.cookie = `userlogin=1; path=/; expires=${expires.toUTCString()}`
+        } catch (e) {}
+      }
+
+      return { success: true, message: 'OAuth login successful', userType: this.userType }
+    },
+
     // Real API Register
     async register(username, email, password, confirmPassword, userType = 1) {
       if (!username || !email || !password || !confirmPassword) return { success: false, message: 'Please fill in all fields' }
