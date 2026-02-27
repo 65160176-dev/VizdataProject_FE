@@ -59,9 +59,13 @@
 
                   <div class="noti-dot"></div>
 
-                  <div class="noti-img-wrapper" v-if="item.image">
-                    <img :src="getImgUrl(item.image)" class="noti-img"
-                      @error="$event.target.src = '/images/icon/logo.png'">
+                  <div class="noti-img-wrapper">
+                    <img v-if="getNotiImage(item)" :src="getNotiImage(item)" class="noti-img"
+                      @error="$event.target.style.display = 'none'; $event.target.nextElementSibling.style.display = 'flex'">
+
+                    <div :style="getNotiImage(item) ? 'display:none' : 'display:flex'" class="default-icon-bg noti-img">
+                      <i class="fa fa-info" aria-hidden="true" style="margin: auto;"></i>
+                    </div>
                   </div>
 
                   <div class="noti-content">
@@ -209,7 +213,6 @@ const loadingOrder = ref(false)
 function toggleNoti() { isNotiOpen.value = !isNotiOpen.value }
 function markAllRead() { notiStore.markAllAsRead() }
 
-// ✅ ฟังก์ชันคลิกแจ้งเตือน (Logic ที่ถูกต้องสำหรับ Sidebar)
 const handleNotificationClick = async (item) => {
   if (!item.isRead) notiStore.markAsRead(item);
   isNotiOpen.value = false;
@@ -226,21 +229,18 @@ const handleNotificationClick = async (item) => {
       const status = (response.status || '').toLowerCase();
       await orderStore.fetchOrders()
 
-      // กลุ่ม Cancel/Return (เปิด Popup หน้าเดิม)
       const isCancelGroup = ['cancelled', 'cancel', 'cancel requested', 'return_requested', 'return requested'].includes(status);
 
       if (isCancelGroup) {
         selectedOrder.value = response
         showOrderModal.value = true
       }
-      // ✅ เพิ่ม: กลุ่ม Pending (ส่งไปหน้า New Orders)
       else if (['pending', 'pending review'].includes(status)) {
         router.push({
-          path: '/SellerPage/order', // 👈 ชื่อไฟล์หน้า New Orders ของคุณ
+          path: '/SellerPage/order',
           query: { id: orderId }
         });
       }
-      // กลุ่ม Process (ส่งไปหน้า Order Status)
       else {
         let targetTab = 'preparing';
         if (['shipped', 'shipping', 'arrived'].includes(status)) targetTab = 'shipped';
@@ -289,6 +289,27 @@ const getImgUrl = (path) => {
   return '/images/' + path;
 }
 
+// ✅ 🚨 ฟังก์ชันใหม่สำหรับดึงรูปใน Noti โดยเฉพาะ (ดัดแปลงมาจาก getItemImage)
+const getNotiImage = (item) => {
+  const resolve = (url) => {
+    if (!url || url.trim() === '' || url === '/images/dashboard/default.png') return null
+    if (url.startsWith('data:')) return url   // base64 จาก MongoDB
+    if (url.startsWith('http')) return url    // full URL
+    if (url.startsWith('/')) return `${API_BASE_URL}${url}`
+    return `${API_BASE_URL}/${url}`
+  }
+
+  // ลองดึงจากข้อมูลใน data ก่อนเผื่อมี 
+  const fromData = resolve(item?.data?.image)
+  if (fromData) return fromData
+
+  // ถ้าไม่มีค่อยไปดึงจาก image ตรงๆ
+  const fromItem = resolve(item?.image)
+  if (fromItem) return fromItem
+
+  return null
+}
+
 const formatDate = (dateString) => {
   if (!dateString) return '';
   return new Date(dateString).toLocaleString('th-TH', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -311,7 +332,7 @@ function logout() {
 </script>
 
 <style scoped>
-/* CSS เดิมทั้งหมด */
+/* CSS เดิมทั้งหมด (พร้อมเพิ่ม CSS ของ default-icon-bg) */
 .seller-sidebar {
   width: 260px;
   height: 100vh;
@@ -662,9 +683,7 @@ function logout() {
   cursor: pointer !important;
   transition: background 0.2s;
   align-items: flex-start;
-  /* ✅✅ 1. เพิ่ม position: relative เพื่อเป็นจุดอ้างอิง */
   position: relative;
-  /* ✅✅ 2. เพิ่ม padding-right เพื่อเว้นที่ให้ปุ่มถังขยะ */
   padding-right: 40px;
 }
 
@@ -705,6 +724,18 @@ function logout() {
   border: 1px solid #eee;
 }
 
+/* ✅ กล่องสีเทากรณีรูปพัง */
+.default-icon-bg {
+  width: 36px;
+  height: 36px;
+  background-color: #ddd;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
 .noti-content {
   flex: 1;
   min-width: 0;
@@ -743,17 +774,11 @@ function logout() {
   font-size: 13px;
 }
 
-/* ✅✅ 3. เพิ่ม CSS สำหรับปุ่มถังขยะ ✅✅ */
 .noti-delete {
   position: absolute;
-  /* ลอยอยู่เหนือเนื้อหา */
   right: 10px;
-  /* ชิดขวา 10px */
   top: 50%;
-  /* กึ่งกลางแนวตั้ง */
   transform: translateY(-50%);
-  /* จัดกึ่งกลางเป๊ะๆ */
-
   width: 28px;
   height: 28px;
   display: flex;
@@ -763,23 +788,11 @@ function logout() {
   color: #999;
   transition: all 0.2s;
   z-index: 5;
-  /* ให้อยู่ชั้นบนสุด */
 }
 
 .noti-delete:hover {
   color: #ff4757;
-  /* เปลี่ยนสีแดงเมื่อชี้ */
   background-color: rgba(255, 71, 87, 0.1);
-}
-
-/* Dark Mode สำหรับปุ่มลบ */
-:global(body.dark) .noti-delete {
-  color: #666;
-}
-
-:global(body.dark) .noti-delete:hover {
-  color: #ff4757;
-  background-color: rgba(255, 71, 87, 0.2);
 }
 
 .fade-enter-active,
@@ -802,7 +815,6 @@ function logout() {
   }
 }
 
-/* ✅ CSS สำหรับ Modal Style (นำมาจาก Order.vue) */
 .header-pending {
   background: linear-gradient(135deg, #FF8F00 0%, #FFB300 100%);
 }
@@ -841,7 +853,6 @@ function logout() {
   transform: rotate(90deg);
 }
 
-/* Dark Mode Overrides */
 :global(body.dark) .seller-sidebar {
   background: #1e1e2f !important;
   border-right: 1px solid #333;
@@ -951,11 +962,19 @@ function logout() {
 
 .action-link.text-danger {
   color: #ff4757;
-  /* สีแดงสำหรับปุ่มลบ */
 }
 
 .divider {
   color: #ccc;
   font-size: 12px;
+}
+
+:global(body.dark) .noti-delete {
+  color: #666;
+}
+
+:global(body.dark) .noti-delete:hover {
+  color: #ff4757;
+  background-color: rgba(255, 71, 87, 0.2);
 }
 </style>

@@ -37,7 +37,8 @@
 
                         <div class="notif-img">
                             <img v-if="resolvedImage(item.image)" :src="resolvedImage(item.image)"
-                                @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='flex'" alt="icon">
+                                @error="$event.target.style.display = 'none'; $event.target.nextElementSibling.style.display = 'flex'"
+                                alt="icon">
                             <div :style="resolvedImage(item.image) ? 'display:none' : ''" class="default-icon-bg">
                                 <i class="fa fa-info" aria-hidden="true"></i>
                             </div>
@@ -63,16 +64,15 @@
 <script>
 import { useAuthStore } from '~/store/auth'
 import { useNotificationStore } from '~/store/notification'
-import { onMounted, onUnmounted, watch } from 'vue' // ✅ เพิ่มการนำเข้า
+import { onMounted, onUnmounted, watch } from 'vue'
 
 export default {
     name: 'HeaderNotification',
     setup() {
         const authStore = useAuthStore()
         const notiStore = useNotificationStore()
-        let intervalId = null; // ✅ ตัวแปรเก็บค่า Interval
+        let intervalId = null;
 
-        // ✅ ฟังก์ชันดึงข้อมูลใหม่
         const refreshNotifications = async () => {
             if (authStore.user && (authStore.user._id || authStore.user.id)) {
                 await notiStore.fetchNotifications();
@@ -80,12 +80,10 @@ export default {
         };
 
         onMounted(() => {
-            // ✅ ดึงข้อมูลทุกๆ 15 วินาที (Real-time Polling)
             intervalId = setInterval(refreshNotifications, 15000);
         });
 
         onUnmounted(() => {
-            // ✅ ล้างค่าเมื่อปิดหน้าจอ
             if (intervalId) clearInterval(intervalId);
             notiStore.disconnectSocket();
         });
@@ -106,7 +104,7 @@ export default {
                 if (newUser && (newUser._id || newUser.id)) {
                     console.log("User loaded, initializing real-time notifications...");
                     this.notiStore.fetchNotifications();
-                    this.notiStore.initSocket(); // ระบบเดิมของคุณ
+                    this.notiStore.initSocket();
                 }
             },
             immediate: true,
@@ -144,23 +142,23 @@ export default {
                 });
             }
         },
-        getImgUrl(path) {
+        // 🚨 นำ Logic จาก getItemImage มาใส่แทนของเดิม
+        resolvedImage(url) {
             const BACKEND = 'https://vizdataprojectbe-production.up.railway.app'
-            if (!path) return '/images/icon/logo.png'
-            if (path.startsWith('data:')) return path           // base64 จาก MongoDB
-            if (path.startsWith('http')) return path            // full URL
-            if (path.startsWith('/')) return `${BACKEND}${path}`
-            return `${BACKEND}/${path}`
-        },
-        resolvedImage(path) {
-            // กรอง path ที่เป็น local fallback หรือว่าง ออกไปเลย → แสดง default icon แทน
             const LOCAL_FALLBACKS = ['/images/dashboard/default.png', '/images/icon/logo.png', '/images/placeholder.png']
-            if (!path || LOCAL_FALLBACKS.includes(path)) return null
-            const BACKEND = 'https://vizdataprojectbe-production.up.railway.app'
-            if (path.startsWith('data:')) return path   // base64 จาก MongoDB
-            if (path.startsWith('http')) return path    // full URL
-            if (path.startsWith('/')) return `${BACKEND}${path}`
-            return `${BACKEND}/${path}`
+
+            // กรอง path ที่เป็น local fallback หรือว่าง ออกไปเลย → แสดง default icon แทน
+            if (!url || url.trim() === '' || LOCAL_FALLBACKS.includes(url)) return null
+
+            // เช็ค Base64 จาก MongoDB
+            if (url.startsWith('data:image')) return url
+
+            // เช็ค Full URL (http/https)
+            if (url.startsWith('http')) return url
+
+            // เช็คและต่อ URL ของ Backend
+            if (url.startsWith('/')) return `${BACKEND}${url}`
+            return `${BACKEND}/${url}`
         },
         formatDate(dateString) {
             if (!dateString) return '';
@@ -181,6 +179,7 @@ export default {
 </script>
 
 <style scoped>
+/* CSS ทุกอย่างเหมือนเดิม ไม่มีการเปลี่ยนแปลง */
 .notification-icon-wrapper {
     position: relative;
     display: inline-block;
@@ -270,17 +269,14 @@ export default {
 .notification-list {
     list-style: none;
     padding-left: 0;
-    /* ✅ มั่นใจว่าชิดซ้ายสุด */
     margin-left: 0;
     max-height: 350px;
     overflow-y: auto;
     cursor: default;
     padding-bottom: 0;
     margin-bottom: 0;
-    /* ลบ margin ล่างออก */
 }
 
-/* ✅ Item ของรายการแจ้งเตือน */
 .notification-item {
     position: relative;
     text-align: left;
@@ -288,25 +284,18 @@ export default {
     width: 100%;
     border-bottom: 1px solid #f1f1f1;
     margin: 0;
-    /* ลบ margin รอบนอก */
     padding: 0;
-    /* ลบ padding รอบนอก */
 }
 
 .notification-item:last-child {
     border-bottom: none;
 }
 
-/* ✅ กล่องเนื้อหาหลัก */
 .notification-item .notif-box {
     display: flex;
     align-items: flex-start;
-
-    /* ✅ แก้ไข: ลด Padding ด้านซ้ายลง (จาก 15px เหลือ 10px หรือ 5px ตามชอบ) */
     padding: 12px 10px 12px 10px;
-
     padding-right: 45px;
-    /* เว้นที่ให้ปุ่มลบ */
     text-decoration: none;
     color: #333;
     transition: 0.2s;
@@ -314,7 +303,6 @@ export default {
     min-height: 80px;
     box-sizing: border-box;
     margin: 0;
-    /* ลบ margin ของกล่อง */
 }
 
 .notification-item:hover {
@@ -329,14 +317,11 @@ export default {
     background-color: #ffffff;
 }
 
-/* --- จุดสีแดง (Dot) --- */
 .notif-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background-color: transparent;
-
-    /* ✅ ปรับระยะห่างของจุด */
     margin-right: 8px;
     margin-top: 6px;
     flex-shrink: 0;
@@ -347,13 +332,10 @@ export default {
     box-shadow: 0 0 4px rgba(255, 76, 59, 0.4);
 }
 
-/* ✅ ส่วนรูปภาพ */
 .notif-img {
-    /* ✅ ลดระยะห่างขวาลง เพื่อให้ชิดกับข้อความมากขึ้น */
     margin-right: 10px;
     flex-shrink: 0;
     line-height: 0;
-    /* แก้ปัญหารูปมีขอบล่าง */
 }
 
 .notif-img img {
@@ -362,7 +344,6 @@ export default {
     object-fit: cover;
     border-radius: 50%;
     display: block;
-    /* แก้ปัญหารูปมีขอบล่าง */
 }
 
 .default-icon-bg {
@@ -376,7 +357,6 @@ export default {
     color: #666;
 }
 
-/* ✅ ส่วนข้อความ */
 .notif-content {
     flex-grow: 1;
     overflow: hidden;
@@ -387,7 +367,6 @@ export default {
     align-items: flex-start !important;
     text-align: left !important;
     padding-top: 2px;
-    /* ดันลงนิดนึงให้ตรงกับรูป */
 }
 
 .notif-title {
@@ -426,16 +405,13 @@ export default {
     width: 100%;
 }
 
-/* ปุ่มลบ */
 .delete-action {
     position: absolute;
     right: 5px;
-    /* ขยับเข้ามาจากขอบขวา */
     top: 50%;
     transform: translateY(-50%);
     z-index: 10;
     width: 30px;
-    /* ลดขนาดปุ่มลงนิดนึง */
     height: 30px;
     display: flex;
     align-items: center;
