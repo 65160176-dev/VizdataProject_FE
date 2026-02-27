@@ -74,7 +74,9 @@
       </a>
       <!-- Telegram Login Widget (real button rendered by Telegram) -->
       <div class="tg-widget-wrap">
-        <div ref="telegramWidgetContainer" class="tg-widget-inner"></div>
+        <div ref="telegramWidgetContainer" class="tg-widget-inner">
+          <div class="tg-widget-overlay">Login with Telegram</div>
+        </div>
       </div>
     </div>
   </form>
@@ -374,6 +376,7 @@ async function handleTelegramAuth(telegramUser) {
       margin-top: 4px;
 
       .tg-widget-inner {
+        position: relative;
         display: flex;
         justify-content: center;
         width: 100%;
@@ -381,8 +384,23 @@ async function handleTelegramAuth(telegramUser) {
 
         /* Make the iframe Telegram renders fill/center nicely */
         :deep(iframe) {
+          opacity: 0.01;
           border-radius: 8px !important;
         }
+      }
+
+      .tg-widget-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #229ed9;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        pointer-events: none;
       }
     }
   }
