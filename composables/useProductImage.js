@@ -4,7 +4,7 @@ export const useProductImage = () => {
 
     const resolveUrl = (url) => {
       if (!url || (typeof url === 'string' && url.trim() === '')) return null
-      if (url.startsWith('data:')) return url  // base64 data URL จาก MongoDB
+      if (url.startsWith('data:')) return null  // ไม่ใช้ base64 แล้ว — รูปอยู่ Cloudinary
       if (url.startsWith('http')) return url
       if (url.startsWith('/')) return `https://vizdataprojectbe-production.up.railway.app${url}`
       return `https://vizdataprojectbe-production.up.railway.app/${url}`

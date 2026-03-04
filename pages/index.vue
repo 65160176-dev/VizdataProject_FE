@@ -264,7 +264,7 @@ function getProductImage(product) {
   if (!product) return 'https://placehold.co/400'
   const img = product.image || (product.images?.[0]?.src)
   if (!img) return 'https://placehold.co/400'
-  if (img.startsWith('data:')) return img  // base64 จาก MongoDB
+   if (img.startsWith('data:')) return 'https://placehold.co/400'  // legacy base64 — skip
   if (img.startsWith('http')) return img
   return `${BACKEND_URL}/${img.replace(/^\//, '')}`
 }

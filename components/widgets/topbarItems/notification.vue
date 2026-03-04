@@ -151,7 +151,7 @@ export default {
             if (!url || url.trim() === '' || LOCAL_FALLBACKS.includes(url)) return null
 
             // เช็ค Base64 จาก MongoDB
-            if (url.startsWith('data:image')) return url
+            if (url.startsWith('data:')) return null
 
             // เช็ค Full URL (http/https)
             if (url.startsWith('http')) return url

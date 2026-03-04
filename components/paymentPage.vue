@@ -809,7 +809,12 @@ export default {
                 name: p.name || p.title,
                 price: this.calcPrice(p),
                 qty: Number(p.quantity) || Number(p.qty) || 1,
-                image: p.image || (p.images && p.images[0]?.src) || '',
+                image: (() => {
+                  const img = p.image || (p.images && p.images[0]?.src) || '';
+                  // ข้าม base64 ไม่ส่งไปเก็บใน MongoDB — ใช้เฉพาะ Cloudinary URL
+                  if (typeof img === 'string' && img.startsWith('data:')) return '';
+                  return img;
+                })(),
                 refAffiliateId: affiliateCode || undefined
               };
             })

@@ -264,14 +264,9 @@ const checkAndOpenOrder = (id) => {
   )
 
   if (targetOrder) {
-    // ✅ เพิ่มการเช็คสิทธิ์ตรงนี้
+    // เช็คสิทธิ์ผ่าน seller field (เก็บ User ID)
     const myId = authStore.user?._id || authStore.user?.id
-    const items = targetOrder.item || targetOrder.items || []
-    const productOwner = items[0]?.productId?.userId
-    const ownerId = (typeof productOwner === 'object') ? productOwner?._id : productOwner
-
-    if (ownerId !== myId) {
-      // ถ้าไม่ใช่เจ้าของออเดอร์ ให้แจ้งเตือนและไม่เปิด Modal
+    if (String(targetOrder.seller) !== String(myId)) {
       Swal.fire({
         icon: 'error',
         title: 'ปฏิเสธการเข้าถึง',
@@ -279,7 +274,6 @@ const checkAndOpenOrder = (id) => {
       })
       return
     }
-
     openDetail(targetOrder)
   }
 }
@@ -408,13 +402,8 @@ const myAllOrders = computed(() => {
   const all = orderStore.allOrders || []
   const myId = authStore.user?._id || authStore.user?.id
   if (!myId) return []
-  return all.filter(order => {
-    const items = order.item || order.items || []
-    if (items.length === 0) return false
-    const productOwner = items[0]?.productId?.userId
-    const ownerId = (typeof productOwner === 'object') ? productOwner?._id : productOwner
-    return ownerId === myId
-  })
+  // seller field เก็บ User ID ของเจ้าของร้าน
+  return all.filter(order => String(order.seller) === String(myId))
 })
 
 const pendingOrders = computed(() => myAllOrders.value.filter(o => {

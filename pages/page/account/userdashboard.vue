@@ -112,7 +112,7 @@ const avatarSrc = computed(() => {
   imageError.value = false
   if (auth.user && auth.user.avatar) {
     const av = auth.user.avatar
-    if (av.startsWith('data:')) return av               // base64 จาก MongoDB
+    if (av.startsWith('data:')) return null              // legacy base64 — skip
     if (av.startsWith('http')) return av                // full URL
     if (av.startsWith('/')) return `${BACKEND_URL}${av}`
     return `${BACKEND_URL}/${av}`

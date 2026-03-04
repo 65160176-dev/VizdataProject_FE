@@ -84,8 +84,14 @@ const initAvatarFromAuth = () => {
         return
     }
 
-    // ถ้าเป็น Base64 หรือ http (รูปภายนอก) ใช้ได้เลย
-    if (userAvatar.startsWith('data:') || userAvatar.startsWith('blob:') || userAvatar.startsWith('http')) {
+    // ถ้าเป็น legacy base64 → ข้ามไป ใช้ default แทน
+    if (userAvatar.startsWith('data:')) {
+        console.log('🔍 [editProfile] Skipping legacy base64 avatar')
+        avatarSrc.value = '/images/avtar.jpg'
+        return
+    }
+    // blob: (upload preview) หรือ http (รูปภายนอก) ใช้ได้เลย
+    if (userAvatar.startsWith('blob:') || userAvatar.startsWith('http')) {
         console.log('🔍 [editProfile] Using external URL:', userAvatar)
         avatarSrc.value = userAvatar
         return

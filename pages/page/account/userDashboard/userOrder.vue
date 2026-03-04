@@ -154,15 +154,20 @@ const selectedOrder = ref(null)
 // ✅ 1. เปลี่ยนจาก ref([]) เป็น computed() เพื่อให้ Update ตาม Store อัตโนมัติ
 const orders = computed(() => {
     const rawOrders = orderStore.allOrders || []
-    const currentUserId = auth.user?._id || auth.user?.id
+    const currentUserId = String(auth.user?._id || auth.user?.id || '')
 
-    // กรองเฉพาะออเดอร์ที่เป็นของ User คนนี้
+    // backend ส่งมาแค่ของ user คนนี้แล้ว (userId query)
+    // filter เพิ่มเพื่อกัน edge case ที่ store มี order จาก seller query ปนมา
     let myOrders = rawOrders.filter(o => {
-        const orderUserId = (o.user && typeof o.user === 'object') ? o.user._id : o.user;
-        return String(orderUserId) === String(currentUserId);
+        if (!currentUserId) return true // ถ้าไม่รู้ id ให้แสดงทั้งหมด
+        const raw = o.user
+        const orderUserId = raw && typeof raw === 'object'
+            ? String(raw._id || raw.id || raw)
+            : String(raw || '')
+        return orderUserId === currentUserId
     });
 
-    // Map ข้อมูล (Logic เดิมจาก fetchOrders)
+    // Map ข้อมูล
     return myOrders.map(order => {
         let displayDate = order.date;
         if (!displayDate && order.createdAt) {
@@ -171,20 +176,16 @@ const orders = computed(() => {
             });
         }
 
-        let shopName = 'Official Store';
-        let shopId = null;
-        const firstItem = order.item && order.item[0];
-        if (firstItem && firstItem.productId && firstItem.productId.userId) {
-            shopName = firstItem.productId.userId.shopName || firstItem.productId.userId.username || 'Shop';
-            shopId = firstItem.productId.userId._id || firstItem.productId.userId;
-        }
+        // ใช้ sellerName จาก backend (batch lookup Seller collection)
+        let shopName = order.sellerName || 'Official Store';
+        let shopId = order.sellerShopId || order.seller || null;
 
         return {
             ...order,
             items: order.item || [],
             date: displayDate,
-            shopName: shopName,
-            shopId: shopId,
+            shopName,
+            shopId,
             shippingFee: order.shippingCost || order.shippingFee || 0
         };
     }).sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
@@ -288,16 +289,17 @@ const getOrderItemImage = (item) => {
         if (!url) return null
         const safeUrl = url.trim()
         if (safeUrl === '' || safeUrl === '/images/dashboard/default.png') return null
-        if (safeUrl.startsWith('data:')) return safeUrl   // base64 จาก MongoDB
+        if (safeUrl.startsWith('data:')) return null  // ข้าม base64 ทั้งหมด (ขนาดใหญ่เกินไป)
         if (safeUrl.startsWith('http')) return safeUrl
         if (safeUrl.startsWith('/')) return `${BACKEND_URL}${safeUrl}`
         return `${BACKEND_URL}/${safeUrl}`
     }
-    // prioritize populate productId.image (real-time จาก MongoDB) ก่อน
-    const fromProduct = resolve(item?.productId?.image)
-    if (fromProduct) return fromProduct
+    // ใช้ item.image จาก order (เป็น Cloudinary URL แล้ว)
     const fromItem = resolve(item?.image)
     if (fromItem) return fromItem
+    // fallback จาก populated productId
+    const fromProduct = resolve(item?.productId?.image)
+    if (fromProduct) return fromProduct
     return 'https://placehold.co/400'
 }
 
