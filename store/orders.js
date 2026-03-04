@@ -1,4 +1,6 @@
 import { defineStore } from 'pinia'
+import { useRuntimeConfig } from '#imports'
+import { useAuthStore } from '~/store/auth'
 
 export const useOrderStore = defineStore('orders', {
   state: () => ({
@@ -14,10 +16,32 @@ export const useOrderStore = defineStore('orders', {
     async fetchOrders() {
       this.isLoading = true
       try {
+        const config = useRuntimeConfig()
+        const apiBase = config.public?.apiBase || 'https://vizdataprojectbe-production.up.railway.app/api'
+        const authStore = useAuthStore()
+        const token = authStore.token || localStorage.getItem('token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        let userId = authStore.user?._id || authStore.user?.id
+        if (!userId) {
+          try {
+            const savedUser = localStorage.getItem('user')
+            if (savedUser) {
+              const parsed = JSON.parse(savedUser)
+              userId = parsed?._id || parsed?.id
+            }
+          } catch (e) {}
+        }
+        const storedType = localStorage.getItem('userType')
+        const isSeller = Number(authStore.userType ?? storedType ?? 1) === 0
+        const queryParts = []
+        if (userId) {
+          queryParts.push(isSeller ? `sellerId=${encodeURIComponent(userId)}` : `userId=${encodeURIComponent(userId)}`)
+        }
+        const query = queryParts.length ? `?${queryParts.join('&')}` : ''
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Request timeout')), 10000)
         )
-        const fetchPromise = $fetch('https://vizdataprojectbe-production.up.railway.app/api/order')
+        const fetchPromise = $fetch(`${apiBase}/order${query}`, { headers })
         const data = await Promise.race([fetchPromise, timeoutPromise])
         if (data) {
           this.allOrders = data.map(o => ({

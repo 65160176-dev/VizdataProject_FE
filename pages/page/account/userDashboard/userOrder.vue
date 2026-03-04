@@ -285,11 +285,13 @@ const BACKEND_URL = 'https://vizdataprojectbe-production.up.railway.app'
 const getOrderItemImage = (item) => {
     if (!item) return 'https://placehold.co/400'
     const resolve = (url) => {
-        if (!url || url.trim() === '' || url === '/images/dashboard/default.png') return null
-        if (url.startsWith('data:')) return url   // base64 จาก MongoDB
-        if (url.startsWith('http')) return url
-        if (url.startsWith('/')) return `${BACKEND_URL}${url}`
-        return `${BACKEND_URL}/${url}`
+        if (!url) return null
+        const safeUrl = url.trim()
+        if (safeUrl === '' || safeUrl === '/images/dashboard/default.png') return null
+        if (safeUrl.startsWith('data:')) return safeUrl   // base64 จาก MongoDB
+        if (safeUrl.startsWith('http')) return safeUrl
+        if (safeUrl.startsWith('/')) return `${BACKEND_URL}${safeUrl}`
+        return `${BACKEND_URL}/${safeUrl}`
     }
     // prioritize populate productId.image (real-time จาก MongoDB) ก่อน
     const fromProduct = resolve(item?.productId?.image)
