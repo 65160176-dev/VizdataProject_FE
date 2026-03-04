@@ -707,6 +707,21 @@ export default {
 
       this.isLoading = true;
       try {
+        // ตรวจสอบสต็อกล่าสุดก่อน checkout
+        const stockValidation = await this.cartStore.validateCheckoutStock();
+        if (!stockValidation) {
+          this.isLoading = false;
+          useNuxtApp().$showToast({ 
+            msg: "มีการเปลี่ยนแปลงสินค้าในตะกร้า กรุณาตรวจสอบอีกครั้ง", 
+            type: "warning" 
+          });
+          // รีเฟรชหน้าเพื่อแสดงข้อมูลล่าสุด
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+          return;
+        }
+        
         const now = new Date();
         const dateString = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 

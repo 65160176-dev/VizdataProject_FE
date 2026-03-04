@@ -21,7 +21,39 @@ export const useCartStore = defineStore({
         if (!token) {
           // โหลดตะกร้าจาก localStorage สำหรับ guest user
           const localCart = localStorage.getItem('product')
-          this.cart = localCart ? JSON.parse(localCart) : []
+          let cartItems = localCart ? JSON.parse(localCart) : []
+          
+          // ตรวจสอบสต็อกล่าสุดจาก API สำหรับทุกสินค้าในตะกร้า
+          if (cartItems.length > 0) {
+            const updatedCart = []
+            for (const item of cartItems) {
+              try {
+                const productId = item._id || item.id
+                if (!productId) continue
+                const product = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${productId}`)
+                const currentStock = Number(product?.stock ?? 0)
+                
+                if (currentStock <= 0) {
+                  // สินค้าหมด ไม่ใส่กลับในตะกร้า
+                  continue
+                }
+                
+                // ปรับจำนวนในตะกร้าให้ไม่เกินสต็อกจริง
+                updatedCart.push({
+                  ...item,
+                  stock: currentStock,
+                  quantity: Math.min(item.quantity, currentStock)
+                })
+              } catch (err) {
+                // ถ้าดึงสินค้าไม่ได้ (อาจถูกลบ) ให้ข้ามไป
+                console.warn(`[Cart] ไม่สามารถเช็คสต็อกสินค้า ${item._id || item.id}:`, err.message)
+              }
+            }
+            cartItems = updatedCart
+            localStorage.setItem('product', JSON.stringify(cartItems))
+          }
+          
+          this.cart = cartItems
           this.loading = false
           return
         }
@@ -114,40 +146,52 @@ export const useCartStore = defineStore({
       const token = localStorage.getItem('token')
       
       if (!token) {
-        // ถ้าไม่มี token ให้ใช้ localStorage แบบเดิม
+        // ถ้าไม่มี token ให้ใช้ localStorage แบบเดิม และเช็คสต็อกล่าสุด
         console.log('No token, using localStorage for cart')
-        const cartItems = this.cart.find(item => {
-          const itemId = item._id || item.id
-          const payloadId = payload._id || payload.id
-          return itemId === payloadId
-        })
-        const qty = payload.quantity ? payload.quantity : 1
-        const productStock = payload.stock || 0
         
-        // Check stock availability
-        if (productStock <= 0) {
-          useNuxtApp().$showToast({ msg: "This product is out of stock", type: "error" })
-          return
-        }
-        
-        if (cartItems) {
-          const newQty = cartItems.quantity + qty
-          // Check if new quantity exceeds stock
-          if (newQty > productStock) {
-            useNuxtApp().$showToast({ msg: `Only ${productStock} items available in stock`, type: "error" })
+        // ตรวจสอบสต็อกล่าสุดจาก API ก่อนเพิ่มลงตะกร้า
+        try {
+          const productResponse = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${payload._id || payload.id}`)
+          const currentStock = Number(productResponse?.stock || 0)
+          
+          if (currentStock <= 0) {
+            useNuxtApp().$showToast({ msg: "สินค้าหมดแล้ว", type: "error" })
             return
           }
-          cartItems.quantity = newQty
-        } else {
-          // Check if quantity exceeds stock for new item
-          if (qty > productStock) {
-            useNuxtApp().$showToast({ msg: `Only ${productStock} items available in stock`, type: "error" })
-            return
-          }
-          this.cart.push({
-            ...payload,
-            quantity: qty
+          
+          const cartItems = this.cart.find(item => {
+            const itemId = item._id || item.id
+            const payloadId = payload._id || payload.id
+            return itemId === payloadId
           })
+          
+          const qty = payload.quantity ? payload.quantity : 1
+          
+          if (cartItems) {
+            const newQty = cartItems.quantity + qty
+            // Check if new quantity exceeds current stock
+            if (newQty > currentStock) {
+              useNuxtApp().$showToast({ msg: `มีสินค้าเหลือเพียง ${currentStock} ชิ้น`, type: "error" })
+              return
+            }
+            cartItems.quantity = newQty
+            cartItems.stock = currentStock // อัพเดทสต็อกล่าสุด
+          } else {
+            // Check if quantity exceeds stock for new item
+            if (qty > currentStock) {
+              useNuxtApp().$showToast({ msg: `มีสินค้าเหลือเพียง ${currentStock} ชิ้น`, type: "error" })
+              return
+            }
+            this.cart.push({
+              ...payload,
+              quantity: qty,
+              stock: currentStock // เก็บสต็อกล่าสุด
+            })
+          }
+        } catch (error) {
+          console.error('Error checking stock:', error)
+          useNuxtApp().$showToast({ msg: "ไม่สามารถตรวจสอบสต็อกได้", type: "error" })
+          return
         }
         
         // Save to localStorage
@@ -325,6 +369,68 @@ export const useCartStore = defineStore({
     // [เพิ่มใหม่ 2] Action สำหรับบันทึกรายการสินค้าที่ถูกเลือก (เรียกใช้ตอนกดปุ่ม Checkout)
     setSelectedItems(payload) {
       this.selectedCheckoutItems = payload
+    },
+    
+    // [เพิ่มใหม่] ตรวจสอบสต็อกล่าสุดก่อน checkout
+    async validateCheckoutStock() {
+      const token = localStorage.getItem('token')
+      let hasStockIssues = false
+      const updatedItems = []
+      
+      for (const item of this.cart) {
+        try {
+          // ดึงข้อมูลสต็อกล่าสุดจาก API
+          const productResponse = await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${item._id || item.id}`)
+          const currentStock = Number(productResponse?.stock || 0)
+          
+          if (currentStock <= 0) {
+            // ถ้าสินค้าหมด ให้ลบออกจากตะกร้า
+            useNuxtApp().$showToast({ 
+              msg: `สินค้า "${item.name}" หมดแล้ว จะถูกลบออกจากตะกร้า`, 
+              type: "warning" 
+            })
+            hasStockIssues = true
+            continue // ข้าม item นี้ (ไม่ใส่ใน updatedItems)
+          }
+          
+          if (item.quantity > currentStock) {
+            // ถ้าจำนวนในตะกร้ามากกว่าสต็อก ให้ปรับจำนวนลง
+            useNuxtApp().$showToast({ 
+              msg: `สินค้า "${item.name}" เหลือเพียง ${currentStock} ชิ้น จำนวนในตะกร้าถูกปรับแล้ว`, 
+              type: "warning" 
+            })
+            updatedItems.push({
+              ...item,
+              quantity: currentStock,
+              stock: currentStock
+            })
+            hasStockIssues = true
+          } else {
+            // สต็อกเพียงพอ 
+            updatedItems.push({
+              ...item,
+              stock: currentStock
+            })
+          }
+        } catch (error) {
+          console.error(`Error checking stock for product ${item._id}:`, error)
+          useNuxtApp().$showToast({ 
+            msg: `ไม่สามารถตรวจสอบสต็อกของ "${item.name}" ได้`, 
+            type: "error" 
+          })
+          return false
+        }
+      }
+      
+      // อัพเดทตะกร้าด้วยข้อมูลสต็อกล่าสุด
+      this.cart = updatedItems
+      
+      // บันทึกลง localStorage สำหรับ guest user
+      if (!token) {
+        localStorage.setItem('product', JSON.stringify(this.cart))
+      }
+      
+      return !hasStockIssues
     }
   },
   getters: {
