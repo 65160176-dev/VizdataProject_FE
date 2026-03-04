@@ -4,7 +4,6 @@
 
     <WidgetsBreadcrumbs :title="seller?.display_name || seller?.name || 'รายละเอียดร้านค้า'" />
 
-    <!-- Seller Header -->
     <div class="seller-header-gradient">
       <div class="container-fluid px-4">
         <div v-if="loading" class="text-center py-3">
@@ -30,39 +29,50 @@
       <div class="container-fluid px-4">
         <div class="row">
 
-          <!-- Sidebar -->
           <div class="col-lg-2 d-none d-lg-block">
             <div class="category-sidebar p-3 bg-white rounded shadow-sm border mb-4">
-              <h6 class="fw-bold mb-3 pb-2 border-bottom">หมวดหมู่สินค้า</h6>
-
-              <div v-if="selectedCategories.length > 0" class="mb-3">
-                <button class="btn btn-outline-danger btn-sm w-100" @click="selectedCategories = []">
-                  <i class="fa fa-times"></i> ล้าง
+              <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                <h6 class="fw-bold mb-0" style="font-size: 15px;">หมวดหมู่สินค้า</h6>
+                <button 
+                  v-if="selectedCategories.length > 0" 
+                  class="btn btn-link text-danger p-0 border-0 btn-clear shadow-none" 
+                  @click="selectedCategories = []"
+                >
+                  ล้าง
                 </button>
               </div>
 
               <div class="category-list">
-                <div v-for="cat in uniqueShopCategories" :key="cat" class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" :value="cat" :id="'cat-' + cat"
-                    v-model="selectedCategories">
-                  <label class="form-check-label w-100" :for="'cat-' + cat"
-                    style="cursor: pointer; font-size: 14px;">
-                    {{ cat }}
-                    <span class="text-muted small float-end" style="font-size: 11px;">({{ getCategoryCount(cat) }})</span>
+                <div v-for="cat in uniqueShopCategories" :key="cat" class="category-item mb-1">
+                  <label :for="'cat-' + cat" class="category-row d-flex align-items-center justify-content-between py-2 px-2 rounded">
+                    <div class="d-flex align-items-center overflow-hidden">
+                      <input 
+                        class="form-check-input me-2 mt-0 custom-checkbox" 
+                        type="checkbox" 
+                        :value="cat" 
+                        :id="'cat-' + cat" 
+                        v-model="selectedCategories"
+                      >
+                      <span class="cat-name text-truncate">{{ cat }}</span>
+                    </div>
+                    <span class="text-muted small ms-1" style="font-size: 11px;">({{ getCategoryCount(cat) }})</span>
                   </label>
                 </div>
-                <div v-if="!loading && uniqueShopCategories.length === 0" class="text-muted small text-center py-3">
+                
+                <div v-if="loading" class="text-center py-3">
+                  <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                </div>
+                <div v-else-if="uniqueShopCategories.length === 0" class="text-muted small text-center py-3">
                   ร้านนี้ยังไม่มีหมวดหมู่
                 </div>
               </div>
             </div>
-          </div>
+            </div>
 
-          <!-- Main Content -->
           <div class="col-lg-10 col-12">
 
             <div class="mb-3">
-              <input v-model="q" class="form-control" placeholder="ค้นหาสินค้า หรือ ร้านค้า" />
+              <input v-model="q" class="form-control shadow-sm" style="border: 1px solid #e6e6e6;" placeholder="ค้นหาสินค้า หรือ ร้านค้า" />
             </div>
 
             <div v-if="bestLoading" class="text-center py-3">
@@ -70,7 +80,7 @@
             </div>
             <div v-else-if="bestSellerItems.length > 0" class="best-seller-section mb-4">
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <h5 class="fw-bold mb-0">สินค้าขายดี</h5>
+                <h5 class="fw-bold mb-0">🔥 สินค้าขายดี</h5>
                 <span class="text-muted small">Top {{ bestSellerItems.length }}</span>
               </div>
               <div class="best-seller-grid">
@@ -82,8 +92,8 @@
                     <div class="card-body d-flex flex-column">
                       <h6 class="card-title mb-1 text-truncate">{{ item.product?.name || 'สินค้า' }}</h6>
                       <div class="mt-auto d-flex justify-content-between align-items-center">
-                        <div class="fw-bold">฿{{ item.product?.price?.toLocaleString() || 0 }}</div>
-                        <span class="text-muted small">ขาย {{ item.totalSold || 0 }}</span>
+                        <div class="fw-bold price-text">฿{{ item.product?.price?.toLocaleString() || 0 }}</div>
+                        <span class="text-muted small" style="font-size: 11px;">ขาย {{ item.totalSold || 0 }}</span>
                       </div>
                     </div>
                   </div>
@@ -104,24 +114,25 @@
               <p class="mt-2">กำลังโหลดสินค้า...</p>
             </div>
 
-            <div v-else-if="filteredProducts.length === 0" class="text-center py-5">
+            <div v-else-if="filteredProducts.length === 0" class="text-center py-5 bg-white rounded shadow-sm">
+              <div class="mb-3"><i class="fa fa-search fa-3x text-muted opacity-25"></i></div>
               <p class="text-muted">ไม่พบสินค้าในร้านนี้</p>
-              <button v-if="selectedCategories.length > 0" class="btn btn-primary btn-sm"
+              <button v-if="selectedCategories.length > 0" class="btn btn-primary btn-sm px-4"
                 @click="selectedCategories = []">ดูสินค้าทั้งหมด</button>
             </div>
 
             <div v-else class="product-grid">
               <div v-for="p in paginatedProducts" :key="p._id" class="product-card">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm border-0">
                   <nuxt-link :to="{ path: '/product/three-column/thumbnail-left', query: { id: p._id, hideSeller: 'true' } }">
                     <img :src="getSellerImage(p.image) || 'https://placehold.co/400'" class="card-img-top" alt="Product Image" />
                   </nuxt-link>
                   <div class="card-body d-flex flex-column">
-                    <h6 class="card-title mb-1 text-truncate">{{ p.name }}</h6>
-                    <div class="mt-auto d-flex justify-content-between align-items-center">
-                      <div class="fw-bold">฿{{ p.price?.toLocaleString() }}</div>
+                    <h6 class="card-title mb-1 text-truncate-2">{{ p.name }}</h6>
+                    <div class="mt-auto d-flex justify-content-between align-items-center pt-2">
+                      <div class="fw-bold price-text">฿{{ p.price?.toLocaleString() }}</div>
                       <button class="btn-cart" @click="addToCart(p)" title="เพิ่มลงตะกร้า">
-                        <Icon name="feather:shopping-cart" size="18" />
+                        <i class="fa fa-shopping-cart"></i>
                       </button>
                     </div>
                   </div>
@@ -129,7 +140,6 @@
               </div>
             </div>
 
-            <!-- Pagination -->
             <div v-if="totalPages > 1" class="d-flex justify-content-center align-items-center gap-3 py-4">
               <button class="btn btn-sm btn-outline-secondary" :disabled="currentPage === 1"
                 @click="goToPage(currentPage - 1)">
@@ -256,13 +266,13 @@ onMounted(() => {
 
 const getSellerImage = (path) => {
   if (!path) return null
-  if (path.startsWith('data:')) return path  // base64 data URL จาก MongoDB
+  if (path.startsWith('data:')) return path
   if (path.startsWith('http')) return path
   const cleanPath = path.startsWith('/') ? path.slice(1) : path
   return `${BACKEND_URL}/${cleanPath}`
 }
 
-// --- Logic หมวดหมู่ ---
+// --- Logic หมวดหมู่ (ใช้ของเดิม เพราะดึงจากสินค้าในร้าน) ---
 const uniqueShopCategories = computed(() => {
   const cats = allProducts.value
     .map(p => p.category)
@@ -325,17 +335,6 @@ function addToCart(product) {
     useNuxtApp().$showToast({ msg: `เพิ่ม ${product.name} ลงตะกร้าเรียบร้อย`, type: 'success' })
   }
 }
-
-function addToWishlist(product) {
-  productStore.addToWishlist(product)
-  if (useNuxtApp().$showToast) {
-    useNuxtApp().$showToast({ msg: `เพิ่ม ${product.name} ในรายการที่ชอบ`, type: 'info' })
-  }
-}
-
-function goToProduct(productId) {
-  window.location.href = `/product/three-column/thumbnail-left?id=${productId}&hideSeller=true`
-}
 </script>
 
 <style scoped>
@@ -370,91 +369,93 @@ function goToProduct(productId) {
 
 /* Marketplace */
 .marketplace {
-  background: #fafafa;
+  background: #f8f9fa;
+  min-height: 100vh;
 }
 
 .marketplace input.form-control {
   height: 48px;
   border-radius: 6px;
   padding: 0 16px;
-  border: 1px solid #e6e6e6;
 }
 
-/* Sidebar */
-.category-sidebar {}
+/* --- หมวดหมู่ Sidebar แบบใหม่ --- */
+.category-sidebar { 
+  border-radius: 12px !important;
+  background: white;
+}
+
+.btn-clear { font-size: 13px; text-decoration: none; font-weight: 500; color: #dc3545; }
 
 .category-list {
-  max-height: 500px;
+  max-height: 350px; 
   overflow-y: auto;
+  padding-right: 5px;
+  scrollbar-width: thin;
+  scrollbar-color: #eee transparent;
 }
 
-.category-list::-webkit-scrollbar {
-  width: 4px;
+.category-list::-webkit-scrollbar { width: 4px; }
+.category-list::-webkit-scrollbar-track { background: transparent; }
+.category-list::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
+
+.category-row { cursor: pointer; transition: all 0.2s; user-select: none; }
+.category-row:hover { background-color: #fff1f0; color: #ff4c3b; }
+.custom-checkbox:checked { background-color: #ff4c3b; border-color: #ff4c3b; }
+
+.cat-name { 
+  font-size: 14px; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  max-width: 130px;
 }
+/* -------------------------------- */
 
-.category-list::-webkit-scrollbar-thumb {
-  background: #ddd;
-  border-radius: 4px;
-}
-
-/* Card */
-.marketplace .card { border:1px solid #eee; border-radius:8px; transition:transform .18s ease, box-shadow .18s ease; overflow:hidden; }
-.marketplace .card:hover { transform:translateY(-6px); box-shadow:0 12px 30px rgba(17,24,39,0.08); }
-.marketplace .card .card-img-top { background:#f5f5f5; height:200px; object-fit:cover; }
-.marketplace .card .card-body { padding:10px; }
-.marketplace .card .card-title { font-size:14px; line-height:1.2; }
-.marketplace .card .fw-bold { color:#111827; font-size:16px; }
-.marketplace .card .text-muted { color:#6b7280; }
-.marketplace .btn-sm { padding:6px 10px; border-radius:6px; }
-
-/* Cart Button */
-.btn-cart {
-  background: #ff4c3b;
-  padding: 8px 14px;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ff4c3b;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: white;
-  box-shadow: 0 2px 6px rgba(255, 76, 59, 0.3);
-}
-
-.btn-cart:hover {
-  background: white;
-  color: #ff4c3b;
-  border-color: #ff4c3b;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 76, 59, 0.3);
-}
-
-/* 5 Columns Grid */
-.product-grid {
+/* Product Grid & Cards */
+.product-grid, .best-seller-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  gap: 16px;
 }
 
 .product-card {
   display: block;
   overflow: hidden;
 }
-.product-card .card { overflow: hidden; }
-.product-card .card img.card-img-top {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  display: block;
-  background: #f5f5f5;
+
+.product-card .card { 
+  transition: transform 0.3s, box-shadow 0.3s; 
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.best-seller-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+.product-card .card:hover { 
+  transform: translateY(-5px); 
+  box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important; 
 }
+
+.card-img-top { height: 200px; object-fit: cover; background: #fdfdfd; }
+.price-text { color: #ff4c3b; font-size: 17px; font-weight: 700; }
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13.5px;
+  height: 40px;
+  line-height: 1.4;
+}
+
+/* Cart Button */
+.btn-cart {
+  background: #ff4c3b; color: white; border: none;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease;
+}
+.btn-cart:hover { transform: scale(1.1); background: #e6392a; }
 
 /* Responsive */
 @media (max-width: 1400px) {
