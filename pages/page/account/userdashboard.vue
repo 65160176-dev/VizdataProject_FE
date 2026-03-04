@@ -178,36 +178,30 @@ watch(() => auth.user, (val) => {
 
 // ในไฟล์ userdashboard.vue
 let refreshInterval = null;
+let isFetchingOrders = false;
 
 onMounted(async () => {
   initDashboard();
 
   const orderStore = useOrderStore();
-  await orderStore.fetchOrders();
+  if (!isFetchingOrders) {
+    isFetchingOrders = true;
+    await orderStore.fetchOrders().finally(() => { isFetchingOrders = false; });
+  }
 
   if (!refreshInterval) {
     refreshInterval = setInterval(async () => {
-      await orderStore.fetchOrders();
+      if (isFetchingOrders) return; // ป้องกัน request ซ้อนกัน
+      isFetchingOrders = true;
+      await orderStore.fetchOrders().finally(() => { isFetchingOrders = false; });
+    }, 60000); // เช็คทุก 60 วินาที
+  }
+});
 
-      // ✅ เพิ่ม Logic: ตรวจสอบออเดอร์ที่มีสถานะ Shipped และเวลาเกิน 3 นาที
-      const now = new Date();
-      orderStore.allOrders.forEach(async (order) => {
-        if (order.status.toLowerCase() === 'shipped' && order.updatedAt) {
-          const updatedTime = new Date(order.updatedAt);
-          const diffMinutes = (now - updatedTime) / (1000 * 60);
-
-          if (diffMinutes >= 3) {
-            console.log(`Order ${order.orderId} is over 3 mins, auto-completing...`);
-            await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/order/${order._id}`, {
-              method: 'PUT',
-              headers: { Authorization: `Bearer ${auth.token}` },
-              body: { status: 'completed' }
-            });
-            await orderStore.fetchOrders();
-          }
-        }
-      });
-    }, 15000); // เช็คทุก 15 วินาที
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
   }
 });
 </script>

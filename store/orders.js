@@ -5,7 +5,8 @@ import { useAuthStore } from '~/store/auth'
 export const useOrderStore = defineStore('orders', {
   state: () => ({
     allOrders: [],
-    isLoading: false
+    isLoading: false,
+    _fetchPromise: null
   }),
 
   getters: {
@@ -14,7 +15,10 @@ export const useOrderStore = defineStore('orders', {
 
   actions: {
     async fetchOrders() {
+      // ป้องกัน concurrent requests
+      if (this._fetchPromise) return this._fetchPromise
       this.isLoading = true
+      this._fetchPromise = (async () => {
       try {
         const config = useRuntimeConfig()
         const apiBase = config.public?.apiBase || 'https://vizdataprojectbe-production.up.railway.app/api'
@@ -36,10 +40,15 @@ export const useOrderStore = defineStore('orders', {
         const queryParts = []
         if (userId) {
           queryParts.push(isSeller ? `sellerId=${encodeURIComponent(userId)}` : `userId=${encodeURIComponent(userId)}`)
+        } else {
+          this.allOrders = []
+          return
         }
+        queryParts.push('page=1')
+        queryParts.push('limit=200')
         const query = queryParts.length ? `?${queryParts.join('&')}` : ''
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timeout')), 10000)
+          setTimeout(() => reject(new Error('Request timeout')), 30000)
         )
         const fetchPromise = $fetch(`${apiBase}/order${query}`, { headers })
         const data = await Promise.race([fetchPromise, timeoutPromise])
@@ -54,7 +63,10 @@ export const useOrderStore = defineStore('orders', {
         console.error('Fetch error:', e)
       } finally {
         this.isLoading = false
+        this._fetchPromise = null
       }
+      })()
+      return this._fetchPromise
     },
 
     async placeOrder(payload) {
