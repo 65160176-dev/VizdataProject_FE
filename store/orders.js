@@ -14,7 +14,11 @@ export const useOrderStore = defineStore('orders', {
     async fetchOrders() {
       this.isLoading = true
       try {
-        const data = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/order')
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timeout')), 10000)
+        )
+        const fetchPromise = $fetch('https://vizdataprojectbe-production.up.railway.app/api/order')
+        const data = await Promise.race([fetchPromise, timeoutPromise])
         if (data) {
           this.allOrders = data.map(o => ({
             ...o,

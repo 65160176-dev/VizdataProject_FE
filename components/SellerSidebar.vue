@@ -164,18 +164,21 @@ const { $showToast } = useNuxtApp()
 const displayName = computed(() => auth.userName || 'ร้านของฉัน')
 
 // --- Avatar Logic ---
+const avatarTimestamp = ref(Date.now())
 const avatar = computed(() => {
   const userAvatar = auth.user?.avatar || null
   if (userAvatar) {
-    if (userAvatar.startsWith('data:') || userAvatar.startsWith('blob:') || userAvatar.startsWith('http')) return userAvatar
+    if (userAvatar.startsWith('data:') || userAvatar.startsWith('blob:')) return userAvatar
+    if (userAvatar.startsWith('http')) return `${userAvatar}?t=${avatarTimestamp.value}`
     const cleanPath = userAvatar.startsWith('/') ? userAvatar : `/${userAvatar}`
-    return `${API_BASE_URL}${cleanPath}`
+    return `${API_BASE_URL}${cleanPath}?t=${avatarTimestamp.value}`
   }
   return '/images/avtar.jpg'
 })
 
 const fileInputRef = ref(null)
 const isUploading = ref(false)
+const localPreview = ref(null)
 const triggerFileInput = () => { if (!isUploading.value) fileInputRef.value.click() }
 const handleImageError = (e) => { e.target.src = '/images/avtar.jpg' }
 function clearAll() {
@@ -196,9 +199,16 @@ const handleFileUpload = async (event) => {
       body: formData
     })
     if (response.success) {
-      auth.user.avatar = response.data.avatar
+      auth.$patch((state) => {
+        if (state.user) state.user.avatar = response.data.avatar
+      })
+      avatarTimestamp.value = Date.now()
+      $showToast('อัพโหลดรูปโปรไฟล์สำเร็จ', 'success')
     }
-  } catch (error) { console.error('Upload Error:', error) }
+  } catch (error) {
+    console.error('Upload Error:', error)
+    $showToast('อัพโหลดรูปโปรไฟล์ไม่สำเร็จ', 'error')
+  }
   finally { isUploading.value = false; if (fileInputRef.value) fileInputRef.value.value = '' }
 }
 

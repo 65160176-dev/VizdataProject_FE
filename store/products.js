@@ -24,11 +24,11 @@ export const useProductStore = defineStore({
         if (!force && this.products.length > 0) return
         this.loading = true
         try {
-          const response = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/product')
-          console.log('Fetched products:', response)
-          if (response && response.length > 0) {
-            console.log('First product sample:', response[0])
-          }
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Request timeout')), 10000)
+          )
+          const fetchPromise = $fetch('https://vizdataprojectbe-production.up.railway.app/api/product')
+          const response = await Promise.race([fetchPromise, timeoutPromise])
           const list = Array.isArray(response) ? response : []
           this.products = list
           this.productslist = list

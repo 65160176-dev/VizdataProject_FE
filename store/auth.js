@@ -27,39 +27,52 @@ export const useAuthStore = defineStore('auth', {
       const savedUserName = localStorage.getItem('userName')
       const savedUserType = localStorage.getItem('userType')
       const savedToken = localStorage.getItem('token')
-      // do not rely on localStorage for avatar; server is authoritative
-      const savedAvatar = null
 
+      // ✅ Step 1: โหลดจาก localStorage ก่อนทันทีเพื่อให้ UI แสดงได้เลย
       if (savedUser && savedToken) {
         try {
-          const verify = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/auth/me', {
-            headers: { Authorization: `Bearer ${savedToken}` }
-          })
+          const localUser = JSON.parse(savedUser)
+          this.user = localUser
+          this.userName = localUser.username || savedUserName
+          this.token = savedToken
+          this.isLoggedIn = true
+          if (savedUserType !== null) this.userType = Number(savedUserType)
+        } catch (e) {}
+
+        // ✅ Step 2: Verify กับ Server ใน background (ไม่ await = ไม่ block UI)
+        $fetch('https://vizdataprojectbe-production.up.railway.app/api/auth/me', {
+          headers: { Authorization: `Bearer ${savedToken}` }
+        }).then(verify => {
           if (verify && verify.success) {
-            // use server user as authoritative (includes avatar)
             const serverUser = verify.data
             this.user = serverUser
             this.userName = serverUser.username || savedUserName
-            this.token = savedToken
-            this.isLoggedIn = true
             if (serverUser.userType !== undefined && serverUser.userType !== null) this.userType = Number(serverUser.userType)
-
-            // sync localStorage with server
             try {
               localStorage.setItem('user', JSON.stringify(serverUser))
               localStorage.setItem('userName', this.userName)
               localStorage.setItem('userType', String(this.userType))
-              // serverUser.avatar will be stored in `this.user.avatar`; do not mirror to localStorage
             } catch (e) {}
-
-            return
+          } else {
+            // token invalid -> logout
+            this._clearSession()
           }
-        } catch (e) {
-          // token invalid or network error -> fallthrough to clear saved
-        }
+        }).catch(() => {
+          // network error: keep local session, don't force logout
+        })
+
+        return
       }
 
-      // If here, no valid saved session -> clear any saved auth data
+      // ไม่มี saved session -> clear
+      this._clearSession()
+    },
+
+    _clearSession() {
+      this.user = null
+      this.userName = null
+      this.isLoggedIn = false
+      this.token = null
       try {
         localStorage.removeItem('user')
         localStorage.removeItem('userName')

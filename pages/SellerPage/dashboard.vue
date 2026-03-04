@@ -55,20 +55,15 @@ const orderStore = useOrderStore()
 const productStore = useProductStore()
 const loading = ref(true)
 
-onMounted(async () => {
-  try {
-    console.log("🚀 Dashboard: Start Fetching...")
-    // เรียกใช้ Store ทั้ง 2 ตัวพร้อมกัน
-    await Promise.all([
-      orderStore.fetchOrders(),
-      productStore.fetchProducts()
-    ])
-    console.log("✅ Data Loaded: Orders =", orderStore.allOrders?.length, ", Products =", productStore.products?.length)
-  } catch (error) {
-    console.error('❌ Dashboard Error:', error)
-  } finally {
-    loading.value = false
-  }
+onMounted(() => {
+  // แสดงหน้าทันที แล้วโหลดข้อมูลใน background
+  setTimeout(() => { loading.value = false }, 300)
+
+  // โหลดข้อมูลใน background ไม่ block UI
+  Promise.all([
+    orderStore.fetchOrders(),
+    productStore.fetchProducts()
+  ]).catch(err => console.error('❌ Dashboard Error:', err))
 })
 </script>
 
