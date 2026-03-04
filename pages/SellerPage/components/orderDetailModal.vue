@@ -284,25 +284,103 @@ const submitReject = async () => {
     closeRejectModal()
 }
 
-const handleAction = async (newStatus, reason = null) => {
-    // 1. Check Stock (คงเดิม)
-    if (newStatus === 'shipped') {
-        const items = props.order.item || props.order.items || []
-        const outOfStockItem = items.find(item => {
-            const stock = Number(item.productId?.stock || 0)
-            return typeof item.productId?.stock !== 'undefined' && stock <= 0
-        })
+const getItemProductId = (item) => {
+    const product = item?.productId
+    if (!product) return null
+    if (typeof product === 'string') return product
+    return product?._id || product?.id || null
+}
 
-        if (outOfStockItem) {
-            const currentStock = outOfStockItem.productId?.stock ?? 0
+const getItemQty = (item) => {
+    const qty = Number(item?.qty ?? item?.quantity ?? 1)
+    return !isNaN(qty) && qty > 0 ? qty : 1
+}
+
+const getKnownStock = (item) => {
+    const stock = Number(item?.productId?.stock ?? item?.stock)
+    return isNaN(stock) ? null : stock
+}
+
+const getApiBaseForRest = () => {
+    const fromConfig = String(config.public.apiBase || '').replace(/\/$/, '')
+    if (fromConfig.endsWith('/api')) return fromConfig
+    if (fromConfig) return `${fromConfig}/api`
+    return 'https://vizdataprojectbe-production.up.railway.app/api'
+}
+
+const fetchLiveStock = async (item) => {
+    const knownStock = getKnownStock(item)
+    if (knownStock !== null) return knownStock
+
+    const productId = getItemProductId(item)
+    if (!productId) return null
+
+    try {
+        const product = await $fetch(`${getApiBaseForRest()}/product/${productId}`)
+        const liveStock = Number(product?.stock)
+        return isNaN(liveStock) ? null : liveStock
+    } catch (error) {
+        console.warn('Cannot fetch stock for product:', productId, error)
+        return null
+    }
+}
+
+const handleAction = async (newStatus, reason = null) => {
+    // 1. Check Stock — เช็คทั้งตอน Accept (preparing) และตอนส่ง (shipped)
+    if (newStatus === 'shipped' || newStatus === 'preparing') {
+        const items = props.order.item || props.order.items || []
+
+        const itemChecks = await Promise.all(items.map(async (item) => ({
+            item,
+            qty: getItemQty(item),
+            stock: await fetchLiveStock(item)
+        })))
+
+        const unknownStockItems = itemChecks.filter(x => x.stock === null)
+        if (unknownStockItems.length > 0) {
             Swal.fire({
                 icon: 'warning',
-                title: 'ไม่สามารถส่งสินค้าได้',
+                title: 'ไม่สามารถตรวจสอบสต็อกได้',
                 html: `
                     <div class="text-start px-3">
-                        <p class="mb-2">สินค้า: <strong>${outOfStockItem.name}</strong></p>
-                        <p class="mb-3">สถานะ: <span class="text-danger fw-bold">สินค้าหมด (Stock: ${currentStock})</span></p>
-                        <small class="text-muted">กรุณาเติมสต็อกสินค้าในคลังสินค้าก่อนดำเนินการเปลี่ยนสถานะ</small>
+                        <p class="mb-2">ไม่สามารถตรวจสอบสต็อกของสินค้าบางรายการได้</p>
+                        <small class="text-muted">กรุณาลองใหม่อีกครั้ง หรือตรวจสอบข้อมูลสินค้าในคลัง</small>
+                    </div>
+                `,
+                confirmButtonText: 'เข้าใจแล้ว',
+                confirmButtonColor: '#ff9f43',
+                focusConfirm: false,
+                customClass: {
+                    container: 'swal-z-index-fix',
+                    popup: 'rounded-4 shadow-lg border-0',
+                    confirmButton: 'rounded-pill px-4 shadow-sm'
+                }
+            })
+            return
+        }
+
+        const stockIssueItems = itemChecks.filter(x => {
+            const stock = Number(x.stock)
+            return stock <= 0 || x.qty > stock
+        })
+
+        if (stockIssueItems.length > 0) {
+            const actionLabel = newStatus === 'shipped' ? 'ส่งสินค้า' : 'รับออเดอร์'
+            const listHtml = stockIssueItems.map(({ item, qty, stock }) => {
+                const isOutOfStock = stock <= 0
+                const statusText = isOutOfStock
+                    ? `<span class="text-danger fw-bold">สินค้าหมด (Stock: ${stock})</span>`
+                    : `<span class="text-danger fw-bold">สั่ง ${qty} ชิ้น แต่เหลือในสต็อกเพียง ${stock} ชิ้น</span>`
+                return `<div class="mb-2 pb-2 border-bottom"><p class="mb-1">สินค้า: <strong>${item.name}</strong></p><p class="mb-0">${statusText}</p></div>`
+            }).join('')
+
+            Swal.fire({
+                icon: 'warning',
+                title: `ไม่สามารถ${actionLabel}ได้`,
+                html: `
+                    <div class="text-start px-3">
+                        ${listHtml}
+                        <small class="text-muted">กรุณาเติมสต็อกสินค้าในคลังสินค้าก่อนดำเนินการ</small>
                     </div>
                 `,
                 confirmButtonText: 'เข้าใจแล้ว',
