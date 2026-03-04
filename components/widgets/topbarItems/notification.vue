@@ -1,5 +1,5 @@
 <template>
-    <li class="mobile-wishlist notification-wrapper">
+    <li class="notification-wrapper">
         <a href="javascript:void(0)" class="notification-trigger" style="color: inherit;">
             <div class="notification-icon-wrapper">
                 <i class="fa fa-bell" aria-hidden="true"></i>
@@ -426,5 +426,58 @@ export default {
 .delete-action:hover {
     color: #d32f2f;
     background-color: rgba(255, 76, 59, 0.1);
+}
+
+/* ==========================================
+   CSS จัดตำแหน่งกระดิ่งในมือถือให้อยู่ "ซ้ายบน"
+============================================= */
+@media (max-width: 577px) {
+
+    /* 1. กระชากกระดิ่งจากฝั่งขวา ให้ไปล็อคติดซ้ายบนสุดของจอ */
+    .notification-wrapper {
+        position: absolute !important;
+        left: 15px !important;
+        /* ห่างจากขอบซ้าย */
+        top: 35px !important;
+        /* ปรับความสูงให้ตรงกับโลโก้/เมนู */
+        right: auto !important;
+        /* ยกเลิกการชิดขวา */
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 9999 !important;
+    }
+
+    /* 2. ซ่อนคำว่า "Notification" ให้เหลือแต่ไอคอนกระดิ่ง */
+    .notification-trigger {
+        font-size: 0 !important;
+        color: transparent !important;
+        display: flex;
+        align-items: center;
+    }
+
+    /* 3. ปรับขนาดไอคอนกระดิ่งให้ใหญ่ชัดเจน */
+    .notification-icon-wrapper {
+        margin: 0 !important;
+    }
+
+    .notification-icon-wrapper i {
+        font-size: 24px !important;
+        color: #333 !important;
+        /* เปลี่ยนสีถ้าต้องการ */
+    }
+
+    /* 4. ปรับขนาดตัวเลขแจ้งเตือน (Badge) */
+    .badge-count {
+        font-size: 10px !important;
+    }
+
+    /* 5. 🚨 บังคับให้กล่องแจ้งเตือนเวลากด กางออกไปทางขวา (ไม่งั้นจะทะลุจอซ้าย) */
+    .notification-dropdown {
+        left: 0 !important;
+        right: auto !important;
+        width: 300px !important;
+        /* ขนาดกล่อง popup ในมือถือ */
+        top: 40px !important;
+    }
 }
 </style>

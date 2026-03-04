@@ -450,29 +450,366 @@ export default {
 </script>
 
 <style scoped>
-/* ... (CSS เดิมของคุณ) ... */
-
-/* ✅ เพิ่มส่วนนี้: ปรับแต่งปุ่มเมื่อถูก Disable (สินค้าหมด Stock) */
+/* ปรับแต่งปุ่มเมื่อถูก Disable (สินค้าหมด Stock) */
 .quantity-btn:disabled {
   opacity: 0.5 !important;
-  /* ทำให้ปุ่มจางลง 50% */
   background-color: #e9ecef !important;
-  /* เปลี่ยนพื้นหลังเป็นสีเทา */
   color: #6c757d !important;
-  /* เปลี่ยนสีไอคอนเป็นสีเทาเข้ม */
   cursor: not-allowed !important;
-  /* เปลี่ยนเมาส์เป็นเครื่องหมายห้าม */
   border-color: #ced4da !important;
 }
 
 .product-img {
   width: 60px;
-  /* กำหนดความกว้างตามต้องการ */
   height: 60px;
-  /* กำหนดความสูงให้เท่ากัน (แนะนำสี่เหลี่ยมจัตุรัส) */
   object-fit: cover;
-  /* สำคัญ! ช่วยให้รูปไม่บีบ ไม่ยืด แต่จะตัดส่วนเกินออกแทน */
   border-radius: 5px;
-  /* (ทางเลือก) ลบเหลี่ยมมุมภาพเล็กน้อย */
+}
+
+/* ==========================================
+   🔥 CSS แปลง Table เป็น Card (Mobile Only) 🔥
+============================================= */
+@media (max-width: 767px) {
+
+  /* ลดขอบจอด้านข้าง */
+  .container-fluid {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+
+  /* 📌 1. นำ Checkbox "เลือกทั้งหมด" (Select All) กลับมาโชว์ */
+  :deep(.cart-table thead) {
+    display: block !important;
+    margin-bottom: 15px;
+    background: transparent !important;
+  }
+
+  :deep(.cart-table thead tr) {
+    display: flex !important;
+    align-items: center;
+    border: none !important;
+    padding: 0 5px;
+  }
+
+  :deep(.cart-table thead th) {
+    display: none !important;
+    /* ซ่อนคำว่า Image, Shop, Product ฯลฯ */
+  }
+
+  :deep(.cart-table thead th:nth-child(1)) {
+    display: flex !important;
+    /* โชว์แค่ช่อง Checkbox ซ้ายสุด */
+    align-items: center;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  /* เติมคำอธิบายหลัง Checkbox */
+  :deep(.cart-table thead th:nth-child(1))::after {
+    content: "เลือกทั้งหมด";
+    margin-left: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  /* ขยายขนาด Checkbox เลือกทั้งหมด */
+  :deep(.cart-table thead th:nth-child(1) input[type="checkbox"]) {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #ff4c3b;
+    /* เปลี่ยนสีตอนติ๊กให้เข้ากับธีมแดง */
+  }
+
+  /* พับ Table ให้เป็น Block */
+  :deep(.cart-table),
+  :deep(.cart-table tbody),
+  :deep(.cart-table tr),
+  :deep(.cart-table td) {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* 📌 จัดโครงร่าง Grid ใหม่ ให้ทุกอย่างอยู่ถูกที่ */
+  :deep(.cart-table tr.align-middle) {
+    position: relative;
+    border: 1px solid #eaeaea !important;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    padding: 15px 15px 10px 10px !important;
+    /* ปรับลดขอบซ้ายนิดนึง */
+    background-color: #fff;
+    display: grid !important;
+    grid-template-columns: 28px 65px 1fr auto;
+    /* เว้นที่ให้ Checkbox 28px */
+    grid-template-areas:
+      "shop  shop  shop  shop"
+      "check image title title"
+      "check image price price"
+      "check image qty   qty"
+      "total total total total";
+    grid-column-gap: 12px;
+    align-items: start;
+  }
+
+  /* ล้าง Padding, Border ของ td เดิมทิ้ง และลบพื้นหลังขาว */
+  :deep(.cart-table td) {
+    border: none !important;
+    padding: 0 !important;
+    text-align: left !important;
+    background-color: transparent !important;
+  }
+
+  /* --- 2. Checkbox ของสินค้าแต่ละชิ้น --- */
+  :deep(.cart-table td:nth-child(1)) {
+    grid-area: check;
+    align-self: stretch;
+    display: flex;
+
+    /* 1. เปลี่ยนจาก center เป็น flex-start เพื่อให้เราคุมระยะจากด้านบนเองได้ */
+    align-items: flex-start !important;
+    justify-content: flex-start;
+
+    /* 2. 👇 ใช้ Padding ในการขยับตำแหน่งทีละนิด */
+    padding-top: 22px !important;
+    /* เพิ่มเลขนี้เพื่อขยับ "ลง" */
+    padding-left: 17px !important;
+    /* เพิ่มเลขนี้เพื่อขยับไปทาง "ขวา" */
+  }
+
+  /* ส่วนของ Input ขนาดเดิมที่คุณตั้งไว้ */
+  :deep(.cart-table td:nth-child(1) input[type="checkbox"]) {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #ff4c3b;
+  }
+
+  /* --- 3. รูปภาพสินค้า --- */
+  :deep(.cart-table td:nth-child(2)) {
+    grid-area: image;
+  }
+
+  :deep(.cart-table td:nth-child(2) .product-img) {
+    width: 70% !important;
+    height: 70px !important;
+    border: 1px solid #f1f1f1;
+    border-radius: 6px;
+  }
+
+  /* --- 4. ชื่อร้าน (Shop) --- */
+  :deep(.cart-table td:nth-child(3)) {
+    grid-area: shop;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid #f1f1f1 !important;
+    margin-bottom: 10px !important;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    /* แก้ margin-left ที่ติดลบเยอะเกินไป ให้กลับมาพอดีขอบ */
+    margin-left: -120px !important;
+  }
+
+  /* --- 5. ชื่อสินค้า (Title) --- */
+  :deep(.cart-table td:nth-child(4)) {
+    grid-area: title;
+    padding-right: 25px !important;
+    /* เว้นที่ให้ปุ่ม X */
+    margin-bottom: 5px !important;
+    /* เคลียร์ margin ที่ทำให้ข้อความกระเด็น */
+    margin-left: 50px !important;
+    margin-top: 0 !important;
+  }
+
+  :deep(.product-name-link) {
+    font-size: 14px !important;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  :deep(.mobile-cart-content) {
+    display: none !important;
+  }
+
+  /* --- 6. ราคาสินค้าต่อชิ้น (Price) --- */
+  :deep(.cart-table td:nth-child(5)) {
+    grid-area: price;
+    align-self: center;
+    /* เคลียร์ margin ที่ทำให้ทับกัน */
+    margin-left: 100px !important;
+    margin-top: 0 !important;
+  }
+
+  :deep(.price-text) {
+    font-size: 15px !important;
+    color: rgb(255, 76, 59);
+    margin: 0 !important;
+    font-weight: bold;
+  }
+
+  /* --- 7. จำนวน และ จำนวนชิ้นที่เหลือ (Qty & Stock) --- */
+  :deep(.cart-table td:nth-child(6)) {
+    grid-area: qty;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    /* ดึงปุ่มให้มาชิดซ้าย ตรงกับราคาและชื่อสินค้า */
+    align-items: flex-start;
+    margin-left: 10px !important;
+    margin-top: 5px !important;
+    margin-left: 80px !important;
+
+  }
+
+  :deep(.qty-box) {
+    width: 100px !important;
+    justify-content: flex-start !important;
+  }
+
+  :deep(.cart-table td:nth-child(6) .text-danger) {
+    font-size: 11px !important;
+    margin-top: 4px !important;
+    text-align: left;
+    /* เปลี่ยนข้อความเหลือชิ้นให้ชิดซ้าย */
+    font-weight: 600;
+    margin-left: 30px !important;
+  }
+
+  /* --- 8. ปุ่มกากบาท ลบสินค้า (X) --- */
+  :deep(.cart-table td:nth-child(7)) {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: auto !important;
+    z-index: 2;
+  }
+
+  :deep(.cart-table td:nth-child(7) a i) {
+    font-size: 16px;
+    color: rgb(255, 76, 59);
+    margin-left: 100px !important;
+  }
+
+  /* --- 9. ราคารวมของสินค้านั้น (Total Price) --- */
+  :deep(.cart-table td:nth-child(8)) {
+    grid-area: total;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+
+    border-top: 1px dashed #eee !important;
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+
+    /* 🚨 ลด Padding ขวาลงนิดนึงเพื่อเพิ่มพื้นที่ให้ตัวเลข */
+    padding-left: 5px !important;
+    padding-right: 0px !important;
+    background-color: transparent !important;
+  }
+
+  /* 🏷️ ส่วนของข้อความ "ราคารวม:" (ฝั่งซ้าย) */
+  :deep(.cart-table td:nth-child(8))::before {
+    content: "ราคารวม:";
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #666 !important;
+    display: block !important;
+    /* ห้ามคำว่าราคารวมหดขนาด */
+    flex-shrink: 0 !important;
+    margin-right: 10px !important;
+  }
+
+  /* 💰 ส่วนของตัวเลขราคา (ฝั่งขวา) */
+  :deep(.total-text) {
+    font-size: 17px !important;
+    color: #ff4c3b !important;
+    margin: 0 !important;
+    font-weight: 700 !important;
+    display: block !important;
+    text-align: right !important;
+
+    /* ✅ บรรทัดสำคัญ: ห้ามตัดคำ ห้ามขึ้นบรรทัดใหม่เด็ดขาด ✅ */
+    white-space: nowrap !important;
+    /* ให้ตัวเลขใช้พื้นที่ที่เหลือทั้งหมด */
+    flex-grow: 1 !important;
+    margin-right: 25px !important;
+  }
+
+  /* ==========================================
+     จัดหน้าสรุปยอดตะกร้าล่างสุด (Total Footer)
+  ============================================= */
+  :deep(.cart-table tfoot) {
+    display: block !important;
+  }
+
+  :deep(.cart-table tfoot tr) {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 15px 20px !important;
+    background-color: #f8f9fa !important;
+    border: 1px solid #eee !important;
+    border-radius: 8px !important;
+    margin-top: 10px !important;
+  }
+
+  :deep(.cart-table tfoot td.total-label) {
+    text-align: left !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    flex-grow: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  :deep(.cart-table tfoot td.col-right) {
+    flex-shrink: 0 !important;
+    text-align: right !important;
+  }
+
+  :deep(.cart-table tfoot .col-right h2) {
+    font-size: 20px !important;
+    margin: 0 !important;
+    color: #ff4c3b !important;
+    font-weight: 700 !important;
+  }
+
+  /* ==========================================
+     ปุ่ม Checkout และ Continue Shopping 
+  ============================================= */
+  .cart-buttons {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+  }
+
+  .cart-buttons .col-6 {
+    width: 100%;
+    padding: 0;
+  }
+
+  .cart-buttons .btn {
+    width: 100%;
+    display: block;
+    padding: 12px 0;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+
+  .cart-buttons .col-6:first-child .btn-solid {
+    background-color: transparent !important;
+    color: #ff4c3b !important;
+    border: 1px solid #ff4c3b !important;
+  }
 }
 </style>

@@ -18,7 +18,7 @@
 
             <HeaderNotification v-if="isLogin" />
 
-            <li class="mobile-wishlist" v-if="isLogin">
+            <li class="mobile-affiliate" v-if="isLogin">
               <a href="javascript:void(0)" @click="checkAffiliateStatus" style="color: inherit;">
                 <i class="fa fa-handshake-o" aria-hidden="true"></i> Affiliate
               </a>
@@ -90,33 +90,23 @@ export default {
       }
     },
     async checkAffiliateStatus() {
-      console.log('🔗 Affiliate button clicked')
-      // เช็คว่าเป็น affiliate หรือยัง
       try {
         const authStore = useAuthStore();
         const userId = authStore.user?._id || authStore.user?.id;
-        console.log('👤 User ID:', userId)
-        
+
         if (!userId) {
-          console.log('❌ No user ID, redirecting to login')
           this.$router.push('/page/auth/LoginPage');
           return;
         }
 
-        console.log('📡 Checking affiliate status...')
         const data = await affiliateService.getMyAffiliate(userId);
-        console.log('✅ Affiliate data found:', data)
-        
+
         if (data && data._id) {
           this.isAffiliate = true;
           this.affiliateData = data;
-          console.log('🚀 Navigating to affiliate dashboard...')
-        this.$router.push('/afiliate/afiliatePage');
-      }
+          this.$router.push('/afiliate/afiliatePage');
+        }
       } catch (error) {
-        console.log('⚠️ Not an affiliate yet, showing registration popup')
-        console.error('Affiliate check error:', error)
-        // ยังไม่ได้สมัคร affiliate
         this.isAffiliate = false;
         this.showAffiliate = true;
       }
@@ -140,7 +130,6 @@ export default {
         }
         this.$router.push('/afiliate/afiliatePage');
       } catch (error) {
-        console.error('Failed to register affiliate:', error);
         if (useNuxtApp().$showToast) {
           useNuxtApp().$showToast({ msg: 'เกิดข้อผิดพลาด กรุณาลองใหม่', type: 'error' });
         }
@@ -148,10 +137,27 @@ export default {
     }
   },
   created() {
-    // ตรวจสอบสถานะ Login ตอนโหลดหน้าเว็บ
     this.isLogin = Boolean(useCookie('userlogin').value || (import.meta.client && localStorage.getItem('user')))
   },
-  computed: {
+  watch: {
+    isLogin: {
+      immediate: true,
+      handler(newVal) {
+        if (import.meta.client) {
+          if (newVal) {
+            // ล็อกอิน: แบ่ง 4 ช่อง
+            document.documentElement.style.setProperty('--nav-wishlist-pos', '40%');
+            document.documentElement.style.setProperty('--nav-cart-pos', '60%');
+            document.documentElement.style.setProperty('--nav-account-pos', '80%');
+          } else {
+            // ไม่ล็อกอิน: แบ่ง 3 ช่อง
+            document.documentElement.style.setProperty('--nav-wishlist-pos', '25%');
+            document.documentElement.style.setProperty('--nav-cart-pos', '50%');
+            document.documentElement.style.setProperty('--nav-account-pos', '75%');
+          }
+        }
+      }
+    }
   }
 }   
 </script>
