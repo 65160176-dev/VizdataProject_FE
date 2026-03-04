@@ -20,7 +20,8 @@ export const useProductStore = defineStore({
       }
     },
     actions: {
-      async fetchProducts() {
+      async fetchProducts(force = false) {
+        if (!force && this.products.length > 0) return
         this.loading = true
         try {
           const response = await $fetch('https://vizdataprojectbe-production.up.railway.app/api/product')
@@ -28,8 +29,9 @@ export const useProductStore = defineStore({
           if (response && response.length > 0) {
             console.log('First product sample:', response[0])
           }
-          this.products = response || []
-          this.productslist = response || []
+          const list = Array.isArray(response) ? response : []
+          this.products = list
+          this.productslist = list
         } catch (error) {
           console.error('Error fetching products:', error)
           this.products = []

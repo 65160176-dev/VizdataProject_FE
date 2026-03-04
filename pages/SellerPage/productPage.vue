@@ -410,6 +410,23 @@ let bootstrap;
 
 definePageMeta({ layout: 'seller' })
 
+const CLOUDINARY_CLOUD_NAME = 'dc4nt8qyq'
+const CLOUDINARY_UPLOAD_PRESET = 'Vizdata'
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
+
+const uploadToCloudinary = async (file) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
+
+  const res = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
+  if (!res.ok) {
+    throw new Error('Cloudinary upload failed')
+  }
+  const data = await res.json()
+  return data.secure_url || data.url
+}
+
 const products = ref([])
 const newCategoryInput = ref('')
 const allCategories = ref([])
@@ -629,6 +646,16 @@ const saveNewItem = async () => {
   if (newItem.value.stock < 0) newItem.value.stock = 0;
 
   const token = localStorage.getItem('token')
+  let imageUrl = ''
+  if (newItem.value.rawFile) {
+    try {
+      imageUrl = await uploadToCloudinary(newItem.value.rawFile)
+    } catch (e) {
+      console.error(e)
+      showError('อัปโหลดรูปไม่สำเร็จ')
+      return
+    }
+  }
   const fd = new FormData()
   fd.append('name', newItem.value.name); 
   fd.append('stock', newItem.value.stock); 
@@ -638,7 +665,7 @@ const saveNewItem = async () => {
   fd.append('shippingCost', newItem.value.shippingCost); 
   fd.append('description', newItem.value.description); 
   fd.append('category', newItem.value.category)
-  if (newItem.value.rawFile) fd.append('file', newItem.value.rawFile)
+  if (imageUrl) fd.append('image', imageUrl)
   
   try {
     await $fetch('https://vizdataprojectbe-production.up.railway.app/api/product', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd })
@@ -660,6 +687,16 @@ async function saveEdit() {
   if (editItem.value.stock < 0) editItem.value.stock = 0;
 
   const token = localStorage.getItem('token')
+  let imageUrl = ''
+  if (editItem.value.rawFile) {
+    try {
+      imageUrl = await uploadToCloudinary(editItem.value.rawFile)
+    } catch (e) {
+      console.error(e)
+      showError('อัปโหลดรูปไม่สำเร็จ')
+      return
+    }
+  }
   const fd = new FormData()
   fd.append('name', editItem.value.name); 
   fd.append('stock', editItem.value.stock); 
@@ -669,7 +706,7 @@ async function saveEdit() {
   fd.append('shippingCost', editItem.value.shippingCost);
   fd.append('category', editItem.value.category); 
   fd.append('description', editItem.value.description)
-  if (editItem.value.rawFile) fd.append('file', editItem.value.rawFile)
+  if (imageUrl) fd.append('image', imageUrl)
   
   try {
     await $fetch(`https://vizdataprojectbe-production.up.railway.app/api/product/${editItem.value._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd })

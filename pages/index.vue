@@ -183,9 +183,11 @@ const banners = ref([
 ])
 
 onMounted(async () => {
-  await productStore.fetchProducts()
-  fetchSystemCategories()
-  fetchBestSellers()
+  await Promise.all([
+    productStore.fetchProducts(),
+    fetchSystemCategories(),
+    fetchBestSellers()
+  ])
   setupInfiniteScroll()
 })
 
