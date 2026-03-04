@@ -651,7 +651,7 @@
                           class="form-control"
                           rows="3"
                           v-model="newItem.description"
-                          maxlength="30"
+                          maxlength="200"
                         ></textarea>
                       </div>
                     </div>
