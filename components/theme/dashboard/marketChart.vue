@@ -1,29 +1,27 @@
 <template>
-  <div class="col-xl-6 xl-100">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-        <div>
-          <h5 class="fw-bold mb-0">Monthly Revenue 📊</h5>
-          <small class="text-muted">ยอดขายปี {{ selectedYear }} (ร้านคุณ)</small>
-        </div>
-        <div class="dropdown">
-          <button class="btn btn-light btn-sm dropdown-toggle rounded-pill px-3 shadow-sm" type="button" data-bs-toggle="dropdown">
-            Year: {{ selectedYear }}
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li v-for="year in availableYears" :key="year">
-              <a class="dropdown-item" href="#" @click.prevent="selectedYear = year">{{ year }}</a>
-            </li>
-          </ul>
-        </div>
+  <div class="card shadow-sm border-0 h-100 w-100">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="fw-bold mb-0">Monthly Revenue 📊</h5>
+        <small class="text-muted">ยอดขายปี {{ selectedYear }} (ร้านคุณ)</small>
       </div>
-      <div class="card-body pt-0">
-        <div class="market-chart-container">
-          <apexchart v-if="hasData" type="bar" height="320" :options="chartOptions" :series="series"></apexchart>
-          <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
-             <Icon name="feather:bar-chart-2" size="40" class="mb-2 opacity-50"/>
-             <span>ไม่มีข้อมูลยอดขายในปี {{ selectedYear }}</span>
-          </div>
+      <div class="dropdown">
+        <button class="btn btn-light btn-sm dropdown-toggle rounded-pill px-3 shadow-sm" type="button" data-bs-toggle="dropdown">
+          Year: {{ selectedYear }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li v-for="year in availableYears" :key="year">
+            <a class="dropdown-item" href="#" @click.prevent="selectedYear = year">{{ year }}</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="card-body pt-0">
+      <div class="market-chart-container">
+        <apexchart v-if="hasData" type="bar" height="320" :options="chartOptions" :series="series"></apexchart>
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+           <Icon name="feather:bar-chart-2" size="40" class="mb-2 opacity-50"/>
+           <span>ไม่มีข้อมูลยอดขายในปี {{ selectedYear }}</span>
         </div>
       </div>
     </div>

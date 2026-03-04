@@ -1,21 +1,19 @@
 <template>
-  <div class="col-xl-6 col-md-6">
-    <div class="card shadow-sm border-0 h-100 overflow-hidden">
-      <div class="card-body pb-0">
-        <div class="d-flex justify-content-between">
-          <div>
-            <p class="text-muted mb-1 text-uppercase small fw-bold">My Orders Volume</p>
-            <h4 class="fw-bolder mb-0">{{ totalOrders7Days }} Order(s)</h4>
-            <small class="text-muted" style="font-size: 10px;">(7 วันล่าสุด)</small>
-          </div>
-          <div class="d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary rounded-3 px-2" style="height: 35px; width: 35px;">
-            <Icon name="feather:shopping-bag" size="18" />
-          </div>
+  <div class="card shadow-sm border-0 h-100 w-100 overflow-hidden">
+    <div class="card-body pb-0">
+      <div class="d-flex justify-content-between">
+        <div>
+          <p class="text-muted mb-1 text-uppercase small fw-bold">My Orders Volume</p>
+          <h4 class="fw-bolder mb-0">{{ totalOrders7Days }} Order(s)</h4>
+          <small class="text-muted" style="font-size: 10px;">(7 วันล่าสุด)</small>
+        </div>
+        <div class="d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary rounded-3 px-2" style="height: 35px; width: 35px;">
+          <Icon name="feather:shopping-bag" size="18" />
         </div>
       </div>
-      <div class="chart-area mt-3">
-        <apexchart type="bar" height="85" :options="chartOptions" :series="series"></apexchart>
-      </div>
+    </div>
+    <div class="chart-area mt-3">
+      <apexchart type="bar" height="85" :options="chartOptions" :series="series"></apexchart>
     </div>
   </div>
 </template>

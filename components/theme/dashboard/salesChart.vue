@@ -1,14 +1,12 @@
 <template>
-  <div class="col-xl-6 col-md-6">
-    <div class="card shadow-sm border-0 h-100 overflow-hidden">
-      <div class="card-body pb-0">
-        <p class="text-muted mb-1 text-uppercase small fw-bold">My Revenue (7 Days)</p>
-        <h4 class="fw-bolder mb-0">{{ formatCurrency(total7Days) }}</h4>
-        <small class="text-muted" style="font-size: 10px;">(ยอดขายเฉพาะร้านคุณ)</small>
-      </div>
-      <div class="chart-area mt-3">
-        <apexchart type="bar" height="85" :options="chartOptions" :series="series"></apexchart>
-      </div>
+  <div class="card shadow-sm border-0 h-100 w-100 overflow-hidden">
+    <div class="card-body pb-0">
+      <p class="text-muted mb-1 text-uppercase small fw-bold">My Revenue (7 Days)</p>
+      <h4 class="fw-bolder mb-0">{{ formatCurrency(total7Days) }}</h4>
+      <small class="text-muted" style="font-size: 10px;">(ยอดขายเฉพาะร้านคุณ)</small>
+    </div>
+    <div class="chart-area mt-3">
+      <apexchart type="bar" height="85" :options="chartOptions" :series="series"></apexchart>
     </div>
   </div>
 </template>

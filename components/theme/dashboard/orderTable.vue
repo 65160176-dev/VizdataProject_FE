@@ -1,85 +1,63 @@
 <template>
-  <div class="col-xl-6 xl-100">
-    <div class="card shadow-sm border-0 h-100">
-      
-      <div class="card-header border-0 pb-3 pt-3" 
-           style="background: linear-gradient(135deg, #ff6b35 0%, #ff9f43 100%); border-radius: 10px 10px 0 0;">
-        
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="fw-bold mb-0 text-white text-shadow">Latest Orders 📦</h5>
-        </div>
-
-        <div class="d-flex gap-2 pb-1 align-items-center">
-          
-          <select 
-            v-model="timeFilter" 
-            class="form-select form-select-sm border-0 bg-white fw-bold rounded-pill text-secondary ps-3 shadow-sm"
-            style="cursor: pointer; flex: 1;">
-            <option value="all">🕒 ทุกช่วงเวลา</option>
-            <option value="1">1 ชม. ล่าสุด</option>
-            <option value="3">3 ชม. ล่าสุด</option>
-            <option value="24">1 วันล่าสุด</option>
-            <option value="168">7 วันล่าสุด</option>
-          </select>
-
-          <select 
-            v-model="statusFilter" 
-            class="form-select form-select-sm border-0 bg-white fw-bold rounded-pill text-secondary ps-3 shadow-sm"
-            style="cursor: pointer; flex: 1;">
-            <option value="all">📋 สถานะ</option>
-            <option value="pending_confirm">🟠 รอการยืนยัน</option>
-            <option value="preparing">🔵 กำลังเตรียม</option>
-            <option value="shipped">🟣 กำลังส่ง</option>
-            <option value="completed">🟢 สำเร็จ</option>
-            <option value="cancelled">🔴 ยกเลิก</option>
-          </select>
-
-        </div>
+  <div class="card shadow-sm border-0 h-100 w-100">
+    <div class="card-header border-0 pb-3 pt-3" 
+         style="background: linear-gradient(135deg, #ff6b35 0%, #ff9f43 100%); border-radius: 10px 10px 0 0;">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="fw-bold mb-0 text-white text-shadow">Latest Orders 📦</h5>
       </div>
-
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light">
-              <tr>
-                <th class="ps-4">ID</th>
-                <th>Customer</th>
-                <th>Status</th>
-                <th class="text-end pe-4">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="order in latestOrders" :key="order._id">
-                <td class="ps-4 fw-bold">#{{ order.orderId ? order.orderId : String(order._id).slice(-6) }}</td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <span>{{ order.customer || 'Unknown' }}</span>
-                    <small class="text-muted" style="font-size: 0.75rem;">{{ formatDate(order.createdAt) }}</small>
-                  </div>
-                </td>
-                <td>
-                  <NuxtLink 
-                    :to="getStatusLink(order)"
-                    class="badge rounded-pill text-decoration-none border-0 shadow-sm transition-hover d-inline-flex align-items-center" 
-                    :class="getStatusBadgeStyle(order.status)"
-                    style="cursor: pointer; padding: 6px 10px;">
-                    {{ order.status }} 
-                    <Icon name="feather:chevron-right" size="10" class="ms-1" style="opacity: 0.8;"/>
-                  </NuxtLink>
-                </td>
-                <td class="text-end pe-4 fw-bold">{{ formatCurrency(order.total) }}</td>
-              </tr>
-              <tr v-if="latestOrders.length === 0">
-                <td colspan="4" class="text-center py-5 text-muted">
-                  <div class="opacity-50 mb-2">
-                    <Icon name="feather:search" size="24" />
-                  </div>
-                  ไม่พบรายการตามเงื่อนไขที่เลือก
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="d-flex gap-2 pb-1 align-items-center">
+        <select v-model="timeFilter" class="form-select form-select-sm border-0 bg-white fw-bold rounded-pill text-secondary ps-3 shadow-sm" style="cursor: pointer; flex: 1;">
+          <option value="all">🕒 ทุกช่วงเวลา</option>
+          <option value="1">1 ชม. ล่าสุด</option>
+          <option value="3">3 ชม. ล่าสุด</option>
+          <option value="24">1 วันล่าสุด</option>
+          <option value="168">7 วันล่าสุด</option>
+        </select>
+        <select v-model="statusFilter" class="form-select form-select-sm border-0 bg-white fw-bold rounded-pill text-secondary ps-3 shadow-sm" style="cursor: pointer; flex: 1;">
+          <option value="all">📋 สถานะ</option>
+          <option value="pending_confirm">🟠 รอการยืนยัน</option>
+          <option value="preparing">🔵 กำลังเตรียม</option>
+          <option value="shipped">🟣 กำลังส่ง</option>
+          <option value="completed">🟢 สำเร็จ</option>
+          <option value="cancelled">🔴 ยกเลิก</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-4">ID</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th class="text-end pe-4">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in latestOrders" :key="order._id">
+              <td class="ps-4 fw-bold">#{{ order.orderId ? order.orderId : String(order._id).slice(-6) }}</td>
+              <td>
+                <div class="d-flex flex-column">
+                  <span>{{ order.customer || 'Unknown' }}</span>
+                  <small class="text-muted" style="font-size: 0.75rem;">{{ formatDate(order.createdAt) }}</small>
+                </div>
+              </td>
+              <td>
+                <NuxtLink :to="getStatusLink(order)" class="badge rounded-pill text-decoration-none border-0 shadow-sm transition-hover d-inline-flex align-items-center" :class="getStatusBadgeStyle(order.status)" style="cursor: pointer; padding: 6px 10px;">
+                  {{ order.status }} <Icon name="feather:chevron-right" size="10" class="ms-1" style="opacity: 0.8;"/>
+                </NuxtLink>
+              </td>
+              <td class="text-end pe-4 fw-bold">{{ formatCurrency(order.total) }}</td>
+            </tr>
+            <tr v-if="latestOrders.length === 0">
+              <td colspan="4" class="text-center py-5 text-muted">
+                <div class="opacity-50 mb-2"><Icon name="feather:search" size="24" /></div>
+                ไม่พบรายการตามเงื่อนไขที่เลือก
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
