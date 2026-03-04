@@ -93,49 +93,79 @@
 
       <ClientOnly>
         <div class="modal fade" id="categoryModal" tabindex="-1">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-              <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-orange">จัดการหมวดหมู่สินค้า</h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body py-4">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg bg-light">
+              
+              <div class="modal-header border-0 pb-3 pt-4 px-4 d-flex align-items-center bg-white rounded-top-3 shadow-sm" style="z-index: 10;">
+                <h4 class="modal-title fw-bold text-orange mb-0 me-auto">Category</h4>
                 
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                   <p class="text-muted small mb-0">หมวดหมู่ที่คุณเลือกใช้งาน:</p>
-                   <button class="btn btn-sm btn-link text-decoration-none p-0 fw-bold text-orange" @click="showAllCategories = !showAllCategories" style="font-size: 13px;">
-                     {{ showAllCategories ? 'ซ่อนหมวดหมู่ที่ไม่ใช้' : '+ แสดงหมวดหมู่ทั้งหมด' }}
-                   </button>
-                </div>
-
-                <div class="category-list-wrapper border rounded-3 p-2 bg-light mb-4" style="max-height: 300px; overflow-y: auto;">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="input-group input-group-sm rounded-pill border overflow-hidden bg-light" style="width: 220px;">
+                    <span class="input-group-text bg-transparent border-0 text-muted ps-3"><Icon name="feather:search" size="14"/></span>
+                    <input type="text" class="form-control border-0 bg-transparent shadow-none" placeholder="ค้นหาหมวดหมู่..." v-model="categorySearch">
+                  </div>
                   
-                  <div v-if="displayModalCategories.length === 0" class="text-center text-muted py-5 small">
-                      <Icon name="feather:inbox" size="32" class="mb-2 opacity-50"/>
-                      <br>ยังไม่มีหมวดหมู่ที่เลือก
-                      <br><span class="text-orange cursor-pointer" @click="showAllCategories = true">กดเพื่อเลือกหมวดหมู่จากระบบ</span>
-                  </div>
+                  <button class="btn btn-sm btn-primary rounded-pill px-3 d-flex align-items-center gap-1" @click="showAddCategory = !showAddCategory">
+                    <Icon name="feather:plus" size="14" style="margin-bottom:1px;" /> เพิ่มหมวดหมู่
+                  </button>
+                </div>
+                
+                <button class="btn-close ms-3" data-bs-dismiss="modal"></button>
+              </div>
 
-                  <div v-for="cat in displayModalCategories" :key="cat.id" 
-                       class="form-check p-3 mb-2 bg-white rounded-3 shadow-sm d-flex justify-content-between align-items-center transition-all"
-                       :class="{'border-orange': cat.isSelected}">
-                    
-                    <div class="d-flex align-items-center w-100" style="cursor: pointer;" @click="toggleCategory(cat)">
-                      <input class="form-check-input me-3 ms-0 mt-0" type="checkbox" :checked="cat.isSelected" style="pointer-events: none;">
-                      <label class="form-check-label fw-bold mb-0 text-dark" style="cursor: pointer;">{{ cat.name }}</label>
-                    </div>
-                    
-                    <Icon v-if="!cat.isSystem" name="feather:trash-2" class="text-danger ms-2" style="cursor: pointer;" @click.stop="openConfirmDelete(cat)" title="ลบถาวร" />
+              <div class="modal-body p-0">
+                
+                <div v-if="showAddCategory" class="px-4 py-3 bg-white border-bottom collapse-transition shadow-sm" style="z-index: 5; position: relative;">
+                  <label class="form-label small fw-bold text-dark">ชื่อ Category ที่ต้องการเพิ่ม:</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control rounded-start-pill ps-3 border-orange-focus shadow-none" placeholder="พิมพ์ชื่อหมวดหมู่... (สูงสุด 30 ตัวอักษร)" v-model="newCategoryInput" @keyup.enter="addNewCategoryToSystem" maxlength="30">
+                    <button class="btn btn-primary rounded-end-pill px-4" @click="addNewCategoryToSystem">บันทึก</button>
                   </div>
-
                 </div>
 
-                <div class="mt-4">
-                  <label class="form-label small fw-bold">สร้างหมวดหมู่ใหม่:</label>
-                  <div class="input-group">
-                    <input type="text" class="form-control rounded-start-pill ps-3 border-orange-focus" placeholder="ชื่อหมวดหมู่... (สูงสุด 30 ตัวอักษร)" v-model="newCategoryInput" @keyup.enter="addNewCategoryToSystem" maxlength="30">
-                    <button class="btn btn-primary rounded-end-pill px-4" @click="addNewCategoryToSystem">เพิ่ม</button>
+                <div class="category-scroll-area px-4 py-4" style="max-height: 60vh; overflow-y: auto;">
+                  
+                  <h6 class="fw-bold text-secondary mb-3"><Icon name="feather:grid" size="16" class="me-1 mb-1"/> หมวดหมู่ระบบ</h6>
+                  <div class="row g-3 mb-4">
+                    <div v-for="cat in filteredSystemCategories" :key="cat.id" class="col-md-6 col-lg-4">
+                       <div class="form-check p-3 bg-white rounded-3 shadow-sm d-flex justify-content-between align-items-center h-100 transition-all m-0"
+                            style="cursor: pointer;"
+                            :class="cat.isSelected ? 'border-orange bg-orange-subtle' : 'border border-light-subtle'"
+                            @click="toggleCategory(cat)">
+                         <div class="d-flex align-items-center w-100" style="pointer-events: none;">
+                           <input class="form-check-input me-2 ms-0 mt-0" type="checkbox" :checked="cat.isSelected">
+                           <label class="form-check-label fw-bold mb-0 text-dark" style="font-size: 14px;">{{ cat.name }}</label>
+                         </div>
+                       </div>
+                    </div>
+                    <div v-if="filteredSystemCategories.length === 0" class="col-12 text-center text-muted small py-4 bg-white rounded-3 border border-dashed">
+                      ไม่พบหมวดหมู่ระบบที่ค้นหา
+                    </div>
                   </div>
+
+                  <h6 class="fw-bold text-secondary mb-3 mt-2"><Icon name="feather:folder-plus" size="16" class="me-1 mb-1"/> Category ที่เพิ่มเข้ามา</h6>
+                  <div class="row g-3 pb-2">
+                    <div v-for="cat in filteredCustomCategories" :key="cat.id" class="col-md-6 col-lg-4">
+                       <div class="form-check p-3 bg-white rounded-3 shadow-sm d-flex justify-content-between align-items-center h-100 transition-all m-0"
+                            style="cursor: pointer;"
+                            :class="cat.isSelected ? 'border-orange bg-orange-subtle' : 'border border-light-subtle'"
+                            @click="toggleCategory(cat)">
+                         <div class="d-flex align-items-center w-100" style="pointer-events: none;">
+                           <input class="form-check-input me-2 ms-0 mt-0" type="checkbox" :checked="cat.isSelected">
+                           <label class="form-check-label fw-bold mb-0 text-dark" style="font-size: 14px;">{{ cat.name }}</label>
+                         </div>
+                         <div style="pointer-events: auto;">
+                            <button class="btn btn-sm btn-link text-danger p-0 ms-2" @click.stop="openConfirmDelete(cat)" title="ลบถาวร">
+                              <Icon name="feather:trash-2" size="16" />
+                            </button>
+                         </div>
+                       </div>
+                    </div>
+                    <div v-if="filteredCustomCategories.length === 0" class="col-12 text-center text-muted small py-4 bg-white rounded-3 border border-dashed">
+                      {{ categorySearch ? 'ไม่พบหมวดหมู่ที่ค้นหา' : 'ยังไม่มีหมวดหมู่ที่เพิ่มเข้ามาเอง' }}
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -285,10 +315,10 @@
                                 <small class="text-muted w-100 mb-1 d-block" style="font-size: 11px;">Select Shipping Cost:</small>
                                 <div class="d-flex flex-wrap gap-2">
                                   <button v-for="(option, index) in availableOptionsEdit" :key="index" type="button" class="btn btn-sm badge-btn" 
-                                     :class="[editItem.shippingCost === option.value ? 'btn-' + option.colorName + ' active-badge' : 'btn-outline-' + option.colorName]" 
-                                     @click="editItem.shippingCost = option.value">
-                                     {{ option.text }}
-                                     <Icon v-if="editItem.shippingCost === option.value" name="feather:check" size="12" />
+                                      :class="[editItem.shippingCost === option.value ? 'btn-' + option.colorName + ' active-badge' : 'btn-outline-' + option.colorName]" 
+                                      @click="editItem.shippingCost = option.value">
+                                      {{ option.text }}
+                                      <Icon v-if="editItem.shippingCost === option.value" name="feather:check" size="12" />
                                    </button>
                                 </div>
                             </div>
@@ -376,7 +406,6 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue'
 
-// 🟢 1. ประกาศตัวแปรเปล่าๆ ไว้รอรับค่า Bootstrap (ป้องกัน SSR Error)
 let bootstrap;
 
 definePageMeta({ layout: 'seller' })
@@ -392,22 +421,27 @@ const preventNegativeInput = (e) => {
   }
 }
 
-const showAllCategories = ref(false)
+// 🟢 ตัวแปรสำหรับคุม UI ใหม่ของ Category Modal
+const categorySearch = ref('')
+const showAddCategory = ref(false)
 
+// 🟢 Computed: ดึงเฉพาะที่เลือกมาใช้กับฟอร์ม Add/Edit
 const activeCategories = computed(() => {
   return allCategories.value.filter(cat => cat.isSelected)
 })
 
-const displayModalCategories = computed(() => {
-  let list = allCategories.value
-  if (!showAllCategories.value) {
-     list = list.filter(cat => cat.isSelected)
-  }
-  return [...list].sort((a, b) => {
-    if (a.isSelected !== b.isSelected) return b.isSelected ? 1 : -1;
-    if (a.isSystem !== b.isSystem) return a.isSystem ? 1 : -1;
-    return a.name.localeCompare(b.name);
-  })
+// 🟢 Computed: ตัวกรองหมวดหมู่ระบบ (isSystem: true) พร้อมระบบค้นหา
+const filteredSystemCategories = computed(() => {
+  return allCategories.value
+    .filter(cat => cat.isSystem && cat.name.toLowerCase().includes(categorySearch.value.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name))
+})
+
+// 🟢 Computed: ตัวกรองหมวดหมู่ที่สร้างเอง (isSystem: false) พร้อมระบบค้นหา
+const filteredCustomCategories = computed(() => {
+  return allCategories.value
+    .filter(cat => !cat.isSystem && cat.name.toLowerCase().includes(categorySearch.value.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name))
 })
 
 const toastMessage = ref('')
@@ -471,7 +505,10 @@ const addNewCategoryToSystem = async () => {
   try {
     const token = localStorage.getItem('token')
     await $fetch('https://vizdataprojectbe-production.up.railway.app/api/category', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: { name: trimmed } })
-    showToast('สร้างหมวดหมู่ใหม่สำเร็จ'); newCategoryInput.value = ''; fetchCategories() 
+    showToast('สร้างหมวดหมู่ใหม่สำเร็จ'); 
+    newCategoryInput.value = ''; 
+    showAddCategory.value = false; // ปิดฟอร์มหลังจากเพิ่มเสร็จ
+    fetchCategories() 
   } catch (e) { console.error(e); showError(e.data?.message || 'สร้างหมวดหมู่ไม่สำเร็จ') }
 }
 
@@ -507,7 +544,6 @@ const fetchProducts = async () => {
   } catch (e) { console.error(e) }
 }
 
-// 🟢 2. แก้ไข onMounted ให้เป็นแบบ async และดึง Bootstrap มาใช้ตอนที่เบราว์เซอร์พร้อมแล้วเท่านั้น
 onMounted(async () => {
   const bsModule = await import('bootstrap/dist/js/bootstrap.bundle.min.js')
   bootstrap = bsModule.default || bsModule
@@ -779,4 +815,15 @@ async function saveAddStock() {
 
 .table-responsive::-webkit-scrollbar { height: 6px; }
 .table-responsive::-webkit-scrollbar-thumb { background: #eee; border-radius: 4px; }
+
+/* 🟢 Category Modal Specifics */
+.border-dashed { border-style: dashed !important; border-color: #dee2e6 !important; }
+.transition-all { transition: all 0.2s ease-in-out; }
+.form-check.bg-orange-subtle { border: 1px solid #fd7e14 !important; background-color: #fff9f5 !important; }
+
+/* Custom Scrollbar สำหรับโซน Category */
+.category-scroll-area::-webkit-scrollbar { width: 6px; }
+.category-scroll-area::-webkit-scrollbar-track { background: transparent; }
+.category-scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.category-scroll-area::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
