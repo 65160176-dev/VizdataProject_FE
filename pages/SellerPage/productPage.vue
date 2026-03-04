@@ -2,21 +2,21 @@
   <div class="col-sm-12">
     <div class="card shadow-sm border-0 overflow-hidden">
       
-      <div class="card-header d-flex justify-content-between align-items-center py-3 bg-gradient-orange text-white">
+      <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center py-3 bg-gradient-orange text-white gap-3">
         <h5 class="fw-bold mb-0 text-white" style="text-shadow: 0 1px 2px rgba(0,0,0,0.1);">
           Products Management 📦
         </h5>
         
-        <div>
-          <button type="button" class="btn btn-success me-2 shadow-sm border border-white" data-bs-toggle="modal" data-bs-target="#categoryModal">
+        <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
+          <button type="button" class="btn btn-success flex-fill flex-md-grow-0 shadow-sm border border-white" data-bs-toggle="modal" data-bs-target="#categoryModal">
             <Icon name="feather:list" size="16" class="me-1" style="margin-bottom:2px;"/> Category
           </button>
           
-          <button type="button" class="btn btn-info text-white me-2 shadow-sm border border-white" data-bs-toggle="modal" data-bs-target="#addStockModal" @click="resetStockForm">
+          <button type="button" class="btn btn-info text-white flex-fill flex-md-grow-0 shadow-sm border border-white" data-bs-toggle="modal" data-bs-target="#addStockModal" @click="resetStockForm">
             <Icon name="feather:box" size="16" class="me-1" style="margin-bottom:2px;"/> Add Stock
           </button>
           
-          <button type="button" class="btn btn-light text-orange fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+          <button type="button" class="btn btn-light text-orange fw-bold flex-fill flex-md-grow-0 shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
             <Icon name="feather:plus" size="16" class="me-1" style="margin-bottom:2px;"/> Add Product
           </button>
         </div>
@@ -24,7 +24,7 @@
 
       <div class="card-body p-0">
         <div class="product-physical table-responsive">
-          <table class="table table-hover text-center align-middle mb-0">
+          <table class="table table-hover text-center align-middle mb-0" style="white-space: nowrap;">
             <thead class="bg-light text-secondary">
               <tr>
                 <th class="border-0 py-3 ps-4">Image</th>
@@ -43,7 +43,7 @@
             <tbody v-if="products && products.length > 0">
               <tr v-for="item in products" :key="item._id" class="border-bottom">
                 <td class="ps-4"><img class="img-40 me-2 shadow-sm" :src="item.image || 'https://placehold.co/400'" style="border-radius:8px;"></td>
-                <td class="fw-bold text-dark text-start">{{ item.name }}</td>
+                <td class="fw-bold text-dark text-start" style="white-space: normal; min-width: 150px;">{{ item.name }}</td>
                 <td>
                   <span class="badge bg-light text-dark border fw-normal px-2 py-1">{{ item.stock }}</span>
                 </td>
@@ -55,7 +55,14 @@
                     {{ formatShippingCost(item.shippingCost) }}
                   </span>
                 </td>
-                <td><i class="fa fa-circle f-10" :class="'font-' + getStockStatus(item.stock)"></i></td>
+                <td>
+                  <div class="d-flex align-items-center justify-content-center">
+                    <i class="fa fa-circle f-10" :class="'font-' + getStockStatus(item.stock)"></i>
+                    <span class="ms-2 fw-medium text-secondary" style="font-size: 13px;">
+                      {{ getStockText(item.stock) }}
+                    </span>
+                  </div>
+                </td>
                 <td><span class="badge bg-orange-subtle text-orange border-0 px-3 py-2" style="border-radius: 20px;">{{ item.category }}</span></td>
                 <td class="pe-4">
                   <button class="btn btn-sm btn-light text-secondary me-1" @click="goEdit(item._id)" title="Edit"><Icon name="feather:edit-2" size="16"/></button>
@@ -96,21 +103,23 @@
           <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg bg-light">
               
-              <div class="modal-header border-0 pb-3 pt-4 px-4 d-flex align-items-center bg-white rounded-top-3 shadow-sm" style="z-index: 10;">
-                <h4 class="modal-title fw-bold text-orange mb-0 me-auto">Category</h4>
+              <div class="modal-header border-0 pb-3 pt-4 px-4 d-flex flex-column align-items-start bg-white rounded-top-3 shadow-sm" style="z-index: 10;">
+                <div class="d-flex justify-content-between align-items-center w-100 mb-3 mb-md-0">
+                  <h4 class="modal-title fw-bold text-orange mb-0">Category</h4>
+                  <button class="btn-close d-md-none" data-bs-dismiss="modal"></button>
+                </div>
                 
-                <div class="d-flex align-items-center gap-2">
-                  <div class="input-group input-group-sm rounded-pill border overflow-hidden bg-light" style="width: 220px;">
+                <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 w-100 mt-md-0 position-md-absolute end-md-4 top-md-4" style="max-width: 100%; width: auto;">
+                  <div class="input-group input-group-sm rounded-pill border overflow-hidden bg-light category-search-box">
                     <span class="input-group-text bg-transparent border-0 text-muted ps-3"><Icon name="feather:search" size="14"/></span>
                     <input type="text" class="form-control border-0 bg-transparent shadow-none" placeholder="ค้นหาหมวดหมู่..." v-model="categorySearch">
                   </div>
                   
-                  <button class="btn btn-sm btn-primary rounded-pill px-3 d-flex align-items-center gap-1" @click="showAddCategory = !showAddCategory">
+                  <button class="btn btn-sm btn-primary rounded-pill px-3 d-flex justify-content-center align-items-center gap-1" @click="showAddCategory = !showAddCategory">
                     <Icon name="feather:plus" size="14" style="margin-bottom:1px;" /> เพิ่มหมวดหมู่
                   </button>
+                  <button class="btn-close d-none d-md-block ms-2" data-bs-dismiss="modal"></button>
                 </div>
-                
-                <button class="btn-close ms-3" data-bs-dismiss="modal"></button>
               </div>
 
               <div class="modal-body p-0">
@@ -214,23 +223,24 @@
                     </div>
                     <div class="col-md-7">
                       <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="newItem.name" type="text" maxlength="30"></div>
+                      
                       <div class="row">
-                        <div class="col-6 form-group mb-3">
+                        <div class="col-12 col-sm-6 form-group mb-3">
                             <label class="small fw-bold">Stock :</label>
                             <input class="form-control" v-model="newItem.stock" type="number" min="0" @keydown="preventNegativeInput" @input="newItem.stock < 0 ? newItem.stock = 0 : null">
                         </div>
-                        <div class="col-6 form-group mb-3">
+                        <div class="col-12 col-sm-6 form-group mb-3">
                             <label class="small fw-bold">Price :</label>
                             <input class="form-control" v-model="newItem.price" type="number" min="1" @keydown="preventNegativeInput">
                         </div>
                       </div>
 
                       <div class="row">
-                        <div class="col-6 form-group mb-3">
+                        <div class="col-12 col-sm-6 form-group mb-3">
                             <label class="small fw-bold">Commission (%) :</label>
                             <input class="form-control" v-model="newItem.commission" type="number" min="0.1" step="0.1" @keydown="preventNegativeInput">
                         </div>
-                        <div class="col-6 form-group mb-3">
+                        <div class="col-12 col-sm-6 form-group mb-3">
                           <label class="text-orange fw-bold small">Weight (kg) :</label>
                           <input class="form-control border-orange" v-model="newItem.weight" type="number" min="0" step="0.1" @keydown="preventNegativeInput">
                           
@@ -291,23 +301,24 @@
                     </div>
                     <div class="col-md-7">
                         <div class="form-group mb-3"><label class="small fw-bold">Product Name :</label><input class="form-control" v-model="editItem.name" maxlength="30"></div>
+                        
                         <div class="row">
-                          <div class="col-6 form-group mb-3">
+                          <div class="col-12 col-sm-6 form-group mb-3">
                               <label class="small fw-bold">Stock :</label>
                               <input class="form-control" v-model="editItem.stock" type="number" min="0" @keydown="preventNegativeInput" @input="editItem.stock < 0 ? editItem.stock = 0 : null">
                           </div>
-                          <div class="col-6 form-group mb-3">
+                          <div class="col-12 col-sm-6 form-group mb-3">
                               <label class="small fw-bold">Price :</label>
                               <input class="form-control" v-model="editItem.price" type="number" min="1" @keydown="preventNegativeInput">
                           </div>
                         </div>
 
                         <div class="row">
-                          <div class="col-6 form-group mb-3">
+                          <div class="col-12 col-sm-6 form-group mb-3">
                               <label class="small fw-bold">Commission (%) :</label>
                               <input class="form-control" v-model="editItem.commission" type="number" min="0.1" step="0.1" @keydown="preventNegativeInput">
                           </div>
-                          <div class="col-6 form-group mb-3">
+                          <div class="col-12 col-sm-6 form-group mb-3">
                             <label class="text-orange fw-bold small">Weight (kg) :</label>
                             <input class="form-control border-orange" v-model="editItem.weight" type="number" min="0" step="0.1" @keydown="preventNegativeInput">
                             
@@ -572,6 +583,7 @@ onMounted(async () => {
 const refresh = fetchProducts
 
 const getStockStatus = (s) => (s >= 100 ? 'success' : s >= 25 ? 'warning' : 'danger')
+const getStockText = (s) => (s >= 100 ? 'มาก' : s >= 25 ? 'ปานกลาง' : 'น้อย')
 
 const getBadgeColor = (c) => {
   const cost = parseInt(c)
@@ -863,4 +875,14 @@ async function saveAddStock() {
 .category-scroll-area::-webkit-scrollbar-track { background: transparent; }
 .category-scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 .category-scroll-area::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* 🌟 แก้ไข: ทำให้กล่อง Search ของ Category Modal ตอบสนองมือถือ */
+.category-search-box {
+  width: 100% !important;
+}
+@media (min-width: 768px) {
+  .category-search-box {
+    width: 220px !important;
+  }
+}
 </style>

@@ -11,17 +11,31 @@
       <Transition name="fade">
         <div v-if="!loading" class="row g-3">
           
-          <WidgetsCard />
+          <div class="col-12">
+            <WidgetsCard />
+          </div>
 
-          <MarketChart /> 
-          <OrderTable />
+          <div class="col-12 col-xl-6">
+            <MarketChart /> 
+          </div>
+          <div class="col-12 col-xl-6">
+            <OrderTable />
+          </div>
 
-          <SalesChart />
-          <PurchaseChart />
-          
+          <div class="col-12 col-md-6">
+            <SalesChart />
+          </div>
+          <div class="col-12 col-md-6">
+            <PurchaseChart />
+          </div>
 
-          <BuysellChart />
-          <SalesStatus />
+          <div class="col-12">
+            <BuysellChart />
+          </div>
+
+          <div class="col-12">
+            <SalesStatus />
+          </div>
 
         </div>
       </Transition>
@@ -42,11 +56,7 @@ import MarketChart from '~/components/theme/dashboard/marketChart.vue'
 import OrderTable from '~/components/theme/dashboard/orderTable.vue'
 import SalesChart from '~/components/theme/dashboard/salesChart.vue'
 import PurchaseChart from '~/components/theme/dashboard/purchaseChart.vue'
-import TransactionChart from '~/components/theme/dashboard/transactionChart.vue'
-import DepositeChart from '~/components/theme/dashboard/depositeChart.vue'
 import BuysellChart from '~/components/theme/dashboard/buysellChart.vue'
-import GoodReturn from '~/components/theme/dashboard/goodReturn.vue'
-import EmployStatus from '~/components/theme/dashboard/employStatus.vue'
 import SalesStatus from '~/components/theme/dashboard/salesStatus.vue'
 
 definePageMeta({ layout: 'seller' })
@@ -56,10 +66,10 @@ const productStore = useProductStore()
 const loading = ref(true)
 
 onMounted(() => {
-  // แสดงหน้าทันที แล้วโหลดข้อมูลใน background
+  // จำลองเวลาโหลด
   setTimeout(() => { loading.value = false }, 300)
 
-  // โหลดข้อมูลใน background ไม่ block UI
+  // ดึงข้อมูลจาก Store
   Promise.all([
     orderStore.fetchOrders(),
     productStore.fetchProducts()
@@ -68,6 +78,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active, .fade-leave-active { 
+  transition: opacity 0.5s ease; 
+}
+.fade-enter-from, .fade-leave-to { 
+  opacity: 0; 
+}
+
+.container-fluid {
+  padding-bottom: 2rem;
+}
 </style>

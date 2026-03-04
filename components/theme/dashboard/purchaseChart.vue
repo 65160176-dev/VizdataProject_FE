@@ -7,9 +7,7 @@
           <h4 class="fw-bolder mb-0">{{ totalOrders7Days }} Order(s)</h4>
           <small class="text-muted" style="font-size: 10px;">(7 วันล่าสุด)</small>
         </div>
-        <div class="d-flex align-items-center justify-content-center bg-secondary-subtle text-secondary rounded-3 px-2" style="height: 35px; width: 35px;">
-          <Icon name="feather:shopping-bag" size="18" />
-        </div>
+        
       </div>
     </div>
     <div class="chart-area mt-3">
