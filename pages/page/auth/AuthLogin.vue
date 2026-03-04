@@ -1,7 +1,11 @@
 ﻿<template>
   <form class="auth-form" @submit.prevent="doLogin">
     <!-- Alerts -->
-    <div v-if="message" class="alert" :class="messageType === 'success' ? 'alert-success' : 'alert-danger'">
+    <div
+      v-if="message"
+      class="alert"
+      :class="messageType === 'success' ? 'alert-success' : 'alert-danger'"
+    >
       {{ message }}
     </div>
     <div v-if="redirectUrl" class="alert alert-info">
@@ -16,7 +20,7 @@
         type="email"
         v-model="email"
         class="form-control"
-        placeholder="Username or Email"
+        placeholder="Enter your Email"
         :disabled="loading"
       />
     </div>
@@ -33,7 +37,14 @@
         :disabled="loading"
       />
       <div class="show-hide" @click="togglePassword">
-        <Icon :name="passwordType === 'password' ? 'mdi:eye-outline' : 'mdi:eye-off-outline'" size="18" />
+        <Icon
+          :name="
+            passwordType === 'password'
+              ? 'mdi:eye-outline'
+              : 'mdi:eye-off-outline'
+          "
+          size="18"
+        />
       </div>
     </div>
 
@@ -43,13 +54,15 @@
         <input type="checkbox" id="rememberMe" v-model="rememberMe" />
         <label for="rememberMe">Remember me</label>
       </div>
-      <NuxtLink to="/forgot-password" class="forgot-pass">Lost your password?</NuxtLink>
+      <NuxtLink to="/forgot-password" class="forgot-pass"
+        >Lost your password?</NuxtLink
+      >
     </div>
 
     <!-- Submit -->
     <div class="form-button">
       <button class="btn-next" type="submit" :disabled="loading">
-        {{ loading ? 'กำลังเข้าสู่ระบบ...' : 'NEXT' }}
+        {{ loading ? "กำลังเข้าสู่ระบบ..." : "NEXT" }}
       </button>
     </div>
 
@@ -83,132 +96,149 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '~/store/auth'
+import { ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useAuthStore } from "~/store/auth";
 
-const router = useRouter()
-const route = useRoute()
-const authStore = useAuthStore()
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
 
-const email = ref('')
-const password = ref('')
-const rememberMe = ref(false)
-const passwordType = ref('password')
-const loading = ref(false)
-const message = ref('')
-const messageType = ref('')
-const redirectUrl = ref('')
+const email = ref("");
+const password = ref("");
+const rememberMe = ref(false);
+const passwordType = ref("password");
+const loading = ref(false);
+const message = ref("");
+const messageType = ref("");
+const redirectUrl = ref("");
 
 onMounted(() => {
-  redirectUrl.value = route.query.redirect || ''
-  email.value = 'user@gmail.com'
-  password.value = '123456'
+  redirectUrl.value = route.query.redirect || "";
+  email.value = "user@gmail.com";
+  password.value = "123456";
 
   // Load Telegram Login Widget
-  const config = useRuntimeConfig()
-  const botName = config.public.telegramBotName || 'BDNShopBot'
-  window.onTelegramAuth = handleTelegramAuth
+  const config = useRuntimeConfig();
+  const botName = config.public.telegramBotName || "BDNShopBot";
+  window.onTelegramAuth = handleTelegramAuth;
 
-  const script = document.createElement('script')
-  script.src = 'https://telegram.org/js/telegram-widget.js?22'
-  script.setAttribute('data-telegram-login', botName)
-  script.setAttribute('data-size', 'large')
-  script.setAttribute('data-radius', '8')
-  script.setAttribute('data-onauth', 'onTelegramAuth(user)')
-  script.setAttribute('data-request-access', 'write')
-  script.async = true
+  const script = document.createElement("script");
+  script.src = "https://telegram.org/js/telegram-widget.js?22";
+  script.setAttribute("data-telegram-login", botName);
+  script.setAttribute("data-size", "large");
+  script.setAttribute("data-radius", "8");
+  script.setAttribute("data-onauth", "onTelegramAuth(user)");
+  script.setAttribute("data-request-access", "write");
+  script.async = true;
   if (telegramWidgetContainer.value) {
-    telegramWidgetContainer.value.appendChild(script)
+    telegramWidgetContainer.value.appendChild(script);
   }
-})
+});
 
 function togglePassword() {
-  passwordType.value = passwordType.value === 'password' ? 'text' : 'password'
+  passwordType.value = passwordType.value === "password" ? "text" : "password";
 }
 
 async function doLogin() {
-  message.value = ''
-  loading.value = true
+  message.value = "";
+  loading.value = true;
   try {
     if (!email.value || !password.value) {
-      message.value = 'Please enter email and password'
-      messageType.value = 'error'
-      return
+      message.value = "Please enter email and password";
+      messageType.value = "error";
+      return;
     }
-    const result = await authStore.login(email.value, password.value)
+    const result = await authStore.login(email.value, password.value);
     if (result.success) {
-      message.value = result.message
-      messageType.value = 'success'
+      message.value = result.message;
+      messageType.value = "success";
       setTimeout(() => {
-        const currentUserType = authStore.userType || Number(localStorage.getItem('userType') || 1)
+        const currentUserType =
+          authStore.userType || Number(localStorage.getItem("userType") || 1);
         if (redirectUrl.value) {
-          let decoded = String(redirectUrl.value)
-          try { decoded = decodeURIComponent(decoded) } catch (e) {}
-          const isSellerPath = (p) => p && (p.includes('/SellerPage') || p.includes('/seller') || p.includes('seller-dashboard') || p.includes('/page/account/seller'))
-          if ((currentUserType === 0 && isSellerPath(decoded)) || (currentUserType !== 0 && !isSellerPath(decoded))) {
-            router.replace(decoded); return
+          let decoded = String(redirectUrl.value);
+          try {
+            decoded = decodeURIComponent(decoded);
+          } catch (e) {}
+          const isSellerPath = (p) =>
+            p &&
+            (p.includes("/SellerPage") ||
+              p.includes("/seller") ||
+              p.includes("seller-dashboard") ||
+              p.includes("/page/account/seller"));
+          if (
+            (currentUserType === 0 && isSellerPath(decoded)) ||
+            (currentUserType !== 0 && !isSellerPath(decoded))
+          ) {
+            router.replace(decoded);
+            return;
           }
         }
-        router.replace(currentUserType === 0 ? '/SellerPage/dashboard' : '/')
-      }, 500)
+        router.replace(currentUserType === 0 ? "/SellerPage/dashboard" : "/");
+      }, 500);
     } else {
-      message.value = result.message
-      messageType.value = 'error'
+      message.value = result.message;
+      messageType.value = "error";
     }
   } catch {
-    message.value = 'An error occurred. Please try again.'
-    messageType.value = 'error'
+    message.value = "An error occurred. Please try again.";
+    messageType.value = "error";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function loginWithFacebook() {
-  const apiUrl = useRuntimeConfig().public.apiUrl || 'https://vizdataprojectbe-production.up.railway.app'
-  window.location.href = `${apiUrl}/api/auth/facebook`
+  const apiUrl =
+    useRuntimeConfig().public.apiUrl ||
+    "https://vizdataprojectbe-production.up.railway.app";
+  window.location.href = `${apiUrl}/api/auth/facebook`;
 }
 
 function loginWithGoogle() {
-  const apiUrl = useRuntimeConfig().public.apiUrl || 'https://vizdataprojectbe-production.up.railway.app'
-  window.location.href = `${apiUrl}/api/auth/google`
+  const apiUrl =
+    useRuntimeConfig().public.apiUrl ||
+    "https://vizdataprojectbe-production.up.railway.app";
+  window.location.href = `${apiUrl}/api/auth/google`;
 }
 
 // Telegram Login Widget
-const telegramWidgetContainer = ref(null)
+const telegramWidgetContainer = ref(null);
 
 async function handleTelegramAuth(telegramUser) {
-  loading.value = true
-  message.value = ''
+  loading.value = true;
+  message.value = "";
   try {
-    const apiUrl = useRuntimeConfig().public.apiUrl || 'https://vizdataprojectbe-production.up.railway.app'
+    const apiUrl =
+      useRuntimeConfig().public.apiUrl ||
+      "https://vizdataprojectbe-production.up.railway.app";
     const res = await fetch(`${apiUrl}/api/auth/telegram`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(telegramUser),
-    })
-    const data = await res.json()
+    });
+    const data = await res.json();
     if (data.success) {
-      await authStore.loginWithOAuth(data.data.user, data.data.token)
-      message.value = 'เข้าสู่ระบบสำเร็จ'
-      messageType.value = 'success'
+      await authStore.loginWithOAuth(data.data.user, data.data.token);
+      message.value = "เข้าสู่ระบบสำเร็จ";
+      messageType.value = "success";
       setTimeout(() => {
-        const currentUserType = authStore.userType || Number(localStorage.getItem('userType') || 1)
-        router.replace(currentUserType === 0 ? '/SellerPage/dashboard' : '/')
-      }, 500)
+        const currentUserType =
+          authStore.userType || Number(localStorage.getItem("userType") || 1);
+        router.replace(currentUserType === 0 ? "/SellerPage/dashboard" : "/");
+      }, 500);
     } else {
-      message.value = data.message || 'Telegram login failed'
-      messageType.value = 'error'
+      message.value = data.message || "Telegram login failed";
+      messageType.value = "error";
     }
   } catch (e) {
-    message.value = 'เกิดข้อผิดพลาด กรุณาลองใหม่'
-    messageType.value = 'error'
+    message.value = "เกิดข้อผิดพลาด กรุณาลองใหม่";
+    messageType.value = "error";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
-
-
 </script>
 
 <style scoped lang="scss">
@@ -242,7 +272,9 @@ async function handleTelegramAuth(telegramUser) {
         background: #fff;
         box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
       }
-      &::placeholder { color: #d0b8a8; }
+      &::placeholder {
+        color: #d0b8a8;
+      }
     }
 
     .show-hide {
@@ -255,7 +287,9 @@ async function handleTelegramAuth(telegramUser) {
       display: flex;
       align-items: center;
       transition: color 0.2s;
-      &:hover { color: #f97316; }
+      &:hover {
+        color: #f97316;
+      }
     }
   }
 
@@ -265,9 +299,21 @@ async function handleTelegramAuth(telegramUser) {
     border-radius: 8px;
     margin-bottom: 16px;
     font-size: 13px;
-    &.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    &.alert-danger  { background: #fff0eb; color: #c0392b; border: 1px solid #ffb8a0; }
-    &.alert-info    { background: #fff7f0; color: #c05000; border: 1px solid #ffddcc; }
+    &.alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    &.alert-danger {
+      background: #fff0eb;
+      color: #c0392b;
+      border: 1px solid #ffb8a0;
+    }
+    &.alert-info {
+      background: #fff7f0;
+      color: #c05000;
+      border: 1px solid #ffddcc;
+    }
   }
 
   /* Remember + Forgot */
@@ -281,12 +327,17 @@ async function handleTelegramAuth(telegramUser) {
       display: flex;
       align-items: center;
       gap: 8px;
-      input[type='checkbox'] {
-        width: 16px; height: 16px;
+      input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
         accent-color: #f97316;
         cursor: pointer;
       }
-      label { font-size: 13px; color: #999; cursor: pointer; }
+      label {
+        font-size: 13px;
+        color: #999;
+        cursor: pointer;
+      }
     }
 
     .forgot-pass {
@@ -294,7 +345,10 @@ async function handleTelegramAuth(telegramUser) {
       color: #f97316;
       text-decoration: none;
       font-weight: 500;
-      &:hover { text-decoration: underline; opacity: 0.8; }
+      &:hover {
+        text-decoration: underline;
+        opacity: 0.8;
+      }
     }
   }
 
@@ -315,8 +369,15 @@ async function handleTelegramAuth(telegramUser) {
       cursor: pointer;
       transition: background 0.25s, transform 0.2s;
 
-      &:hover { background: #ea6c0a; transform: translateY(-1px); }
-      &:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+      &:hover {
+        background: #ea6c0a;
+        transform: translateY(-1px);
+      }
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
     }
   }
 
@@ -329,7 +390,13 @@ async function handleTelegramAuth(telegramUser) {
       margin-bottom: 14px;
       font-size: 13px;
       color: #d0b8a8;
-      &::before, &::after { content: ''; flex: 1; height: 1px; background: #ffddcc; }
+      &::before,
+      &::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #ffddcc;
+      }
     }
 
     .social-btn {
@@ -350,22 +417,36 @@ async function handleTelegramAuth(telegramUser) {
       margin-bottom: 10px;
       text-decoration: none;
 
-      .social-logo { width: 20px; height: 20px; object-fit: contain; }
+      .social-logo {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+      }
 
-      &:hover { border-color: #f97316; background: #fff7f0; transform: translateY(-1px); }
+      &:hover {
+        border-color: #f97316;
+        background: #fff7f0;
+        transform: translateY(-1px);
+      }
 
       &.fb-btn {
         color: #1877f2;
         border-color: #d0e4ff;
         background: #f5f8ff;
-        &:hover { background: #edf2ff; border-color: #1877f2; }
+        &:hover {
+          background: #edf2ff;
+          border-color: #1877f2;
+        }
       }
 
       &.tg-btn {
-        color: #229ED9;
+        color: #229ed9;
         border-color: #c8e8f7;
         background: #f0f9ff;
-        &:hover { background: #e0f4ff; border-color: #229ED9; }
+        &:hover {
+          background: #e0f4ff;
+          border-color: #229ed9;
+        }
       }
     }
 
@@ -406,4 +487,3 @@ async function handleTelegramAuth(telegramUser) {
   }
 }
 </style>
-
