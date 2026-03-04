@@ -100,7 +100,7 @@
                 </div>
               </div>
             </div>
-            <div v-else class="text-muted small mb-4">ยังไม่มีสินค้าขายดีในร้านนี้</div>
+            <div v-else class="text-muted small mb-4">ยังไม่มีสินค้าขายดีในหมวดหมู่นี้</div>
 
             <div class="d-flex align-items-center justify-content-between mb-2">
               <h5 class="fw-bold mb-0">สินค้าในระบบ</h5>
@@ -189,11 +189,19 @@ const selectedCategories = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 20
 
-const bestSellerItems = computed(() =>
-  bestSellers.value
+const bestSellerItems = computed(() => {
+  let filtered = bestSellers.value
     .filter(item => Number(item?.product?.stock) > 0)
-    .slice(0, 5)
-)
+  
+  // กรองตามหมวดหมู่ที่เลือก
+  if (selectedCategories.value.length > 0) {
+    filtered = filtered.filter(item => 
+      selectedCategories.value.includes(item.product?.category)
+    )
+  }
+  
+  return filtered.slice(0, 5)
+})
 
 // Fetch Data
 const fetchData = async () => {

@@ -835,7 +835,7 @@
                           class="form-control"
                           rows="3"
                           v-model="editItem.description"
-                          maxlength="30"
+                          maxlength="300"
                         ></textarea>
                       </div>
                     </div>
