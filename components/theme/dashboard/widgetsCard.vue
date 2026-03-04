@@ -1,29 +1,29 @@
 <template>
   <div class="row g-3 mb-4">
-    <div class="col-xl-3 col-md-6">
-  <div class="card widget-card bg-distinct-blue text-white h-100">
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h6 class="mb-2 opacity-90">My Earnings</h6>
-          <h3 class="fw-bold mb-0">{{ formatCurrency(totalEarnings) }}</h3>
-        </div>
-        <div class="bg-white-glass p-3 rounded-circle">
-          <Icon name="feather:dollar-sign" size="24" />
+    <div class="col-xl-3 col-md-6"  style="cursor: pointer;" title="ดูรายละเอียดรายได้">
+      <div class="card widget-card bg-theme-orange text-white h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-2 opacity-90">My Earnings</h6>
+              <h3 class="fw-bold mb-0">{{ formatCurrency(totalEarnings) }}</h3>
+            </div>
+            <div class="bg-white-glass p-3 rounded-circle">
+              <Icon name="feather:dollar-sign" size="24" />
+            </div>
+          </div>
+          <small class="mt-3 d-block opacity-90">
+            รายได้ทั้งหมดของร้าน <Icon name="feather:chevron-right" size="14"/>
+          </small>
         </div>
       </div>
-      <small class="mt-3 d-block opacity-90">
-        รายได้ทั้งหมดของร้าน
-      </small>
     </div>
-  </div>
-</div>
 
     <div class="col-xl-3 col-md-6" 
          @click="goToProducts" 
          style="cursor: pointer;"
          title="จัดการสินค้า">
-      <div class="card widget-card bg-distinct-green text-white h-100">
+      <div class="card widget-card bg-theme-dark text-white h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -43,7 +43,7 @@
          @click="goToOrders('preparing')" 
          style="cursor: pointer;" 
          title="ดูรายการที่ต้องเตรียม">
-      <div class="card widget-card bg-distinct-yellow text-white h-100">
+      <div class="card widget-card bg-theme-amber text-white h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -60,7 +60,7 @@
     </div>
 
     <div class="col-xl-3 col-md-6">
-      <div class="card widget-card bg-distinct-purple text-white h-100">
+      <div class="card widget-card bg-theme-coral text-white h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -81,51 +81,9 @@
     <div v-if="showEarningsModal" class="modal-backdrop-custom" @click.self="showEarningsModal = false">
       <div class="modal-content-custom p-0 overflow-hidden shadow-lg" style="max-width: 500px;">
         
-        <div class="px-4 py-3 bg-distinct-blue text-white d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="fw-bold mb-0"><Icon name="feather:pie-chart" class="me-2"/>รายได้ทั้งหมด</h5>
-            <small class="opacity-75">สรุปยอดขายแยกตามสถานะ</small>
-          </div>
-          <button class="btn btn-white-glass rounded-circle btn-sm" @click="showEarningsModal = false">
-            <Icon name="feather:x" size="20" />
-          </button>
-        </div>
+        
 
-        <div class="p-4 bg-light">
-            
-            <div class="card border-0 shadow-sm mb-3 rounded-4 overflow-hidden">
-                <div class="card-body d-flex align-items-center">
-                    <div class="p-3 rounded-circle bg-success-subtle text-success me-3">
-                        <Icon name="feather:check-circle" size="32" />
-                    </div>
-                    <div>
-                        <p class="text-secondary small mb-0 fw-bold">ยอดขายที่สำเร็จ (รับเงินแล้ว)</p>
-                        <h4 class="fw-bold text-success mb-0">{{ formatCurrency(earningsSuccess) }}</h4>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card border-0 shadow-sm mb-3 rounded-4 overflow-hidden">
-                <div class="card-body d-flex align-items-center">
-                    <div class="p-3 rounded-circle bg-warning-subtle text-warning me-3">
-                        <Icon name="feather:truck" size="32" />
-                    </div>
-                    <div>
-                        <p class="text-secondary small mb-0 fw-bold">อยู่ระหว่างจัดส่ง/เตรียมของ</p>
-                        <h4 class="fw-bold text-dark mb-0">{{ formatCurrency(earningsProcess) }}</h4>
-                        <small class="text-muted" style="font-size: 0.75rem;">*ยอดนี้จะได้รับเมื่อลูกค้ากดยืนยัน</small>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-center mt-4">
-                <p class="text-muted small">
-                    ยอดรวมทั้งหมด: 
-                    <span class="fw-bold text-primary">{{ formatCurrency(earningsSuccess + earningsProcess) }}</span>
-                </p>
-            </div>
-
-        </div>
+        
       </div>
     </div>
   </Transition>
@@ -164,8 +122,6 @@ const myOrders = computed(() => {
 
 // Helper คำนวณยอดเงิน (ราคาสินค้า - ค่าส่ง ถ้ามี Logic นี้)
 const calculateNetPrice = (order) => {
-    // สมมติว่าราคารวม (total) หักลบค่าส่ง (shippingCost) คือรายได้ร้านค้า
-    // หรือถ้า total คือค่าของล้วนๆ อยู่แล้ว ก็ใช้ order.total ได้เลย
     const total = Number(order.total) || 0
     const shipping = Number(order.shippingCost) || 0
     const net = total - shipping 
@@ -186,8 +142,7 @@ const earningsProcess = computed(() => {
         .reduce((sum, o) => sum + calculateNetPrice(o), 0)
 })
 
-// ยอดรวม (ใช้แสดงหน้าการ์ดหลัก) - เอาเฉพาะที่สำเร็จแล้ว หรือจะรวมทั้งหมดก็ได้ตาม Business Logic
-// *ในที่นี้ขอใช้ "สำเร็จแล้ว" โชว์หน้าการ์ด เพื่อความชัวร์ของตัวเลข
+// ยอดรวม (ใช้แสดงหน้าการ์ดหลัก)
 const totalEarnings = computed(() => earningsSuccess.value)
 
 const myProducts = computed(() => {
@@ -211,11 +166,18 @@ const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currenc
 </script>
 
 <style scoped>
-/* --- THEME COLORS --- */
-.bg-distinct-blue { background: linear-gradient(135deg, #007adf 0%, #00ecbc 100%); }
-.bg-distinct-green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-.bg-distinct-yellow { background: linear-gradient(135deg, #f09819 0%, #edde5d 100%); }
-.bg-distinct-purple { background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%); }
+/* --- THEME COLORS (Orange & Complementary) --- */
+/* สีส้มหลักของแอป (รายได้ - เด่นที่สุด) */
+.bg-theme-orange { background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%); }
+
+/* สีเทาเข้ม/สเลท (สินค้า - ตัดสีส้มให้ดูพรีเมียมและเบรกสายตา) */
+.bg-theme-dark { background: linear-gradient(135deg, #2D3436 0%, #535C68 100%); }
+
+/* สีเหลือง/อำพัน (กำลังเตรียม - สื่อถึงสถานะรอดำเนินการ) */
+.bg-theme-amber { background: linear-gradient(135deg, #F39C12 0%, #FBD786 100%); }
+
+/* สีส้มพีช/คอรัล (ออเดอร์ทั้งหมด - คุมโทนส้มแต่นุ่มนวลกว่า) */
+.bg-theme-coral { background: linear-gradient(135deg, #E17055 0%, #FFC3A0 100%); }
 
 /* Widget Styles */
 .widget-card {

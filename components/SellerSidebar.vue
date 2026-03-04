@@ -89,8 +89,8 @@
       <div class="profile-actions" v-if="!isCollapsed">
         <NuxtLink to="/SellerPage/editProfile" class="btn btn-sm btn-outline-primary w-100">แก้ไขโปรไฟล์</NuxtLink>
       </div>
-      <div class="profile-actions justify-content-center" v-else>
-        <NuxtLink to="/SellerPage/editProfile" class="btn btn-sm btn-outline-primary p-1">
+      <div class="profile-actions d-flex justify-content-center w-100 mt-3" v-else>
+        <NuxtLink to="/SellerPage/editProfile" class="btn btn-sm btn-outline-primary p-1 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 50%;">
           <Icon name="feather:edit" size="14" />
         </NuxtLink>
       </div>
@@ -299,21 +299,18 @@ const getImgUrl = (path) => {
   return '/images/' + path;
 }
 
-// ✅ 🚨 ฟังก์ชันใหม่สำหรับดึงรูปใน Noti โดยเฉพาะ (ดัดแปลงมาจาก getItemImage)
 const getNotiImage = (item) => {
   const resolve = (url) => {
     if (!url || url.trim() === '' || url === '/images/dashboard/default.png') return null
-    if (url.startsWith('data:')) return url   // base64 จาก MongoDB
-    if (url.startsWith('http')) return url    // full URL
+    if (url.startsWith('data:')) return url
+    if (url.startsWith('http')) return url
     if (url.startsWith('/')) return `${API_BASE_URL}${url}`
     return `${API_BASE_URL}/${url}`
   }
 
-  // ลองดึงจากข้อมูลใน data ก่อนเผื่อมี 
   const fromData = resolve(item?.data?.image)
   if (fromData) return fromData
 
-  // ถ้าไม่มีค่อยไปดึงจาก image ตรงๆ
   const fromItem = resolve(item?.image)
   if (fromItem) return fromItem
 
@@ -342,7 +339,6 @@ function logout() {
 </script>
 
 <style scoped>
-/* CSS เดิมทั้งหมด (พร้อมเพิ่ม CSS ของ default-icon-bg) */
 .seller-sidebar {
   width: 260px;
   height: 100vh;
@@ -734,7 +730,6 @@ function logout() {
   border: 1px solid #eee;
 }
 
-/* ✅ กล่องสีเทากรณีรูปพัง */
 .default-icon-bg {
   width: 36px;
   height: 36px;
@@ -817,7 +812,6 @@ function logout() {
 }
 
 @keyframes ping {
-
   75%,
   100% {
     transform: scale(2.5);
