@@ -141,11 +141,21 @@ const calculateSellerEarnings = (order) => {
   return items.reduce((sum, i) => sum + Number(i.price) * Number(i.qty), 0);
 };
 
-// 3. รายได้ที่สำเร็จแล้ว (เช็คสถานะ 'completed')
+// 3. รายได้ที่สำเร็จแล้ว (เฉพาะสถานะที่เสร็จสิ้นจริง ไม่รวมยกเลิก)
 const earningsSuccess = computed(() => {
-  const orders = myOrders.value.filter(
-    (o) => (o.status || "").toLowerCase() === "completed",
-  );
+  // สถานะที่ถือว่าเสร็จสิ้นจริงๆ และได้รับเงินแล้ว
+  const completedStatuses = ["completed", "สำเร็จ"];
+  
+  // สถานะที่ยกเลิก ไม่นับรายได้
+  const cancelledStatuses = ["cancelled", "canceled", "cancel requested", "refunded", "returned", "ยกเลิก"];
+  
+  const orders = myOrders.value.filter((order) => {
+    const status = (order.status || "").toLowerCase();
+    
+    // ต้องเป็นสถานะเสร็จสิ้นจริง และไม่ใช่สถานะยกเลิก
+    return completedStatuses.includes(status) && !cancelledStatuses.includes(status);
+  });
+  
   return orders.reduce((sum, o) => sum + calculateSellerEarnings(o), 0);
 });
 
