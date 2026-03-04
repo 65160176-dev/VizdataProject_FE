@@ -63,7 +63,7 @@ export const useCartStore = defineStore({
             let imageUrl = ''
             if (product.image) {
               if (product.image.startsWith('data:')) {
-                imageUrl = product.image  // base64 จาก MongoDB
+                imageUrl = ''  // legacy base64 — skip, use placeholder
               } else if (product.image.startsWith('http')) {
                 imageUrl = product.image
               } else if (product.image.startsWith('/')) {

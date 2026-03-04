@@ -116,7 +116,7 @@ export default {
       if (!product) return 'https://placehold.co/400'
       const resolveUrl = (url) => {
         if (!url || (typeof url === 'string' && url.trim() === '')) return null
-        if (url.startsWith('data:')) return url  // base64 จาก MongoDB
+        if (url.startsWith('data:')) return null  // legacy base64 — skip
         if (url.startsWith('http')) return url
         if (url.startsWith('/')) return `${BACKEND_URL}${url}`
         return `${BACKEND_URL}/${url}`

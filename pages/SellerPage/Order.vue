@@ -109,12 +109,9 @@ const myStoreOrders = computed(() => {
     const myId = authStore.user?._id || authStore.user?.id
     if (!myId) return []
 
+    // seller field เก็บ User ID ของเจ้าของร้าน (ไม่ใช่ Seller collection ID)
     return allPending.filter(order => {
-        const items = order.item || order.items || []
-        if (items.length === 0) return false
-        const productOwner = items[0]?.productId?.userId
-        const ownerId = (typeof productOwner === 'object') ? productOwner?._id : productOwner
-        return ownerId === myId
+        return String(order.seller) === String(myId)
     })
 })
 

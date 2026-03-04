@@ -210,7 +210,7 @@ const getItemImage = (item) => {
   const BACKEND = 'https://vizdataprojectbe-production.up.railway.app'
   const resolve = (url) => {
     if (!url || url.trim() === '' || url === '/images/dashboard/default.png') return null
-    if (url.startsWith('data:')) return url   // base64 จาก MongoDB
+    if (url.startsWith('data:')) return null  // legacy base64 — skip
     if (url.startsWith('http')) return url    // full URL
     if (url.startsWith('/')) return `${BACKEND}${url}`
     return `${BACKEND}/${url}`

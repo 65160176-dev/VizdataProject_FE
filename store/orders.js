@@ -41,6 +41,7 @@ export const useOrderStore = defineStore('orders', {
         if (userId) {
           queryParts.push(isSeller ? `sellerId=${encodeURIComponent(userId)}` : `userId=${encodeURIComponent(userId)}`)
         } else {
+          console.warn('[OrderStore] fetchOrders: no userId, skipping fetch')
           this.allOrders = []
           return
         }
@@ -53,6 +54,7 @@ export const useOrderStore = defineStore('orders', {
         const fetchPromise = $fetch(`${apiBase}/order${query}`, { headers })
         const data = await Promise.race([fetchPromise, timeoutPromise])
         if (data) {
+          console.log(`[OrderStore] fetched ${data.length} orders for userId=${userId}`)
           this.allOrders = data.map(o => ({
             ...o,
             status: o.status ? o.status.toLowerCase() : 'pending',
