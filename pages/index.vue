@@ -2,109 +2,101 @@
   <div>
     <Header />
 
-    <section class="marketplace py-4">
+    <section class="marketplace py-3">
       <div class="container-fluid px-4">
-        <div class="hero-swiper mb-4">
-          <ClientOnly>
-            <Swiper
-              :modules="[SwiperAutoplay, SwiperNavigation, SwiperPagination]"
-              :slides-per-view="1"
-              :loop="true"
-              :autoplay="{
-                delay: 4000,
-                disableOnInteraction: false,
-              }"
-              :navigation="true"
-              :pagination="{ clickable: true }"
-              class="banner-swiper"
+        <!-- Top bar: Category dropdown + Search -->
+        <div class="d-flex align-items-center gap-3 mb-3 top-bar-row">
+          <!-- Category Dropdown -->
+          <div class="category-dropdown-wrapper" ref="categoryDropdownRef">
+            <button
+              class="btn btn-category-dropdown d-flex align-items-center gap-2"
+              @click="showCategoryDropdown = !showCategoryDropdown"
             >
-              <SwiperSlide v-for="(banner, index) in banners" :key="index">
-                <div class="banner-slide">
-                  <img :src="banner.image" :alt="banner.alt" />
-                </div>
-              </SwiperSlide>
-            </Swiper>
-          </ClientOnly>
-        </div>
-
-        <div class="row">
-          <div class="col-lg-2 d-none d-lg-block">
-            <div
-              class="category-sidebar p-3 bg-white rounded shadow-sm border mb-4"
-            >
-              <div
-                class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom"
-              >
-                <h6 class="fw-bold mb-0" style="font-size: 15px">
-                  หมวดหมู่สินค้า
-                </h6>
-                <button
-                  v-if="selectedCategories.length > 0"
-                  class="btn btn-link text-danger p-0 border-0 btn-clear"
-                  @click="selectedCategories = []"
-                >
-                  ล้าง
-                </button>
-              </div>
-
-              <div class="category-list">
-                <div
-                  v-for="(cat, index) in systemCategories"
-                  :key="cat._id || index"
-                  class="category-item mb-1"
-                >
-                  <label
-                    :for="'cat-' + (cat._id || index)"
-                    class="category-row d-flex align-items-center justify-content-between py-2 px-2 rounded"
+              <i class="fa fa-bars"></i>
+              <span class="fw-semibold">หมวดหมู่สินค้า</span>
+              <i class="fa fa-chevron-down ms-1" style="font-size: 11px"></i>
+            </button>
+            <transition name="dropdown-fade">
+              <div v-if="showCategoryDropdown" class="category-dropdown-menu shadow">
+                <div class="dropdown-header d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+                  <span class="fw-bold">หมวดหมู่สินค้า</span>
+                  <button
+                    v-if="selectedCategories.length > 0"
+                    class="btn btn-link text-danger p-0 border-0 small"
+                    @click="selectedCategories = []"
                   >
-                    <div class="d-flex align-items-center overflow-hidden">
+                    ล้างทั้งหมด
+                  </button>
+                  <button class="btn btn-link text-muted p-0 border-0" @click="showCategoryDropdown = false">
+                    <i class="fa fa-times"></i> ปิด
+                  </button>
+                </div>
+                <div class="dropdown-body p-3">
+                  <div class="category-grid">
+                    <label
+                      v-for="(cat, index) in systemCategories"
+                      :key="cat._id || index"
+                      :for="'cat-dd-' + (cat._id || index)"
+                      class="category-dropdown-item d-flex align-items-center gap-2 py-2 px-3 rounded"
+                    >
                       <input
-                        class="form-check-input me-2 mt-0 custom-checkbox"
+                        class="form-check-input mt-0 custom-checkbox"
                         type="checkbox"
                         :value="cat.name"
-                        :id="'cat-' + (cat._id || index)"
+                        :id="'cat-dd-' + (cat._id || index)"
                         v-model="selectedCategories"
                       />
-                      <span class="cat-name text-truncate">{{ cat.name }}</span>
-                    </div>
-                    <span class="text-muted small ms-1" style="font-size: 11px"
-                      >({{ getCategoryCount(cat.name) }})</span
-                    >
-                  </label>
-                </div>
-                <div
-                  v-if="systemCategories.length === 0"
-                  class="text-center py-3"
-                >
-                  <div
-                    class="spinner-border spinner-border-sm text-secondary"
-                    role="status"
-                  ></div>
+                      <span class="cat-dd-name">{{ cat.name }}</span>
+                      <span class="text-muted ms-auto" style="font-size: 11px">({{ getCategoryCount(cat.name) }})</span>
+                    </label>
+                  </div>
+                  <div v-if="systemCategories.length === 0" class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </transition>
           </div>
 
-          <div class="col-lg-10 col-12">
-            <div class="search-box mb-4">
-              <div class="input-group shadow-sm rounded">
-                <span class="input-group-text bg-white border-end-0"
-                  ><i class="fa fa-search text-muted"></i
-                ></span>
-                <input
-                  v-model="q"
-                  class="form-control border-start-0 ps-0"
-                  placeholder="ค้นหาสินค้า หรือ ร้านค้า..."
-                />
-              </div>
+          <!-- Search bar -->
+          <div class="search-box flex-grow-1">
+            <div class="input-group shadow-sm rounded">
+              <span class="input-group-text bg-white border-end-0"
+                ><i class="fa fa-search text-muted"></i
+              ></span>
+              <input
+                v-model="q"
+                class="form-control border-start-0 ps-0"
+                placeholder="ค้นหาสินค้า หรือ ร้านค้า..."
+              />
             </div>
+          </div>
+        </div>
 
+        <!-- Selected category tags -->
+        <div v-if="selectedCategories.length > 0" class="selected-tags mb-3 d-flex flex-wrap gap-2">
+          <span
+            v-for="cat in selectedCategories"
+            :key="cat"
+            class="badge-tag d-flex align-items-center gap-1"
+          >
+            {{ cat }}
+            <button class="btn-tag-remove" @click="selectedCategories = selectedCategories.filter(c => c !== cat)">
+              <i class="fa fa-times"></i>
+            </button>
+          </span>
+        </div>
+
+        <div>
+          <!-- Main content: products first -->
+          <div>
+            <!-- Best Sellers -->
             <div v-if="bestLoading" class="text-center py-3">
               <div class="spinner-border text-primary" role="status"></div>
             </div>
             <div
               v-else-if="bestSellersFiltered.length > 0"
-              class="best-seller-section mb-5"
+              class="best-seller-section mb-4"
             >
               <div
                 class="d-flex align-items-center justify-content-between mb-3"
@@ -154,6 +146,7 @@
               </div>
             </div>
 
+            <!-- All Products -->
             <div class="d-flex align-items-center justify-content-between mb-3">
               <h5 class="fw-bold mb-0">สินค้าทั้งหมด</h5>
               <span class="text-muted small"
@@ -250,6 +243,34 @@
       </div>
     </section>
 
+    <!-- Banner at the bottom -->
+    <section class="banner-bottom-section py-4">
+      <div class="container-fluid px-4">
+        <div class="mini-banner">
+          <ClientOnly>
+            <Swiper
+              :modules="[SwiperAutoplay, SwiperNavigation, SwiperPagination]"
+              :slides-per-view="1"
+              :loop="true"
+              :autoplay="{
+                delay: 4000,
+                disableOnInteraction: false,
+              }"
+              :navigation="true"
+              :pagination="{ clickable: true }"
+              class="banner-swiper"
+            >
+              <SwiperSlide v-for="(banner, index) in banners" :key="index">
+                <div class="banner-slide">
+                  <img :src="banner.image" :alt="banner.alt" />
+                </div>
+              </SwiperSlide>
+            </Swiper>
+          </ClientOnly>
+        </div>
+      </div>
+    </section>
+
     <Footer />
   </div>
 </template>
@@ -278,6 +299,8 @@ const systemCategories = ref([]);
 const bestSellers = ref([]);
 const bestLoading = ref(true);
 const scrollTrigger = ref(null);
+const showCategoryDropdown = ref(false);
+const categoryDropdownRef = ref(null);
 
 const itemsPerPage = 20;
 const displayedCount = ref(20);
@@ -300,7 +323,14 @@ const banners = ref([
   },
 ]);
 
+function handleClickOutside(e) {
+  if (categoryDropdownRef.value && !categoryDropdownRef.value.contains(e.target)) {
+    showCategoryDropdown.value = false;
+  }
+}
+
 onMounted(async () => {
+  document.addEventListener('click', handleClickOutside);
   await Promise.all([
     productStore.fetchProducts(),
     fetchSystemCategories(),
@@ -310,6 +340,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
   if (observer) observer.disconnect();
 });
 
@@ -434,17 +465,17 @@ function addToCart(product) {
   min-height: 100vh;
 }
 
-/* --- CSS คืนค่าแบนเนอร์ให้เท่าของเก่า --- */
-.hero-swiper {
-  border-radius: 8px;
+/* --- Mini Banner --- */
+.mini-banner {
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .banner-swiper {
   width: 100%;
-  height: 480px;
-  border-radius: 8px;
+  height: 180px;
+  border-radius: 10px;
 }
 
 .banner-slide {
@@ -463,15 +494,15 @@ function addToCart(product) {
 /* ปรับแต่งปุ่มเลื่อนซ้าย-ขวาแบบบังคับแสดงผล (Force Display) */
 .banner-swiper :deep(.swiper-button-next),
 .banner-swiper :deep(.swiper-button-prev) {
-  background: rgba(0, 0, 0, 0.6);
-  width: 45px;
-  height: 45px;
+  background: rgba(0, 0, 0, 0.5);
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex !important;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  color: white !important; /* บังคับสีขาว */
+  color: white !important;
 }
 
 /* บังคับซ่อนลูกศรเดิมของ Swiper เผื่อมันบั๊ก */
@@ -482,8 +513,8 @@ function addToCart(product) {
 
 /* สร้างลูกศรใหม่โดยใช้ Unicode ที่ชัวร์ 100% */
 .banner-swiper :deep(.swiper-button-next)::before {
-  content: "\276F" !important; /* ลูกศรขวา */
-  font-size: 20px !important;
+  content: "\276F" !important;
+  font-size: 14px !important;
   font-weight: bold !important;
   display: block !important;
   color: white !important;
@@ -491,8 +522,8 @@ function addToCart(product) {
 }
 
 .banner-swiper :deep(.swiper-button-prev)::before {
-  content: "\276E" !important; /* ลูกศรซ้าย */
-  font-size: 20px !important;
+  content: "\276E" !important;
+  font-size: 14px !important;
   font-weight: bold !important;
   display: block !important;
   color: white !important;
@@ -505,14 +536,13 @@ function addToCart(product) {
   transform: scale(1.1);
 }
 
-/* จุดไข่ปลาด้านล่าง (Pagination) */
 .banner-swiper :deep(.swiper-pagination) {
-  bottom: 20px;
+  bottom: 10px;
 }
 
 .banner-swiper :deep(.swiper-pagination-bullet) {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   background: white;
   opacity: 0.7;
   transition: all 0.3s ease;
@@ -520,68 +550,125 @@ function addToCart(product) {
 
 .banner-swiper :deep(.swiper-pagination-bullet-active) {
   opacity: 1;
-  background: #ff4c3b; /* ปรับสีให้เข้ากับธีมใหม่ */
-  width: 30px;
-  border-radius: 6px;
+  background: #ff4c3b;
+  width: 20px;
+  border-radius: 4px;
 }
-/* ------------------------------------- */
 
-.category-sidebar {
-  border-radius: 12px !important;
+/* --- Category Dropdown --- */
+.category-dropdown-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.btn-category-dropdown {
+  background: #ff4c3b;
+  color: white;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.btn-category-dropdown:hover {
+  background: #e6392a;
+  color: white;
+}
+
+.category-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 380px;
+  max-width: 500px;
   background: white;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  z-index: 1050;
+  overflow: hidden;
 }
 
-.btn-clear {
-  font-size: 13px;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.category-list {
-  max-height: 350px;
+.dropdown-body {
+  max-height: 400px;
   overflow-y: auto;
-  padding-right: 5px;
   scrollbar-width: thin;
-  scrollbar-color: #eee transparent;
+  scrollbar-color: #ddd transparent;
 }
-
-.category-list::-webkit-scrollbar {
+.dropdown-body::-webkit-scrollbar {
   width: 4px;
 }
-.category-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-.category-list::-webkit-scrollbar-thumb {
-  background: #eee;
+.dropdown-body::-webkit-scrollbar-thumb {
+  background: #ddd;
   border-radius: 10px;
 }
 
-.category-row {
-  cursor: pointer;
-  transition: all 0.2s;
-  user-select: none;
+.category-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
-.category-row:hover {
-  background-color: #fff1f0;
+
+.category-dropdown-item {
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  font-size: 14px;
+}
+.category-dropdown-item:hover {
+  background: #fff1f0;
   color: #ff4c3b;
 }
+
+.cat-dd-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .custom-checkbox:checked {
   background-color: #ff4c3b;
   border-color: #ff4c3b;
 }
 
-.cat-name {
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 130px;
+/* Dropdown animation */
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+  transition: opacity 0.2s, transform 0.2s;
+}
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* Selected category tags */
+.badge-tag {
+  background: #fff1f0;
+  color: #ff4c3b;
+  border: 1px solid #ffd6d2;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.btn-tag-remove {
+  background: none;
+  border: none;
+  color: #ff4c3b;
+  padding: 0;
+  margin-left: 2px;
+  cursor: pointer;
+  font-size: 11px;
+}
+.btn-tag-remove:hover {
+  color: #c0392b;
 }
 
 /* Product Grid & Cards */
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 16px;
 }
 
@@ -648,7 +735,7 @@ function addToCart(product) {
 
 @media (max-width: 1400px) {
   .product-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 @media (max-width: 1100px) {
@@ -661,7 +748,7 @@ function addToCart(product) {
     grid-template-columns: repeat(2, 1fr);
   }
   .banner-swiper {
-    height: 260px;
+    height: 120px;
   }
 }
 </style>

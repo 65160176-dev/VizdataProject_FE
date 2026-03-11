@@ -17,6 +17,7 @@
           <div class="collection-wrapper">
             <div class="container-fluid px-4">
               <div class="row">
+                <!-- รูปสินค้า -->
                 <div class="col-lg-1 col-sm-2 col-xs-12">
                   <div class="row">
                     <div class="col-12 slider-nav-images">
@@ -44,236 +45,205 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-lg-4">
-                  <div class="product-right product-description-box">
-                    <h2>{{ product.name }}</h2>
 
-                    <div
-                      class="seller-block mt-3 p-3 border rounded bg-light"
-                      v-if="seller && $route.query.hideSeller !== 'true'"
-                    >
-                      <div
-                        class="d-flex justify-content-between align-items-center"
-                      >
-                        <div>
-                          <label class="text-muted small mb-1">ร้านค้า</label>
-                          <h5 class="mb-0">
-                            {{ seller.display_name || seller.name }}
+                <!-- ข้อมูลสินค้าทั้งหมด -->
+                <div class="col-lg-8">
+                  <div class="row">
+                    <!-- ข้อมูลหลัก -->
+                    <div class="col-lg-7">
+                      <div class="product-right product-description-box" style="padding-bottom: 0;">
+                        <h2 style="font-size: 1.3rem; margin-bottom: 4px;">{{ product.name }}</h2>
+
+                        <div
+                          class="seller-block mt-2 p-2 border rounded bg-light"
+                          v-if="seller && $route.query.hideSeller !== 'true'"
+                        >
+                          <div
+                            class="d-flex justify-content-between align-items-center"
+                          >
+                            <div>
+                              <label class="text-muted small mb-0">ร้านค้า</label>
+                              <h6 class="mb-0">
+                                {{ seller.display_name || seller.name }}
+                              </h6>
+                            </div>
+                            <nuxt-link
+                              :to="{ path: '/seller/' + product.userId }"
+                              class="btn btn-sm btn-outline-primary"
+                            >
+                              <i class="ti-eye"></i> ดูร้าน
+                            </nuxt-link>
+                          </div>
+                        </div>
+
+                        <div
+                          class="pro_inventory mt-1"
+                          v-if="product.stock < 8 && product.stock > 0"
+                        >
+                          <p class="active mb-0" style="font-size: 0.85rem;">เหลือเพียง {{ product.stock }} ชิ้น!</p>
+                          <div class="inventory-scroll">
+                            <span
+                              :style="{ width: (product.stock / 8) * 100 + '%' }"
+                            ></span>
+                          </div>
+                        </div>
+
+                        <div class="single-product-tables border-product detail-section" style="padding: 8px 0;">
+                          <table>
+                            <tbody>
+                              <tr>
+                                <td>หมวดหมู่:</td>
+                                <td>{{ product.category || "-" }}</td>
+                              </tr>
+                              <tr>
+                                <td>ค่าจัดส่ง: (ต่อชิ้น)</td>
+                                <td>฿{{ product.shippingCost || 0 }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div class="border-product" style="padding: 8px 0;">
+                          <div class="product-icon">
+                            <form class="d-inline-block" @submit.prevent>
+                              <button
+                                type="button"
+                                class="wishlist-btn"
+                                @click="addToWishlist(product)"
+                              >
+                                <i class="fa fa-heart"></i>
+                                <span class="title-font">เพิ่มลงในรายการที่อยากได้</span>
+                              </button>
+                            </form>
+                          </div>
+                        </div>
+
+                        <div class="border-product" style="padding: 8px 0;">
+                          <h6 class="inner-title mb-1">รายละเอียดสินค้า:</h6>
+                          <p style="word-break: break-word; overflow-wrap: break-word; margin-bottom: 0;">{{ product.description || "ไม่มีรายละเอียด" }}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- กล่องซื้อสินค้า -->
+                    <div class="col-lg-5">
+                      <div class="product-right product-form-box" style="position: sticky; top: 20px; padding: 15px;">
+                        <h3 class="mb-2" style="text-align: center;">฿{{ product.price?.toFixed(2) }}</h3>
+                        <div class="border-product" style="padding: 8px 0;">
+                          <h5
+                            class="avalibility"
+                            v-if="product.stock > 0 && counter <= product.stock"
+                          >
+                            <span>มีสินค้า (เหลือ {{ product.stock }} ชิ้น)</span>
                           </h5>
-                          <p
-                            class="text-muted small mb-0"
-                            v-if="seller.description"
-                          >
-                            {{ seller.description }}
-                          </p>
-                        </div>
-                        <nuxt-link
-                          :to="{ path: '/seller/' + product.userId }"
-                          class="btn btn-sm btn-outline-primary"
-                        >
-                          <i class="ti-eye"></i> ดูร้าน
-                        </nuxt-link>
-                      </div>
-                    </div>
+                          <h5 class="avalibility text-danger" v-else>
+                            <span>สินค้าหมด</span>
+                          </h5>
 
-                    <div
-                      class="pro_inventory"
-                      v-if="product.stock < 8 && product.stock > 0"
-                    >
-                      <p class="active">เหลือเพียง {{ product.stock }} ชิ้น!</p>
-                      <div class="inventory-scroll">
-                        <span
-                          :style="{ width: (product.stock / 8) * 100 + '%' }"
-                        ></span>
-                      </div>
-                    </div>
-                    <div
-                      class="single-product-tables border-product detail-section"
-                    >
-                      <table>
-                        <tbody>
-                          <tr>
-                            <td>หมวดหมู่:</td>
-                            <td>{{ product.category || "-" }}</td>
-                          </tr>
-                          <tr>
-                            <td>ค่าจัดส่ง: (ต่อชิ้น)</td>
-                            <td>฿{{ product.shippingCost || 0 }}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div class="border-product">
-                      <div class="product-icon">
-                        <form class="d-inline-block" @submit.prevent>
+                          <h6 class="product-title">จำนวน</h6>
+                          <div class="qty-box d-flex justify-content-center">
+                            <div class="input-group" style="width: 140px">
+                              <span class="input-group-prepend">
+                                <button
+                                  type="button"
+                                  class="btn quantity-left-minus"
+                                  style="padding: 10px 15px; height: 45px"
+                                  @click="decrement()"
+                                  :disabled="counter <= 1"
+                                >
+                                  <i class="ti-angle-left"></i>
+                                </button>
+                              </span>
+                              <input
+                                type="text"
+                                name="quantity"
+                                class="form-control input-number text-center qty-input-custom"
+                                style="
+                                  height: 45px;
+                                  font-size: 16px;
+                                  font-weight: 600;
+                                "
+                                :disabled="counter > product.stock"
+                                v-model="counter"
+                                readonly
+                              />
+                              <span class="input-group-prepend">
+                                <button
+                                  type="button"
+                                  class="btn quantity-right-plus"
+                                  style="padding: 10px 15px; height: 45px"
+                                  @click="increment()"
+                                  :disabled="counter >= product.stock"
+                                >
+                                  <i class="ti-angle-right"></i>
+                                </button>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="product-buttons">
                           <button
-                            type="button"
-                            class="wishlist-btn"
-                            @click="addToWishlist(product)"
-                          >
-                            <i class="fa fa-heart"></i
-                            ><span class="title-font">Add To WishList</span>
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-4">
-                  <div class="product-right product-form-box">
-                    <h3>฿{{ product.price?.toFixed(2) }}</h3>
-
-                    <div class="border-product">
-                      <h5
-                        class="avalibility"
-                        v-if="product.stock > 0 && counter <= product.stock"
-                      >
-                        <span>มีสินค้า (เหลือ {{ product.stock }} ชิ้น)</span>
-                      </h5>
-                      <h5 class="avalibility text-danger" v-else>
-                        <span>สินค้าหมด</span>
-                      </h5>
-
-                      <h6 class="product-title">จำนวน</h6>
-                      <div class="qty-box d-flex justify-content-center">
-                        <div class="input-group" style="width: 140px">
-                          <span class="input-group-prepend">
-                            <button
-                              type="button"
-                              class="btn quantity-left-minus"
-                              style="padding: 10px 15px; height: 45px"
-                              @click="decrement()"
-                              :disabled="counter <= 1"
-                            >
-                              <i class="ti-angle-left"></i>
-                            </button>
-                          </span>
-                          <input
-                            type="text"
-                            name="quantity"
-                            class="form-control input-number text-center qty-input-custom"
+                            class="btn btn-solid"
                             style="
-                              height: 45px;
-                              font-size: 16px;
-                              font-weight: 600;
+                              padding: 10px 20px;
+                              height: auto;
+                              min-height: 40px;
                             "
-                            :disabled="counter > product.stock"
-                            v-model="counter"
-                            readonly
-                          />
-                          <span class="input-group-prepend">
+                            @click="addToCart(product, counter)"
+                          >
+                            เพิ่มลงรถเข็น
+                          </button>
+                          <button
+                            class="btn btn-solid"
+                            style="
+                              padding: 10px 20px;
+                              height: auto;
+                              min-height: 40px;
+                            "
+                            @click="buyNow(product, counter)"
+                          >
+                            ซื้อเลย
+                          </button>
+                        </div>
+
+                        <div class="border-product mt-2" v-if="isAffiliate">
+                          <h6 class="product-title" style="font-size: 0.85rem;">
+                            🔗 แชร์ลิงก์รับค่าคอม (Affiliate)
+                          </h6>
+                          <div class="d-flex gap-2 align-items-center">
+                            <input
+                              type="text"
+                              :value="affiliateLink"
+                              readonly
+                              class="form-control form-control-sm"
+                            />
                             <button
-                              type="button"
-                              class="btn quantity-right-plus"
-                              style="padding: 10px 15px; height: 45px"
-                              @click="increment()"
-                              :disabled="counter >= product.stock"
+                              @click="copyAffiliateLink"
+                              class="btn btn-outline-primary btn-sm"
+                              style="min-width: 80px"
                             >
-                              <i class="ti-angle-right"></i>
+                              <i class="fa fa-copy me-1"></i>Copy
                             </button>
-                          </span>
+                          </div>
+                          <small class="text-muted mt-1 d-block"
+                            >คัดลอกลิงก์ไปแชร์เพื่อรับค่าคอมมิชชั่น</small
+                          >
                         </div>
                       </div>
-                    </div>
-
-                    <div class="product-buttons">
-                      <button
-                        class="btn btn-solid"
-                        style="
-                          padding: 12px 24px;
-                          height: auto;
-                          min-height: 45px;
-                        "
-                        @click="addToCart(product, counter)"
-                      >
-                        เพิ่มลงรถเข็น
-                      </button>
-                      <button
-                        class="btn btn-solid"
-                        style="
-                          padding: 12px 24px;
-                          height: auto;
-                          min-height: 45px;
-                        "
-                        @click="buyNow(product, counter)"
-                      >
-                        ซื้อเลย
-                      </button>
-                    </div>
-
-                    <div class="border-product mt-3" v-if="isAffiliate">
-                      <h6 class="product-title">
-                        🔗 แชร์ลิงก์รับค่าคอม (Affiliate)
-                      </h6>
-                      <div class="d-flex gap-2 align-items-center">
-                        <input
-                          type="text"
-                          :value="affiliateLink"
-                          readonly
-                          class="form-control form-control-sm"
-                        />
-                        <button
-                          @click="copyAffiliateLink"
-                          class="btn btn-outline-primary btn-sm"
-                          style="min-width: 100px"
-                        >
-                          <i class="fa fa-copy me-1"></i>Copy
-                        </button>
-                      </div>
-                      <small class="text-muted mt-1 d-block"
-                        >คัดลอกลิงก์ไปแชร์เพื่อรับค่าคอมมิชชั่น</small
-                      >
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <section class="tab-product m-0">
-            <div class="container-fluid px-4">
-              <div class="row">
-                <div class="col-sm-12 col-lg-12">
-                  <ul
-                    class="nav nav-tabs nav-material"
-                    id="top-tab"
-                    role="tablist"
-                  >
-                    <li class="nav-item">
-                      <a
-                        class="nav-link active"
-                        id="top-home-tab"
-                        data-bs-toggle="tab"
-                        href="#top-home"
-                        role="tab"
-                        aria-selected="true"
-                        ><i class="icofont icofont-ui-home"></i>Details</a
-                      >
-                      <div class="material-border"></div>
-                    </li>
-                  </ul>
-                  <div class="tab-content nav-material" id="top-tabContent">
-                    <div
-                      class="tab-pane fade show active"
-                      id="top-home"
-                      role="tabpanel"
-                    >
-                      <div class="product-tab-discription">
-                        <div class="part">
-                          <h5 class="inner-title">รายละเอียดสินค้า:</h5>
-                          <p>{{ product.description || "ไม่มีรายละเอียด" }}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+
         </section>
 
         <!-- Related Products Section -->
         <section
-          class="section-b-space ratio_asos"
+          class="ratio_asos"
+          style="padding: 15px 0;"
           v-if="relatedProducts.length > 0"
         >
           <div class="container-fluid px-4">
@@ -330,7 +300,8 @@
 
         <!-- Random Products Section -->
         <section
-          class="section-b-space ratio_asos"
+          class="ratio_asos"
+          style="padding: 15px 0;"
           v-if="randomProducts.length > 0"
         >
           <div class="container-fluid px-4">
@@ -561,7 +532,7 @@ export default {
         );
 
         // สุ่มเอา 6 ตัว
-        this.relatedProducts = this.shuffleArray(related).slice(0, 5);
+        this.relatedProducts = this.shuffleArray(related).slice(0, 6);
       } catch (error) {
         console.error("Failed to fetch related products:", error);
         this.relatedProducts = [];
@@ -583,7 +554,7 @@ export default {
         );
 
         // สุ่มเอา 6 ตัว
-        this.randomProducts = this.shuffleArray(filtered).slice(0, 5);
+        this.randomProducts = this.shuffleArray(filtered).slice(0, 6);
       } catch (error) {
         console.error("Failed to fetch random products:", error);
         this.randomProducts = [];
@@ -631,8 +602,8 @@ export default {
 /* Product Grid (index style) */
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
 }
 .product-card {
   display: block;
@@ -649,7 +620,7 @@ export default {
   box-shadow: 0 12px 30px rgba(17, 24, 39, 0.08);
 }
 .card-img-wrap {
-  height: 200px;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   background: #f5f5f5;
   cursor: pointer;
@@ -661,10 +632,10 @@ export default {
   display: block;
 }
 .card .card-body {
-  padding: 10px;
+  padding: 8px;
 }
 .card .card-title {
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -672,13 +643,13 @@ export default {
 }
 .card .fw-bold {
   color: #111827;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 /* Cart Button */
 .btn-cart {
   background: #ff4c3b;
-  padding: 8px 14px;
+  padding: 6px 10px;
   border-radius: 4px;
   display: inline-flex;
   align-items: center;
@@ -700,22 +671,22 @@ export default {
 /* Responsive */
 @media (max-width: 1400px) {
   .product-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 @media (max-width: 1100px) {
   .product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .product-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
-@media (max-width: 767px) {
+@media (max-width: 600px) {
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (max-width: 480px) {
-  .product-grid {
-    grid-template-columns: repeat(1, 1fr);
   }
 }
 

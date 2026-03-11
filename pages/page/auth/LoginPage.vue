@@ -20,8 +20,8 @@
       <div class="auth-form-wrap">
         <!-- Header -->
         <div class="form-header">
-          <h1 class="welcome-title">Welcome</h1>
-          <p class="welcome-sub">We are glad to see you back with us</p>
+          <h1 class="welcome-title">BDN Official Store</h1>
+          <p class="welcome-sub">ยินดีต้อนรับสู่ BDN Official Store</p>
         </div>
 
         <!-- Tabs -->
@@ -172,11 +172,12 @@ definePageMeta({
   margin-bottom: 28px;
 
   .welcome-title {
-    font-size: 40px;
+    font-size: 32px;
     font-weight: 800;
     color: #111;
     margin: 0 0 6px;
     line-height: 1.1;
+    white-space: nowrap;
   }
 
   .welcome-sub {

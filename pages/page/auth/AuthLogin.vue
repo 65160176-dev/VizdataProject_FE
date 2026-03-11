@@ -20,7 +20,7 @@
         type="email"
         v-model="email"
         class="form-control"
-        placeholder="Enter your Email"
+        placeholder="กรอกอีเมลของคุณ"
         :disabled="loading"
       />
     </div>
@@ -33,7 +33,7 @@
         v-model="password"
         :type="passwordType"
         class="form-control"
-        placeholder="Password"
+        placeholder="กรอกรหัสผ่านของคุณ"
         :disabled="loading"
       />
       <div class="show-hide" @click="togglePassword">
@@ -52,30 +52,32 @@
     <div class="form-terms">
       <div class="check-wrap">
         <input type="checkbox" id="rememberMe" v-model="rememberMe" />
-        <label for="rememberMe">Remember me</label>
+        <label for="rememberMe">จดจำฉัน
+
+        </label>
       </div>
       <NuxtLink to="/forgot-password" class="forgot-pass"
-        >Lost your password?</NuxtLink
+        >ลืมรหัสผ่าน?</NuxtLink
       >
     </div>
 
     <!-- Submit -->
     <div class="form-button">
       <button class="btn-next" type="submit" :disabled="loading">
-        {{ loading ? "กำลังเข้าสู่ระบบ..." : "NEXT" }}
+        {{ loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ" }}
       </button>
     </div>
 
     <!-- Social -->
     <div class="form-footer">
-      <div class="divider">Login with Others</div>
+      <div class="divider">เข้าสู่ระบบด้วยบัญชีอื่น</div>
       <a href="#" class="social-btn" @click.prevent="loginWithGoogle">
         <img
           class="social-logo"
           src="https://www.svgrepo.com/show/475656/google-color.svg"
           alt="Google"
         />
-        Login with Google
+        เข้าสู่ระบบด้วย Google
       </a>
       <a href="#" class="social-btn fb-btn" @click.prevent="loginWithFacebook">
         <img
@@ -83,12 +85,12 @@
           src="https://www.svgrepo.com/show/448224/facebook.svg"
           alt="Facebook"
         />
-        Login with Facebook
+        เข้าสู่ระบบด้วย Facebook
       </a>
       <!-- Telegram Login Widget (real button rendered by Telegram) -->
       <div class="tg-widget-wrap">
         <div ref="telegramWidgetContainer" class="tg-widget-inner">
-          <div class="tg-widget-overlay">Login with Telegram</div>
+          <div class="tg-widget-overlay">เข้าสู่ระบบด้วย Telegram</div>
         </div>
       </div>
     </div>

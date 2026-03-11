@@ -6,7 +6,7 @@
           <div class="col-sm-6">
             
             <button @click="$router.back()" class="btn btn-sm back-button">
-              <i class="ti-arrow-left"></i> BACK
+              <i class="ti-arrow-left"></i> ย้อนกลับ
             </button>
           </div>
           <div class="col-sm-6">

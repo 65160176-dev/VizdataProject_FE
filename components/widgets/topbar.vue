@@ -5,9 +5,9 @@
         <div class="col-lg-6">
           <div class="header-contact">
             <ul>
-              <li>Welcome to BDN Shop</li>
+              <li>ยินดีต้อนรับสู่  BDN Official Store</li>
               <li>
-                <i class="fa fa-phone" aria-hidden="true"></i>Call Us: 123 - 456 - 7890
+                <i class="fa fa-phone" aria-hidden="true"></i>โทรหาเรา: 123 - 456 - 7890
               </li>
             </ul>
           </div>
@@ -26,19 +26,19 @@
 
             <li class="mobile-wishlist">
               <nuxt-link to="/page/account/wishlist" style="color: inherit">
-                <i class="fa fa-heart" aria-hidden="true"></i> wishlist
+                <i class="fa fa-heart" aria-hidden="true"></i> รายการที่อยากได้
               </nuxt-link>
             </li>
 
             <li class="onhover-dropdown mobile-account">
-              <i class="fa fa-user" aria-hidden="true"></i> My Account
+              <i class="fa fa-user" aria-hidden="true"></i> บัญชีของฉัน
               <ul class="onhover-show-div">
                 <li>
-                  <nuxt-link to="/page/account/userdashboard">Dashboard</nuxt-link>
+                  <nuxt-link to="/page/account/userdashboard">โปรไฟล์</nuxt-link>
                 </li>
                 <li @click="logout">
                   <nuxt-link to="javascript:void(0)">
-                    {{ isLogin ? 'Logout' : 'Login' }}
+                    {{ isLogin ? 'ออกจากระบบ' : 'เข้าสู่ระบบ' }}
                   </nuxt-link>
                 </li>
               </ul>

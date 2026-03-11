@@ -51,33 +51,33 @@
     },
     
     {
-      "title": "Menu",
+      "title": "เมนู",
       "type": "sub",
       "active": false,
       "children": [
         {
-          "title": "Account",
+          "title": "บัญชี",
           "type": "sub",
           "active": false,
           "children": [
             {
               "path": "/page/account/wishlist",
-              "title": "Wishlist",
+              "title": "รายการที่อยากได้",
               "type": "link"
             },
             {
               "path": "/page/account/cart",
-              "title": "Cart",
+              "title": "ตะกร้าสินค้า",
               "type": "link"
             },
             {
               "path": "/page/auth/LoginPage",
-              "title": "Login",
+              "title": "เข้าสู่ระบบ",
               "type": "link"
             },
             {
               "path": "/page/account/userdashboard",
-              "title": "Profile",
+              "title": "โปรไฟล์",
               "type": "link"
             }
           ]

@@ -5,6 +5,23 @@
       {{ message }}
     </div>
 
+    <!-- Register as -->
+    <div class="register-type">
+      <label class="type-label">สมัครเป็น</label>
+      <div class="type-options">
+        <label class="type-option" :class="{ active: userType == 1 }">
+          <input type="radio" value="1" v-model="userType" :disabled="loading" />
+          <Icon name="mdi:account-outline" size="16" />
+          ผู้ซื้อ
+        </label>
+        <label class="type-option" :class="{ active: userType == 0 }">
+          <input type="radio" value="0" v-model="userType" :disabled="loading" />
+          <Icon name="mdi:store-outline" size="16" />
+          ผู้ขาย
+        </label>
+      </div>
+    </div>
+
     <!-- Username / Shop Name -->
     <div class="form-group">
       <Icon name="mdi:store-outline" size="18" class="input-icon" />
@@ -13,7 +30,7 @@
         type="text"
         v-model="username"
         class="form-control"
-        :placeholder="userType == 0 ? 'Shop Name' : 'Username'"
+        :placeholder="userType == 0 ? 'ชื่อร้านค้า' : 'ชื่อผู้ใช้'"
         :disabled="loading"
       />
     </div>
@@ -26,7 +43,7 @@
         type="email"
         v-model="email"
         class="form-control"
-        placeholder="Email"
+        placeholder="อีเมล"
         :disabled="loading"
       />
     </div>
@@ -39,7 +56,7 @@
         v-model="password"
         :type="showPassword ? 'text' : 'password'"
         class="form-control"
-        placeholder="Password"
+        placeholder="รหัสผ่าน"
         :disabled="loading"
       />
       <div class="show-hide" @click="showPassword = !showPassword">
@@ -55,26 +72,9 @@
         v-model="confirmPassword"
         :type="showPassword ? 'text' : 'password'"
         class="form-control"
-        placeholder="Confirm Password"
+        placeholder="ยืนยันรหัสผ่าน"
         :disabled="loading"
       />
-    </div>
-
-    <!-- Register as -->
-    <div class="register-type">
-      <label class="type-label">Register as</label>
-      <div class="type-options">
-        <label class="type-option" :class="{ active: userType == 1 }">
-          <input type="radio" value="1" v-model="userType" :disabled="loading" />
-          <Icon name="mdi:account-outline" size="16" />
-          User
-        </label>
-        <label class="type-option" :class="{ active: userType == 0 }">
-          <input type="radio" value="0" v-model="userType" :disabled="loading" />
-          <Icon name="mdi:store-outline" size="16" />
-          Seller
-        </label>
-      </div>
     </div>
 
     <!-- Terms -->
@@ -82,7 +82,7 @@
       <div class="check-wrap">
         <input type="checkbox" id="agreeTerms" v-model="agreeTerms" required />
         <label for="agreeTerms">
-          I agree to <a href="#">Terms &amp; Conditions</a>
+          ฉันยอมรับ <a href="#">ข้อกำหนดและเงื่อนไข</a>
         </label>
       </div>
     </div>
@@ -90,20 +90,20 @@
     <!-- Submit -->
     <div class="form-button">
       <button class="btn-next" type="submit" :disabled="loading || !agreeTerms">
-        {{ loading ? 'à¸à¸³à¸¥à¸±à¸‡à¸ªà¸¡à¸±à¸„à¸£...' : 'REGISTER' }}
+        {{ loading ? 'กำลังสมัคร...' : 'สมัครสมาชิก' }}
       </button>
     </div>
 
     <!-- Social -->
     <div class="form-footer">
-      <div class="divider">Or sign up with</div>
+      <div class="divider">หรือสมัครด้วยบัญชีอื่น</div>
       <a href="#" class="social-btn" @click.prevent="loginWithGoogle">
         <img class="social-logo" src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
-        Sign up with Google
+        สมัครด้วย Google
       </a>
       <a href="#" class="social-btn fb-btn" @click.prevent="loginWithFacebook">
         <img class="social-logo" src="https://www.svgrepo.com/show/448224/facebook.svg" alt="Facebook" />
-        Sign up with Facebook
+        สมัครด้วย Facebook
       </a>
     </div>
   </form>
