@@ -8,6 +8,14 @@
         style="padding-left: 3rem; padding-right: 3rem"
       >
         <div class="mb-3"></div>
+
+        <div class="row mb-4">
+          <div class="col-12 text-center">
+            <h2 class="title-font font-weight-bold" style="color: #333; font-size: 28px;">ตะกร้าสินค้า</h2>
+            <div class="title-border mb-0 mt-2" style="width: 50px; height: 3px; background-color: #ff4c3b; margin: 0 auto;"></div>
+          </div>
+        </div>
+
         <div class="row">
           <div class="col-sm-12">
             <div class="cart-table-wrapper" v-if="cart.length">
@@ -44,7 +52,7 @@
                         }"
                       >
                         <img
-                          :src="getProductImage(item)"
+                          :src="getProductImage(item.image || item.images?.[0]?.src)"
                           alt=""
                           class="product-img"
                         />
@@ -230,6 +238,44 @@
         </div>
       </div>
     </section>
+
+    <section class="ratio_asos section-b-space bg-light" v-if="randomProducts.length > 0">
+      <div class="container-fluid" style="padding-left: 3rem; padding-right: 3rem;">
+        <div class="row">
+          <div class="col-12 product-related">
+            <h2 class="mb-4 text-center">สินค้าที่คุณอาจสนใจ</h2>
+          </div>
+        </div>
+        <div class="product-grid">
+          <div
+            v-for="(prod, idx) in randomProducts"
+            :key="'random-' + idx"
+            class="product-card"
+          >
+            <div class="card h-100 shadow-sm" @click="navigateToProduct(prod._id || prod.id)" style="cursor: pointer;">
+              <div class="card-img-wrap">
+                <img
+                  :src="getProductImage(prod.image || prod.images?.[0]?.src)"
+                  class="card-img-top"
+                  :alt="prod.name"
+                />
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h6 class="card-title mb-2 text-truncate" style="white-space: normal;">
+                  {{ prod.name }}
+                </h6>
+                <div class="mt-auto">
+                  <div class="fw-bold td-color" style="font-size: 15px;">
+                    ฿{{ prod.price?.toLocaleString() }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div>
   <Footer />
 </template>
@@ -242,17 +288,16 @@ import Swal from "sweetalert2";
 export default {
   data() {
     return {
-      selectedItems: [], // เก็บเฉพาะ ID ของสินค้าที่ถูกเลือก (id หรือ _id)
+      selectedItems: [],
       cartKey: 0,
       refreshInterval: null,
+      randomProducts: [], // เก็บข้อมูลสินค้าแนะนำ
     };
   },
   computed: {
     cart() {
       return useCartStore().cartItems;
     },
-
-    // ✅ แก้ไข: คำนวณราคาสรุปโดยกรอง ID ในตะกร้าจริง เพื่อให้ค่าอัปเดตตามจำนวน (quantity) ล่าสุดเสมอ
     selectedTotal() {
       return this.cart
         .filter((item) => this.selectedItems.includes(item.id || item._id))
@@ -260,12 +305,9 @@ export default {
           return total + this.calcPrice(item) * item.quantity;
         }, 0);
     },
-
     curr() {
       return useProductStore().changeCurrency;
     },
-
-    // ✅ แก้ไข: logic การเลือกทั้งหมดให้เก็บเฉพาะ ID
     isAllSelected: {
       get() {
         return (
@@ -282,7 +324,6 @@ export default {
   watch: {
     cart: {
       handler(newVal) {
-        // กรอง ID ใน selectedItems ที่อาจถูกลบออกจากตะกร้าไปแล้ว
         const currentCartIds = newVal.map((item) => item.id || item._id);
         this.selectedItems = this.selectedItems.filter((id) =>
           currentCartIds.includes(id),
@@ -296,24 +337,13 @@ export default {
     getImgUrl(path) {
       return "/images/" + path;
     },
-    getProductImage(product) {
-      if (!product) return "https://placehold.co/400?text=No+Product";
-      const resolveUrl = (url) => {
-        if (!url || (typeof url === "string" && url.trim() === "")) return null;
-        if (url.startsWith("data:")) return null; // legacy base64 — skip
-        if (url.startsWith("http")) return url;
-        if (url.startsWith("/"))
-          return `https://vizdataprojectbe-production.up.railway.app${url}`;
-        return `https://vizdataprojectbe-production.up.railway.app/${url}`;
-      };
-      const fromImage = resolveUrl(product.image);
-      if (fromImage) return fromImage;
-      if (product.images && product.images.length > 0) {
-        const img = product.images[0].src || product.images[0];
-        const fromImages = resolveUrl(img);
-        if (fromImages) return fromImages;
-      }
-      return "https://placehold.co/400?text=No+Image";
+    getProductImage(image) {
+      const BACKEND_URL = "https://vizdataprojectbe-production.up.railway.app";
+      if (!image) return "https://placehold.co/400?text=No+Image";
+      if (typeof image === 'string' && image.startsWith("data:")) return "https://placehold.co/400?text=No+Image";
+      if (typeof image === 'string' && image.startsWith("http")) return image;
+      if (typeof image === 'string' && image.startsWith("/")) return `${BACKEND_URL}${image}`;
+      return `${BACKEND_URL}/${image}`;
     },
     calcPrice(item) {
       if (!item || !item.price) return 0;
@@ -395,8 +425,6 @@ export default {
         this.cartKey++;
       }
     },
-
-    // ✅ แก้ไข: ดึงข้อมูลสินค้าล่าสุดจากตะกร้าตาม ID ก่อนส่งไปหน้า Checkout
     goToCheckout() {
       const outOfStockItems = this.cart.filter(
         (item) => item.quantity > item.stock,
@@ -414,7 +442,6 @@ export default {
         return;
       }
 
-      // ดึงข้อมูลจริงจาก cart มาสร้าง checkoutData
       const checkoutData = this.cart
         .filter((item) => this.selectedItems.includes(item.id || item._id))
         .map((item) => ({
@@ -425,40 +452,47 @@ export default {
           price: Number(item.price) || 0,
           quantity: Number(item.quantity),
           brand: item.brand || "Shop",
-          image: this.getProductImage(item),
+          image: item.image || item.images?.[0]?.src, // ส่งรูปไปด้วย
           seller: item.seller || null,
         }));
 
       localStorage.setItem("checkout_items", JSON.stringify(checkoutData));
       this.$router.push("/page/account/checkout");
     },
-
     async refreshCartData() {
       const store = useCartStore();
-      const previousCart = [...this.cart];
-      await store.fetchCart();
-      if (previousCart.length > 0) {
-        const currentIds = new Set(
-          this.cart.map((item) => item._id || item.id),
-        );
-        const removedItems = previousCart.filter(
-          (item) => !currentIds.has(item._id || item.id),
-        );
-        if (removedItems.length > 0 && !Swal.isVisible()) {
-          // ... (แจ้งเตือน Swal เดิมของคุณ) ...
-          this.showRemovedItemsAlert(removedItems);
+      const token = localStorage.getItem("token");
+      
+      if (token) {
+        try {
+          const previousCart = [...this.cart];
+          await store.fetchCart();
+          if (previousCart.length > 0) {
+            const currentIds = new Set(
+              this.cart.map((item) => item._id || item.id),
+            );
+            const removedItems = previousCart.filter(
+              (item) => !currentIds.has(item._id || item.id),
+            );
+            if (removedItems.length > 0 && !Swal.isVisible()) {
+              this.showRemovedItemsAlert(removedItems);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error("Fetch cart failed");
         }
       }
+      
       if (!Swal.isVisible()) {
         this.checkStockAvailability();
       }
     },
-
     showRemovedItemsAlert(removedItems) {
       let removedHtml =
         '<div style="text-align: left; max-height: 300px; overflow-y: auto; padding-right: 5px;">';
       removedItems.forEach((item) => {
-        const imageUrl = this.getProductImage(item);
+        const imageUrl = this.getProductImage(item.image || item.images?.[0]?.src);
         removedHtml += `<div class="d-flex align-items-center mb-3 pb-2 border-bottom" style="gap: 15px;">
                 <div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid #eee; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
                     <img src="${imageUrl}" alt="${
@@ -488,22 +522,19 @@ export default {
         },
       });
     },
-
     checkStockAvailability() {
       const outOfStockItems = this.cart.filter(
         (item) => item.quantity > item.stock,
       );
       if (outOfStockItems.length > 0) {
-        // ... (Logic แจ้งเตือนสต็อกเดิมของคุณ) ...
         this.showStockAlert(outOfStockItems);
       }
     },
-
     showStockAlert(outOfStockItems) {
       let itemListHtml =
         '<div style="text-align: left; max-height: 300px; overflow-y: auto; padding-right: 5px;">';
       outOfStockItems.forEach((item) => {
-        const imageUrl = this.getProductImage(item);
+        const imageUrl = this.getProductImage(item.image || item.images?.[0]?.src);
         itemListHtml += `<div class="d-flex align-items-center mb-3 pb-2 border-bottom" style="gap: 15px;">
                 <div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid #eee; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
                     <img src="${imageUrl}" alt="${
@@ -550,10 +581,44 @@ export default {
         }
       });
     },
+
+    // ดึงสินค้าแนะนำ
+    async fetchRandomProducts() {
+      try {
+        const allProducts = await $fetch(
+          "https://vizdataprojectbe-production.up.railway.app/api/product"
+        );
+        
+        // ดึงเฉพาะสินค้าที่มีสต็อก และไม่ได้อยู่ในตะกร้าแล้ว
+        const cartIds = this.cart.map(item => item._id || item.id);
+        const filtered = allProducts.filter(
+          (p) => p.stock && p.stock > 0 && !cartIds.includes(p._id)
+        );
+
+        // สุ่มมา 6 ชิ้น
+        this.randomProducts = this.shuffleArray(filtered).slice(0, 6);
+      } catch (error) {
+        console.error("Failed to fetch random products:", error);
+        this.randomProducts = [];
+      }
+    },
+    shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    },
+    navigateToProduct(productId) {
+      this.$router.push(`/product/three-column/thumbnail-left?id=${productId}`);
+    }
   },
 
   async mounted() {
     await this.refreshCartData();
+    await this.fetchRandomProducts();
+
     this.refreshInterval = setInterval(async () => {
       await this.refreshCartData();
     }, 15000);
@@ -568,7 +633,7 @@ export default {
 </script>
 
 <style scoped>
-/* ปรับแต่งปุ่มเมื่อถูก Disable (สินค้าหมด Stock) */
+/* Style เดิมของตารางและปุ่ม */
 .quantity-btn:disabled {
   opacity: 0.5 !important;
   background-color: #e9ecef !important;
@@ -584,44 +649,122 @@ export default {
   border-radius: 5px;
 }
 
+/* -----------------------------------------
+   🔥 Style สำหรับสินค้าแนะนำ (Product Grid) 🔥
+----------------------------------------- */
+.product-related h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 15px;
+  padding-bottom: 20px;
+}
+
+.product-card {
+  display: block;
+}
+
+.product-card .card {
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.product-card .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.card-img-wrap {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: #f9f9f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-card .card-img-top {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 10px;
+}
+
+.product-card .card-body {
+  padding: 12px;
+}
+
+.product-card .card-title {
+  font-size: 13px;
+  line-height: 1.4;
+  height: 36px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+  color: #333;
+}
+
+.td-color {
+  color: #ff4c3b;
+}
+
+/* Responsive Grid */
+@media (max-width: 1400px) {
+  .product-grid { grid-template-columns: repeat(5, 1fr); }
+}
+@media (max-width: 1100px) {
+  .product-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 900px) {
+  .product-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .product-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 10px;
+  }
+  .product-related h2 { font-size: 18px; }
+}
+
 /* ==========================================
    🔥 CSS แปลง Table เป็น Card (Mobile Only) 🔥
 ============================================= */
 @media (max-width: 767px) {
-  /* ลดขอบจอด้านข้าง */
   .container-fluid {
     padding-left: 15px !important;
     padding-right: 15px !important;
   }
 
-  /* 📌 1. นำ Checkbox "เลือกทั้งหมด" (Select All) กลับมาโชว์ */
   :deep(.cart-table thead) {
     display: block !important;
     margin-bottom: 15px;
     background: transparent !important;
   }
-
   :deep(.cart-table thead tr) {
     display: flex !important;
     align-items: center;
     border: none !important;
     padding: 0 5px;
   }
-
   :deep(.cart-table thead th) {
     display: none !important;
-    /* ซ่อนคำว่า Image, Shop, Product ฯลฯ */
   }
-
   :deep(.cart-table thead th:nth-child(1)) {
     display: flex !important;
-    /* โชว์แค่ช่อง Checkbox ซ้ายสุด */
     align-items: center;
     border: none !important;
     padding: 0 !important;
   }
-
-  /* เติมคำอธิบายหลัง Checkbox */
   :deep(.cart-table thead th:nth-child(1))::after {
     content: "เลือกทั้งหมด";
     margin-left: 10px;
@@ -629,17 +772,12 @@ export default {
     font-weight: 600;
     color: #333;
   }
-
-  /* ขยายขนาด Checkbox เลือกทั้งหมด */
   :deep(.cart-table thead th:nth-child(1) input[type="checkbox"]) {
     width: 20px;
     height: 20px;
     cursor: pointer;
     accent-color: #ff4c3b;
-    /* เปลี่ยนสีตอนติ๊กให้เข้ากับธีมแดง */
   }
-
-  /* พับ Table ให้เป็น Block */
   :deep(.cart-table),
   :deep(.cart-table tbody),
   :deep(.cart-table tr),
@@ -647,19 +785,15 @@ export default {
     display: block !important;
     width: 100% !important;
   }
-
-  /* 📌 จัดโครงร่าง Grid ใหม่ ให้ทุกอย่างอยู่ถูกที่ */
   :deep(.cart-table tr.align-middle) {
     position: relative;
     border: 1px solid #eaeaea !important;
     border-radius: 12px;
     margin-bottom: 15px;
     padding: 15px 15px 10px 10px !important;
-    /* ปรับลดขอบซ้ายนิดนึง */
     background-color: #fff;
     display: grid !important;
     grid-template-columns: 28px 65px 1fr auto;
-    /* เว้นที่ให้ Checkbox 28px */
     grid-template-areas:
       "shop  shop  shop  shop"
       "check image title title"
@@ -669,53 +803,36 @@ export default {
     grid-column-gap: 12px;
     align-items: start;
   }
-
-  /* ล้าง Padding, Border ของ td เดิมทิ้ง และลบพื้นหลังขาว */
   :deep(.cart-table td) {
     border: none !important;
     padding: 0 !important;
     text-align: left !important;
     background-color: transparent !important;
   }
-
-  /* --- 2. Checkbox ของสินค้าแต่ละชิ้น --- */
   :deep(.cart-table td:nth-child(1)) {
     grid-area: check;
     align-self: stretch;
     display: flex;
-
-    /* 1. เปลี่ยนจาก center เป็น flex-start เพื่อให้เราคุมระยะจากด้านบนเองได้ */
     align-items: flex-start !important;
     justify-content: flex-start;
-
-    /* 2. 👇 ใช้ Padding ในการขยับตำแหน่งทีละนิด */
     padding-top: 22px !important;
-    /* เพิ่มเลขนี้เพื่อขยับ "ลง" */
     padding-left: 17px !important;
-    /* เพิ่มเลขนี้เพื่อขยับไปทาง "ขวา" */
   }
-
-  /* ส่วนของ Input ขนาดเดิมที่คุณตั้งไว้ */
   :deep(.cart-table td:nth-child(1) input[type="checkbox"]) {
     width: 20px;
     height: 20px;
     cursor: pointer;
     accent-color: #ff4c3b;
   }
-
-  /* --- 3. รูปภาพสินค้า --- */
   :deep(.cart-table td:nth-child(2)) {
     grid-area: image;
   }
-
   :deep(.cart-table td:nth-child(2) .product-img) {
     width: 70% !important;
     height: 70px !important;
     border: 1px solid #f1f1f1;
     border-radius: 6px;
   }
-
-  /* --- 4. ชื่อร้าน (Shop) --- */
   :deep(.cart-table td:nth-child(3)) {
     grid-area: shop;
     padding-bottom: 8px !important;
@@ -724,21 +841,15 @@ export default {
     font-size: 14px;
     font-weight: 600;
     color: #333;
-    /* แก้ margin-left ที่ติดลบเยอะเกินไป ให้กลับมาพอดีขอบ */
     margin-left: -120px !important;
   }
-
-  /* --- 5. ชื่อสินค้า (Title) --- */
   :deep(.cart-table td:nth-child(4)) {
     grid-area: title;
     padding-right: 25px !important;
-    /* เว้นที่ให้ปุ่ม X */
     margin-bottom: 5px !important;
-    /* เคลียร์ margin ที่ทำให้ข้อความกระเด็น */
     margin-left: 50px !important;
     margin-top: 0 !important;
   }
-
   :deep(.product-name-link) {
     font-size: 14px !important;
     font-weight: 600;
@@ -749,55 +860,42 @@ export default {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
   :deep(.mobile-cart-content) {
     display: none !important;
   }
-
-  /* --- 6. ราคาสินค้าต่อชิ้น (Price) --- */
   :deep(.cart-table td:nth-child(5)) {
     grid-area: price;
     align-self: center;
-    /* เคลียร์ margin ที่ทำให้ทับกัน */
     margin-left: 100px !important;
     margin-top: 0 !important;
   }
-
   :deep(.price-text) {
     font-size: 15px !important;
     color: rgb(255, 76, 59);
     margin: 0 !important;
     font-weight: bold;
   }
-
-  /* --- 7. จำนวน และ จำนวนชิ้นที่เหลือ (Qty & Stock) --- */
   :deep(.cart-table td:nth-child(6)) {
     grid-area: qty;
     align-self: start;
     display: flex;
     flex-direction: column;
-    /* ดึงปุ่มให้มาชิดซ้าย ตรงกับราคาและชื่อสินค้า */
     align-items: flex-start;
     margin-left: 10px !important;
     margin-top: 5px !important;
     margin-left: 80px !important;
   }
-
   :deep(.qty-box) {
     width: 100px !important;
     justify-content: flex-start !important;
   }
-
   :deep(.cart-table td:nth-child(6) .text-danger) {
     font-size: 11px !important;
     margin-top: 4px !important;
     text-align: left;
-    /* เปลี่ยนข้อความเหลือชิ้นให้ชิดซ้าย */
     font-weight: 600;
     margin-left: 30px !important;
   }
-
-  /* --- 8. ปุ่มกากบาท ลบสินค้า (X) --- */
   :deep(.cart-table td:nth-child(7)) {
     position: absolute;
     top: 15px;
@@ -805,44 +903,33 @@ export default {
     width: auto !important;
     z-index: 2;
   }
-
   :deep(.cart-table td:nth-child(7) a i) {
     font-size: 16px;
     color: rgb(255, 76, 59);
     margin-left: 100px !important;
   }
-
-  /* --- 9. ราคารวมของสินค้านั้น (Total Price) --- */
   :deep(.cart-table td:nth-child(8)) {
     grid-area: total;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
     width: 100% !important;
-
     border-top: 1px dashed #eee !important;
     margin-top: 12px !important;
     padding-top: 12px !important;
-
-    /* 🚨 ลด Padding ขวาลงนิดนึงเพื่อเพิ่มพื้นที่ให้ตัวเลข */
     padding-left: 5px !important;
     padding-right: 0px !important;
     background-color: transparent !important;
   }
-
-  /* 🏷️ ส่วนของข้อความ "ราคารวม:" (ฝั่งซ้าย) */
   :deep(.cart-table td:nth-child(8))::before {
     content: "ราคารวม:";
     font-size: 14px !important;
     font-weight: 600 !important;
     color: #666 !important;
     display: block !important;
-    /* ห้ามคำว่าราคารวมหดขนาด */
     flex-shrink: 0 !important;
     margin-right: 10px !important;
   }
-
-  /* 💰 ส่วนของตัวเลขราคา (ฝั่งขวา) */
   :deep(.total-text) {
     font-size: 17px !important;
     color: #ff4c3b !important;
@@ -850,21 +937,13 @@ export default {
     font-weight: 700 !important;
     display: block !important;
     text-align: right !important;
-
-    /* ✅ บรรทัดสำคัญ: ห้ามตัดคำ ห้ามขึ้นบรรทัดใหม่เด็ดขาด ✅ */
     white-space: nowrap !important;
-    /* ให้ตัวเลขใช้พื้นที่ที่เหลือทั้งหมด */
     flex-grow: 1 !important;
     margin-right: 25px !important;
   }
-
-  /* ==========================================
-     จัดหน้าสรุปยอดตะกร้าล่างสุด (Total Footer)
-  ============================================= */
   :deep(.cart-table tfoot) {
     display: block !important;
   }
-
   :deep(.cart-table tfoot tr) {
     display: flex !important;
     justify-content: space-between !important;
@@ -876,7 +955,6 @@ export default {
     border-radius: 8px !important;
     margin-top: 10px !important;
   }
-
   :deep(.cart-table tfoot td.total-label) {
     text-align: left !important;
     font-size: 15px !important;
@@ -885,22 +963,16 @@ export default {
     flex-grow: 1 !important;
     white-space: nowrap !important;
   }
-
   :deep(.cart-table tfoot td.col-right) {
     flex-shrink: 0 !important;
     text-align: right !important;
   }
-
   :deep(.cart-table tfoot .col-right h2) {
     font-size: 20px !important;
     margin: 0 !important;
     color: #ff4c3b !important;
     font-weight: 700 !important;
   }
-
-  /* ==========================================
-     ปุ่ม Checkout และ Continue Shopping 
-  ============================================= */
   .cart-buttons {
     display: flex;
     flex-direction: column-reverse;
@@ -908,12 +980,10 @@ export default {
     margin-top: 20px;
     margin-bottom: 30px;
   }
-
   .cart-buttons .col-6 {
     width: 100%;
     padding: 0;
   }
-
   .cart-buttons .btn {
     width: 100%;
     display: block;
@@ -921,7 +991,6 @@ export default {
     border-radius: 8px;
     font-size: 16px;
   }
-
   .cart-buttons .col-6:first-child .btn-solid {
     background-color: transparent !important;
     color: #ff4c3b !important;
