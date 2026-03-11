@@ -1,7 +1,7 @@
 <template>
   <div>
     <Header />
-    <WidgetsBreadcrumbs title="Dashboard" />
+    <WidgetsBreadcrumbs title="โปรไฟล์" />
 
     <div class="theme-wrapper">
       <section class="dashboard-section section-b-space user-dashboard-section">

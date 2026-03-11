@@ -6,7 +6,7 @@
         <i class="fa fa-arrow-left"></i>
       </button>
       <div class="header-content">
-        <h1 class="page-title">AFFILIATE DASHBOARD</h1>
+        <h1 class="page-title">สรุปผล Affiliate</h1>
         <p class="page-subtitle">จัดการและติดตามรายได้จากการแชร์สินค้าของคุณ</p>
       </div>
     </div>
@@ -24,14 +24,14 @@
 
       <div class="code-section">
         <div class="code-display">
-          <span class="code-label">Affiliate Code</span>
+          <span class="code-label">รหัส Affiliate</span>
           <div class="code-value">{{ affiliateInfo.code }}</div>
         </div>
 
         <div class="action-buttons">
           <button @click="copyAffiliateLink" class="copy-btn">
             <i class="fa fa-copy"></i>
-            <span>Copy Link</span>
+            <span>คัดลอกลิงก์</span>
           </button>
 
           <div class="share-dropdown">

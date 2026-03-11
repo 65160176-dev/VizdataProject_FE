@@ -1,7 +1,7 @@
 <template>
   <div>
     <Header />
-    <WidgetsBreadcrumbs title="Cart" />
+    <WidgetsBreadcrumbs title="ตะกร้าสินค้า" />
     <section class="cart-section section-b-space">
       <div
         class="container-fluid"

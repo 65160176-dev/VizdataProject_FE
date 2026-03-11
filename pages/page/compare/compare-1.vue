@@ -1,7 +1,7 @@
 <template>
 <Header/>
   <div>
-    <WidgetsBreadcrumbs title="Comapre" />
+    <WidgetsBreadcrumbs title="เปรียบเทียบสินค้า" />
     <section class="compare-padding">
       <div class="container">
         <div class="row">

@@ -36,9 +36,9 @@
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <a href="javascript:void(0)" class="text-secondary" style="margin-right: 15px;"
-                                            @click="openModal(item)">Edit</a>
+                                            @click="openModal(item)">แก้ไข</a>
                                         <a href="javascript:void(0)" class="text-danger" v-if="!item.isDefault"
-                                            @click="deleteAddress(item)">Delete</a>
+                                            @click="deleteAddress(item)">ลบ</a>
                                     </div>
                                 </div>
                                 <div class="box-content pl-4 ml-2"
@@ -49,7 +49,7 @@
                                         {{ item.province }} {{ item.zipCode }}
                                     </address>
                                     <div class="mt-2 text-muted">
-                                        <span class="mr-3"><strong>Mobile:</strong> {{ item.phone }}</span>
+                                        <span class="mr-3"><strong>เบอร์โทร:</strong> {{ item.phone }}</span>
                                     </div>
                                 </div>
                             </div>

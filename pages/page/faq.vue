@@ -1,7 +1,7 @@
 <template>
  <Header/> 
   <div>
-    <WidgetsBreadcrumbs title="Faq" />
+    <WidgetsBreadcrumbs title="คำถามที่พบบ่อย" />
     <section class="faq-section section-b-space">
       <div class="container">
         <div class="row">

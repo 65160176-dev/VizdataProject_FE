@@ -1,7 +1,7 @@
 <template>
 <Header/> 
   <div>
-    <WidgetsBreadcrumbs title="Comapre" />
+    <WidgetsBreadcrumbs title="เปรียบเทียบสินค้า" />
     <section class="compare-section section-b-space ratio_asos">
       <div class="container">
         <div class="row">

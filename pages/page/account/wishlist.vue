@@ -1,7 +1,7 @@
 <template>
     <Header/>
   <div>
-    <WidgetsBreadcrumbs title="wishlist" />
+    <WidgetsBreadcrumbs title="รายการที่อยากได้" />
     <section class="wishlist-section section-b-space">
       <div class="container-fluid px-4">
         <div class="mb-3">

@@ -1,7 +1,7 @@
 <template>
 <Header/>
   <div>
-    <WidgetsBreadcrumbs title="Profile" />
+    <WidgetsBreadcrumbs title="โปรไฟล์" />
  
     <section class="contact-page register-page">
       <div class="container">

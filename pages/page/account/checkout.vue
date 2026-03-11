@@ -1,7 +1,7 @@
 <template>
 <Header/>
   <div>
-    <WidgetsBreadcrumbs title="Checkout" />
+    <WidgetsBreadcrumbs title="ชำระเงิน" />
    <PaymentPage/>
   </div>
   <Footer />

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Breadcrumbs title="Dashboard" />
+    <Breadcrumbs title="โปรไฟล์" />
     <div class="container-fluid">
       
       <div v-if="loading" class="d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">

@@ -1,7 +1,7 @@
 <template>
 <Header/>
 <div>
-    <WidgetsBreadcrumbs title="search" />
+    <WidgetsBreadcrumbs title="ค้นหา" />
     <searched />
     <section class="section-b-space ratio_asos pt-0" v-if="searchItems.length">
         <div class="container">

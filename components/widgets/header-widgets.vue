@@ -82,7 +82,7 @@
             <span class="cart_qty_cls">{{ cartTotalQuantity }}</span>
           </nuxt-link>
           <ul class="show-div shopping-cart" v-if="!cart.length">
-            <li>Your cart is currently empty.</li>
+            <li>ไม่มีสินค้าอยู่ในตะกร้าคุณในขณะนี้</li>
           </ul>
           <ul class="show-div shopping-cart" v-if="cart.length">
             <li v-for="(item, index) in cart" :key="index">
@@ -113,7 +113,7 @@
             <li>
               <div class="total">
                 <h5>
-                  total items :
+                  สินค้าทั้งหมด :
                   <span>{{ totalItems }}</span>
                 </h5>
               </div>
@@ -121,11 +121,11 @@
             <li>
               <div class="buttons">
                 <nuxt-link :to="{ path: '/page/account/cart' }" :class="'view-cart'">
-                  view cart
+                  ตะกร้าสินค้า
                 </nuxt-link>
 
                 <a href="javascript:void(0)" @click="goToCheckout" :class="'checkout'">
-                  checkout
+                  ชำระเงิน
                 </a>
 
               </div>

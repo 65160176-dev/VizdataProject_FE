@@ -5,7 +5,7 @@
                 <i class="fa fa-bell" aria-hidden="true"></i>
                 <span v-if="unreadCount > 0" class="badge-count">{{ unreadCount }}</span>
             </div>
-            Notification
+            แจ้งเตือน
         </a>
 
         <div class="notification-dropdown">
