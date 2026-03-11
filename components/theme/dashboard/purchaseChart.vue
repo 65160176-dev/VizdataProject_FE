@@ -9,7 +9,7 @@
         </div>
         
       </div>
-    </div>
+    </div>  
     <div class="chart-area mt-3">
       <apexchart type="bar" height="85" :options="chartOptions" :series="series"></apexchart>
     </div>

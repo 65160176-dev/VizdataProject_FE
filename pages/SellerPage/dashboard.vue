@@ -28,7 +28,9 @@
           <div class="col-12 col-md-6">
             <PurchaseChart />
           </div>
-
+<div class="col-12">
+      <TopAffiliateChart />
+    </div>
           <div class="col-12">
             <BuysellChart />
           </div>
@@ -58,6 +60,7 @@ import SalesChart from '~/components/theme/dashboard/salesChart.vue'
 import PurchaseChart from '~/components/theme/dashboard/purchaseChart.vue'
 import BuysellChart from '~/components/theme/dashboard/buysellChart.vue'
 import SalesStatus from '~/components/theme/dashboard/salesStatus.vue'
+import TopAffiliateChart from '~/components/theme/dashboard/topAffiliateChart.vue'
 
 definePageMeta({ layout: 'seller' })
 
