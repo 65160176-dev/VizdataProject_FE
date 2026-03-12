@@ -158,7 +158,7 @@
                   </nuxt-link>
                 </div>
               </div>
-              <div v-else class="text-center text-muted py-5 small">ยังไม่มีสินค้าขายดี</div>
+              <div v-else class="text-center text-muted py-5 small">ยังไม่มีสินค้าขายดีในหมวดหมู่นี้</div>
             </div>
           </div>
 

@@ -100,7 +100,7 @@
                 </div>
               </div>
             </div>
-            <div v-else class="text-muted small mb-4">ยังไม่มีสินค้าขายดีในหมวดหมู่นี้</div>
+            <div v-else class="text-muted small mb-4">ยังไม่มีสินค้าขายดี</div>
 
             <div class="d-flex align-items-center justify-content-between mb-2">
               <h5 class="fw-bold mb-0">สินค้าในระบบ</h5>
