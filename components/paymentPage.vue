@@ -91,7 +91,7 @@
                                 v-if="addr.isDefault"
                                 class="badge bg-success ms-2"
                                 style="font-size: 10px"
-                                >Default</span
+                                >ค่าเริ่มต้น</span
                               >
                             </span>
                             <span
