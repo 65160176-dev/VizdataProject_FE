@@ -61,8 +61,8 @@ const productData = computed(() => {
     const stats = {};
     
     myOrders.value.forEach(order => {
-        // ไม่นับออเดอร์ที่ยกเลิก
-        if (['cancelled', 'cancel'].includes((order.status || '').toLowerCase())) return;
+        // นับเฉพาะออเดอร์ที่เสร็จสิ้น (ลูกค้ากดรับสินค้าแล้ว)
+        if ((order.status || '').toLowerCase() !== 'completed') return;
 
         // วนลูปสินค้าในแต่ละออเดอร์
         const items = order.item || order.items || [];

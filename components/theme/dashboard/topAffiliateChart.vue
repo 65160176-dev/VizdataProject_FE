@@ -91,7 +91,7 @@ const myValidOrders = computed(() => {
     return all.filter(order => {
         const sellerId = typeof order.seller === 'object' ? order.seller?._id : order.seller;
         if (sellerId !== myId) return false;
-        if (order.status === 'cancelled' || order.status === 'cancel') return false;
+        if ((order.status || '').toLowerCase() !== 'completed') return false;
         if (Number(order.affiliateCommission || 0) <= 0) return false;
         if (order.createdAt && new Date(order.createdAt).getTime() < cutoffTs) return false;
         return true;
