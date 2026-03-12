@@ -88,65 +88,82 @@
         </div>
 
         <div>
-          <!-- Main content: products first -->
-          <div>
-            <!-- Best Sellers -->
-            <div v-if="bestLoading" class="text-center py-3">
-              <div class="spinner-border text-primary" role="status"></div>
-            </div>
-            <div
-              v-else-if="bestSellersFiltered.length > 0"
-              class="best-seller-section mb-4"
-            >
-              <div
-                class="d-flex align-items-center justify-content-between mb-3"
-              >
-                <h5 class="fw-bold mb-0">🔥 สินค้าขายดี</h5>
-              </div>
-              <div class="product-grid">
-                <div
-                  v-for="item in bestSellersFiltered"
-                  :key="item.productId"
-                  class="product-card"
+          <!-- Hero section: Banner left + Best Sellers right -->
+          <div class="hero-row mb-4">
+            <!-- Banner Left -->
+            <div class="hero-banner">
+              <ClientOnly>
+                <Swiper
+                  :modules="[SwiperAutoplay, SwiperNavigation, SwiperPagination]"
+                  :slides-per-view="1"
+                  :loop="true"
+                  :autoplay="{
+                    delay: 4000,
+                    disableOnInteraction: false,
+                  }"
+                  :navigation="true"
+                  :pagination="{ clickable: true }"
+                  class="banner-swiper"
                 >
-                  <div class="card h-100 shadow-sm border-0">
-                    <nuxt-link
-                      :to="{
-                        path: '/product/three-column/thumbnail-left',
-                        query: {
-                          id:
-                            item.product?._id ||
-                            item.product?.id ||
-                            item.productId,
-                        },
-                      }"
-                    >
+                  <SwiperSlide v-for="(banner, index) in banners" :key="index">
+                    <div class="banner-slide">
+                      <img :src="banner.image" :alt="banner.alt" />
+                    </div>
+                  </SwiperSlide>
+                </Swiper>
+              </ClientOnly>
+            </div>
+
+            <!-- Best Sellers Right -->
+            <div class="hero-bestseller">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="fw-bold mb-0">🔥 ขายดี</h6>
+              </div>
+              <div v-if="bestLoading" class="text-center py-5">
+                <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+              </div>
+              <div v-else-if="bestSellersFiltered.length > 0" class="bestseller-grid">
+                <div
+                  v-for="item in bestSellersFiltered.slice(0, 8)"
+                  :key="item.productId"
+                  class="bestseller-card"
+                >
+                  <nuxt-link
+                    :to="{
+                      path: '/product/three-column/thumbnail-left',
+                      query: {
+                        id:
+                          item.product?._id ||
+                          item.product?.id ||
+                          item.productId,
+                      },
+                    }"
+                    class="text-decoration-none text-dark"
+                  >
+                    <div class="card h-100 shadow-sm border-0">
                       <img
                         :src="getProductImage(item.product)"
                         class="card-img-top"
                       />
-                    </nuxt-link>
-                    <div class="card-body d-flex flex-column">
-                      <h6 class="card-title mb-1 text-truncate">
-                        {{ item.product?.name || "สินค้า" }}
-                      </h6>
-                      <div
-                        class="mt-auto d-flex justify-content-between align-items-center"
-                      >
-                        <div class="fw-bold price-text">
-                          ฿{{ item.product?.price || 0 }}
+                      <div class="card-body p-2">
+                        <div class="small text-truncate fw-semibold">
+                          {{ item.product?.name || "สินค้า" }}
                         </div>
-                        <span class="text-muted" style="font-size: 11px"
-                          >ขายแล้ว {{ item.totalSold || 0 }}</span
-                        >
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                          <span class="price-text" style="font-size: 14px">฿{{ item.product?.price || 0 }}</span>
+                          <span class="text-muted" style="font-size: 10px">ขายแล้ว {{ item.totalSold || 0 }}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </nuxt-link>
                 </div>
               </div>
+              <div v-else class="text-center text-muted py-5 small">ยังไม่มีสินค้าขายดีในหมวดหมู่นี้</div>
             </div>
+          </div>
 
-            <!-- All Products -->
+          <!-- Main content -->
+          <div>
             <div class="d-flex align-items-center justify-content-between mb-3">
               <h5 class="fw-bold mb-0">สินค้าทั้งหมด</h5>
               <span class="text-muted small"
@@ -239,34 +256,6 @@
               <div ref="scrollTrigger" class="scroll-trigger"></div>
             </ClientOnly>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Banner at the bottom -->
-    <section class="banner-bottom-section py-4">
-      <div class="container-fluid px-4">
-        <div class="mini-banner">
-          <ClientOnly>
-            <Swiper
-              :modules="[SwiperAutoplay, SwiperNavigation, SwiperPagination]"
-              :slides-per-view="1"
-              :loop="true"
-              :autoplay="{
-                delay: 4000,
-                disableOnInteraction: false,
-              }"
-              :navigation="true"
-              :pagination="{ clickable: true }"
-              class="banner-swiper"
-            >
-              <SwiperSlide v-for="(banner, index) in banners" :key="index">
-                <div class="banner-slide">
-                  <img :src="banner.image" :alt="banner.alt" />
-                </div>
-              </SwiperSlide>
-            </Swiper>
-          </ClientOnly>
         </div>
       </div>
     </section>
@@ -465,17 +454,56 @@ function addToCart(product) {
   min-height: 100vh;
 }
 
-/* --- Mini Banner --- */
-.mini-banner {
+/* --- Hero Row: Banner + Best Sellers side by side --- */
+.hero-row {
+  display: flex;
+  gap: 16px;
+  min-height: 360px;
+}
+
+.hero-banner {
+  flex: 0 0 52%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.hero-bestseller {
+  flex: 1;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+  overflow: hidden;
+}
+
+.bestseller-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.bestseller-card .card {
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.bestseller-card .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+}
+.bestseller-card .card-img-top {
+  height: 120px;
+  object-fit: contain;
+  background: #fff;
+  padding: 6px;
 }
 
 .banner-swiper {
   width: 100%;
-  height: 180px;
-  border-radius: 10px;
+  height: 100%;
+  border-radius: 12px;
 }
 
 .banner-slide {
@@ -684,9 +712,10 @@ function addToCart(product) {
 }
 
 .card-img-top {
-  height: 200px;
-  object-fit: cover;
-  background: #fdfdfd;
+  height: 220px;
+  object-fit: contain;
+  background: #fff;
+  padding: 10px;
 }
 .price-text {
   color: #ff4c3b;
@@ -737,18 +766,34 @@ function addToCart(product) {
   .product-grid {
     grid-template-columns: repeat(5, 1fr);
   }
+  .bestseller-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 @media (max-width: 1100px) {
   .product-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+  .hero-row {
+    flex-direction: column;
+  }
+  .hero-banner {
+    flex: none;
+    height: 220px;
+  }
+  .bestseller-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 @media (max-width: 768px) {
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .banner-swiper {
-    height: 120px;
+  .bestseller-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .hero-banner {
+    height: 180px;
   }
 }
 </style>

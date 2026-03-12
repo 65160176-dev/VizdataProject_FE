@@ -8,12 +8,12 @@
             <div class="row">
               <div class="col-lg-6 col-sm-12">
                 <div class="checkout-title">
-                  <h3>Billing Details</h3>
+                  <h3>รายละเอียดการชำระเงิน</h3>
                 </div>
 
                 <div class="row check-out">
                   <div class="col-12 mb-3">
-                    <label>Shipping Address:</label>
+                    <label>ที่อยู่จัดส่ง:</label>
 
                     <div class="address-box" v-if="hasSelectedAddress">
                       <div class="d-flex justify-content-between">
@@ -72,7 +72,7 @@
                       v-if="isAddressListVisible && !isFormVisible"
                     >
                       <label class="text-muted mb-2"
-                        >Select from saved addresses:</label
+                        >เลือกที่อยู่ที่บันทึกไว้:</label
                       >
                       <div class="saved-address-list">
                         <div
@@ -91,7 +91,7 @@
                                 v-if="addr.isDefault"
                                 class="badge bg-success ms-2"
                                 style="font-size: 10px"
-                                >Default</span
+                                >ค่าเริ่มต้น</span
                               >
                             </span>
                             <span
@@ -280,13 +280,13 @@
                   <div class="order-box">
                     <div class="title-box">
                       <div class="d-flex align-items-center mb-3">
-                        <span class="fw-bold" style="width: 120px">Shop</span>
-                        <span class="fw-bold flex-grow-1">Product</span>
+                        <span class="fw-bold" style="width: 120px">ร้านค้า</span>
+                        <span class="fw-bold flex-grow-1">สินค้า</span>
                         <span class="fw-bold text-end" style="width: 100px"
-                          >Total</span
+                          >ราคารวม</span
                         >
                         <span class="fw-bold text-end ms-3" style="width: 80px"
-                          >Shipping</span
+                          >ค่าส่ง</span
                         >
                       </div>
                     </div>
@@ -345,19 +345,19 @@
                     </ul>
                     <ul class="sub-total">
                       <li>
-                        Subtotal
+                        ราคารวมสินค้า
                         <span class="count">{{
                           (cartTotal * curr.curr).toFixed(2)
                         }}</span>
                       </li>
                       <li v-if="shippingBeforeDiscount > 0">
-                        Shipping
+                        ค่าจัดส่ง
                         <span class="count">{{
                           (shippingBeforeDiscount * curr.curr).toFixed(2)
                         }}</span>
                       </li>
                       <li v-if="shippingDiscount > 0" class="text-success">
-                        Shipping Discount
+                        ส่วนลดค่าจัดส่ง 
                         <span class="count"
                           >-{{
                             (shippingDiscount * curr.curr).toFixed(2)
@@ -372,7 +372,7 @@
                         <i class="ti-info-alt"></i> {{ shippingDiscountInfo }}
                       </li>
                       <li class="fw-bold">
-                        Total
+                        ราคารวมสุทธิ
                         <span class="count">{{
                           (grandTotal * curr.curr).toFixed(2)
                         }}</span>
@@ -382,7 +382,7 @@
 
                   <div class="payment-box">
                     <div class="checkout-title">
-                      <h3>Payment Method</h3>
+                      <h3>วิธีการชำระเงิน</h3>
                     </div>
                     <div class="upper-box">
                       <div class="payment-options">
@@ -397,7 +397,7 @@
                                 type="radio"
                                 name="payment-method"
                               />
-                              Cash On Delivery (COD)
+                              ชำระเงินปลายทาง (COD)
                             </label>
                           </li>
                           <li>
@@ -410,7 +410,7 @@
                                 type="radio"
                                 name="payment-method"
                               />
-                              PromptPay (QR Code)
+                              พร้อมเพย์ (คิวอาร์โค้ด)
                             </label>
                           </li>
                         </ul>
@@ -431,7 +431,7 @@
                         v-if="isQRVisible && selectedPayment === 'promptpay'"
                         class="qr-payment-section mb-3 p-3 border rounded bg-white"
                       >
-                        <h5 class="fw-bold mb-3">Scan to Pay</h5>
+                        <h5 class="fw-bold mb-3">แสกนเพื่อชำระเงิน</h5>
                         <img
                           src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Rickrolling_QR_code.png"
                           alt="PromptPay QR"
@@ -463,8 +463,8 @@
                               :disabled="isLoading || !hasSelectedAddress"
                               @click.prevent="handlePlaceOrder"
                             >
-                              <span v-if="isLoading">Processing...</span>
-                              <span v-else>Place Order</span>
+                              <span v-if="isLoading">กำลังดำเนินการ...</span>
+                              <span v-else>สั่งซื้อสินค้า</span>
                             </button>
                           </div>
                         </div>

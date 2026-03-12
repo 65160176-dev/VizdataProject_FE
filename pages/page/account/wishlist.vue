@@ -15,11 +15,11 @@
               <table class="table cart-table table-responsive" v-if="wishlist.length">
                 <thead>
                   <tr class="table-head">
-                    <th scope="col">image</th>
-                    <th scope="col">product name</th>
-                    <th scope="col">price</th>
-                    <th scope="col">availability</th>
-                    <th scope="col">action</th>
+                    <th scope="col">รูปภาพ</th>
+                    <th scope="col">ชื่อสินค้า</th>
+                    <th scope="col">ราคา</th>
+                    <th scope="col">สถานะ</th>
+                    <th scope="col">ลบ/เพิ่มสินค้า</th>
                   </tr>
                 </thead>
                 <tbody v-for="(item, index) in wishlist" :key="index">
@@ -77,16 +77,16 @@
         </div>
         <div class="row wishlist-buttons" v-if="wishlist.length">
           <div class="col-12">
-            <nuxt-link :to="{ path: '/' }" :class="'btn btn-solid'">continue shopping</nuxt-link>
+            <nuxt-link :to="{ path: '/' }" :class="'btn btn-solid'">เลือกซื้อสินค้าอื่นๆ</nuxt-link>
           </div>
         </div>
         <div class="col-sm-12 empty-cart-cls text-center" v-if="!wishlist.length">
           <img src='/images/empty-wishlist.png' class="img-fluid" alt="empty cart" />
           <h3 class="mt-3 empty-text">
-            <strong>Your Wishlist is Empty</strong>
+            <strong>ไม่มีรายการที่อยากได้</strong>
           </h3>
           <div class="col-12">
-            <nuxt-link :to="{ path: '/' }" class="btn btn-solid">continue shopping</nuxt-link>
+            <nuxt-link :to="{ path: '/' }" class="btn btn-solid">เลือกซื้อสินค้าอื่นๆ</nuxt-link>
           </div>
         </div>
       </div>

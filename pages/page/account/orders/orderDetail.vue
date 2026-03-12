@@ -108,7 +108,7 @@
       <div>
         <div class="d-flex justify-content-between align-items-center mb-2">
           <span class="text-muted">ช่องทางชำระเงิน</span>
-          <span class="fw-bold">{{ order.paymentMethod || 'PromptPay' }}</span>
+          <span class="fw-bold">{{ order.paymentMethod || 'พร้อมเพย์' }}</span>
         </div>
         <div class="d-flex justify-content-between align-items-center mb-2">
           <span class="text-muted">ราคาสินค้า</span>

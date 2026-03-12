@@ -28,7 +28,11 @@
 
         <div class="profile-info" v-show="!isCollapsed">
           <div class="name text-truncate">{{ displayName }}</div>
+<<<<<<< HEAD
           
+=======
+          <div class="role">ผู้ขาย</div>
+>>>>>>> 38adb285b9cac67106233b10cf60793532a02a2b
         </div>
 
         <div class="noti-wrapper" v-show="!isCollapsed">
@@ -103,7 +107,11 @@
         <li>
           <NuxtLink to="/SellerPage/dashboard"
             :class="['menu-item', { 'is-active': isActive('/SellerPage/dashboard') }]">
+<<<<<<< HEAD
             <span class="icon-slot">📊</span><span class="menu-label" v-show="!isCollapsed">ภาพรวมร้านค้า</span>
+=======
+            <span class="icon-slot">📊</span><span class="menu-label" v-show="!isCollapsed">หน้าสรุปผล</span>
+>>>>>>> 38adb285b9cac67106233b10cf60793532a02a2b
           </NuxtLink>
         </li>
         <li>
@@ -114,18 +122,30 @@
         </li>
         <li>
           <NuxtLink to="/SellerPage/order" :class="['menu-item', { 'is-active': isActive('/SellerPage/order') }]">
+<<<<<<< HEAD
             <span class="icon-slot">📋</span><span class="menu-label" v-show="!isCollapsed">รายการออเดอร์</span>
+=======
+            <span class="icon-slot">📋</span><span class="menu-label" v-show="!isCollapsed">คำสั่งซื้อ</span>
+>>>>>>> 38adb285b9cac67106233b10cf60793532a02a2b
           </NuxtLink>
         </li>
         <li>
           <NuxtLink to="/SellerPage/orderStatus"
             :class="['menu-item', { 'is-active': isActive('/SellerPage/orderStatus') }]">
+<<<<<<< HEAD
             <span class="icon-slot">🚚</span><span class="menu-label" v-show="!isCollapsed">สถานะออเดอร์</span>
+=======
+            <span class="icon-slot">🚚</span><span class="menu-label" v-show="!isCollapsed">สถานะคำสั่งซื้อ</span>
+>>>>>>> 38adb285b9cac67106233b10cf60793532a02a2b
           </NuxtLink>
         </li>
         <li>
           <NuxtLink to="/SellerPage/wallet" :class="['menu-item', { 'is-active': isActive('/SellerPage/wallet') }]">
+<<<<<<< HEAD
             <span class="icon-slot">💳</span><span class="menu-label" v-show="!isCollapsed">กระเป๋าตัง</span>
+=======
+            <span class="icon-slot">💳</span><span class="menu-label" v-show="!isCollapsed">กระเป๋าเงิน</span>
+>>>>>>> 38adb285b9cac67106233b10cf60793532a02a2b
           </NuxtLink>
         </li>
       </ul>
