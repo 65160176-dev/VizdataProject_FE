@@ -71,11 +71,6 @@
               "type": "link"
             },
             {
-              "path": "/page/auth/LoginPage",
-              "title": "เข้าสู่ระบบ",
-              "type": "link"
-            },
-            {
               "path": "/page/account/userdashboard",
               "title": "โปรไฟล์",
               "type": "link"

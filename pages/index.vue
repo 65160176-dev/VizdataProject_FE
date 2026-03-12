@@ -35,15 +35,15 @@
                   <div class="category-grid">
                     <label
                       v-for="(cat, index) in systemCategories"
-                      :key="cat._id || index"
-                      :for="'cat-dd-' + (cat._id || index)"
+                      :key="cat.id || index"
+                      :for="'cat-dd-' + (cat.id || index)"
                       class="category-dropdown-item d-flex align-items-center gap-2 py-2 px-3 rounded"
                     >
                       <input
                         class="form-check-input mt-0 custom-checkbox"
                         type="checkbox"
                         :value="cat.name"
-                        :id="'cat-dd-' + (cat._id || index)"
+                        :id="'cat-dd-' + (cat.id || index)"
                         v-model="selectedCategories"
                       />
                       <span class="cat-dd-name">{{ cat.name }}</span>
@@ -159,6 +159,39 @@
                 </div>
               </div>
               <div v-else class="text-center text-muted py-5 small">ยังไม่มีสินค้าขายดีในหมวดหมู่นี้</div>
+            </div>
+          </div>
+
+          <!-- Store search results -->
+          <div v-if="filteredSellers.length > 0" class="mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h5 class="fw-bold mb-0">ร้านค้าที่เกี่ยวข้อง</h5>
+              <span class="text-muted small">พบ {{ filteredSellers.length }} ร้านค้า</span>
+            </div>
+            <div class="seller-search-grid">
+              <nuxt-link
+                v-for="seller in filteredSellers"
+                :key="seller._id || seller.id"
+                :to="'/seller/' + (seller._id || seller.id)"
+                class="seller-search-card text-decoration-none"
+              >
+                <div class="card shadow-sm border-0 h-100">
+                  <div class="card-body d-flex align-items-center gap-4 py-4 px-4">
+                    <div class="seller-avatar-circle">
+                      <img v-if="seller.avatar" :src="seller.avatar" :alt="seller.display_name" />
+                      <span v-else class="seller-avatar-initial">{{ (seller.display_name || seller.name || 'S').charAt(0).toUpperCase() }}</span>
+                    </div>
+                    <div class="overflow-hidden">
+                      <div class="fw-semibold text-dark text-truncate">{{ seller.display_name || seller.name }}</div>
+                      <div class="text-muted small text-truncate">{{ seller.description || 'ร้านค้าออนไลน์' }}</div>
+                      <div v-if="seller.rating" class="text-warning small mt-1">
+                        <i class="fa fa-star"></i> {{ seller.rating }}
+                      </div>
+                    </div>
+                    <i class="fa fa-chevron-right text-muted ms-auto"></i>
+                  </div>
+                </div>
+              </nuxt-link>
             </div>
           </div>
 
@@ -290,6 +323,7 @@ const bestLoading = ref(true);
 const scrollTrigger = ref(null);
 const showCategoryDropdown = ref(false);
 const categoryDropdownRef = ref(null);
+const allSellers = ref([]);
 
 const itemsPerPage = 20;
 const displayedCount = ref(20);
@@ -324,6 +358,7 @@ onMounted(async () => {
     productStore.fetchProducts(),
     fetchSystemCategories(),
     fetchBestSellers(),
+    fetchSellers(),
   ]);
   setupInfiniteScroll();
 });
@@ -339,6 +374,15 @@ const fetchSystemCategories = async () => {
     if (res) systemCategories.value = res;
   } catch (e) {
     console.error(e);
+  }
+};
+
+const fetchSellers = async () => {
+  try {
+    const res = await $fetch(`${BACKEND_URL}/api/sellers`);
+    allSellers.value = Array.isArray(res?.data) ? res.data : [];
+  } catch (e) {
+    allSellers.value = [];
   }
 };
 
@@ -384,6 +428,16 @@ const filteredProducts = computed(() => {
     );
   }
   return result;
+});
+
+const filteredSellers = computed(() => {
+  const term = q.value.toLowerCase().trim();
+  if (!term) return [];
+  return allSellers.value.filter(
+    (s) =>
+      (s.display_name || "").toLowerCase().includes(term) ||
+      (s.name || "").toLowerCase().includes(term),
+  );
 });
 
 const bestSellersFiltered = computed(() => {
@@ -452,6 +506,47 @@ function addToCart(product) {
 .marketplace {
   background: #f8f9fa;
   min-height: 100vh;
+}
+
+/* --- Seller Search Results --- */
+.seller-search-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.seller-search-card .card {
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.seller-search-card .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.seller-avatar-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seller-avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.seller-avatar-initial {
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
 }
 
 /* --- Hero Row: Banner + Best Sellers side by side --- */

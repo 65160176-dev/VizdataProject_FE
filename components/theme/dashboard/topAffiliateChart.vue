@@ -1,19 +1,24 @@
 <template>
-  <div class="card shadow-sm border-0 h-100 w-100 overflow-hidden">
+  <div class="card shadow-sm border-0 h-100 w-100">
     <div class="card-body pb-0">
       <div class="d-flex justify-content-between align-items-start">
         <div>
-<<<<<<< HEAD
           <p class="text-muted mb-1 text-uppercase small fw-bold">สินค้าที่แชร์ด้วย Affiliate Link มากที่สุด</p>
-          <h4 class="fw-bolder mb-0">{{ totalAffiliateItems }} ชิ้น</h4>
-          <small class="text-muted" style="font-size: 10px;">(ยอดขายจากลิงก์ Affiliate ทั้งหมด)</small>
-=======
-          <p class="text-muted mb-1 text-uppercase small fw-bold">Affiliate Products</p>
           <h4 class="fw-bolder mb-0">{{ totalSoldItems }} ชิ้น</h4>
-          <small class="text-muted" style="font-size: 10px;">(ยอดขายสินค้าที่ Affiliate แชร์ลิงก์แล้วขายได้)</small>
->>>>>>> 38adb285b9cac67106233b10cf60793532a02a2b
+          <small class="text-muted" style="font-size: 10px;">(ยอดขายจากลิงก์ Affiliate ทั้งหมด)</small>
         </div>
         <Icon name="feather:award" class="text-orange" size="20" />
+      </div>
+
+      <!-- ช่วงเวลา -->
+      <div class="d-flex flex-wrap gap-1 mt-3">
+        <button
+          v-for="d in dayOptions"
+          :key="d"
+          class="btn btn-period"
+          :class="{ active: selectedDays === d }"
+          @click="selectedDays = d"
+        >{{ d }} วัน</button>
       </div>
     </div>
     
@@ -47,7 +52,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useOrderStore } from '~/store/orders';
 import { useAuthStore } from '~/store/auth';
 import { useProductStore } from '~/store/products';
@@ -59,6 +64,9 @@ const productStore = useProductStore();
 const { getProductImage } = useProductImage();
 
 const DEFAULT_IMG = 'https://placehold.co/80?text=No+Image';
+
+const dayOptions = [7, 14, 30, 45, 60, 90];
+const selectedDays = ref(30);
 
 onMounted(() => {
     productStore.fetchProducts();
@@ -74,17 +82,19 @@ const myProducts = computed(() => {
     });
 });
 
-// 2. ดึงเฉพาะออเดอร์ที่มาจาก Affiliate (affiliateCommission > 0)
+// 2. ดึงเฉพาะออเดอร์ที่มาจาก Affiliate (affiliateCommission > 0) และกรองตามช่วงเวลา
 const myValidOrders = computed(() => {
     const all = orderStore.allOrders || [];
     const myId = authStore.user?._id || authStore.user?.id || '';
     if (!myId) return [];
+    const cutoffTs = Date.now() - selectedDays.value * 86400000;
     return all.filter(order => {
         const sellerId = typeof order.seller === 'object' ? order.seller?._id : order.seller;
-        return sellerId === myId
-            && order.status !== 'cancelled'
-            && order.status !== 'cancel'
-            && Number(order.affiliateCommission || 0) > 0;
+        if (sellerId !== myId) return false;
+        if (order.status === 'cancelled' || order.status === 'cancel') return false;
+        if (Number(order.affiliateCommission || 0) <= 0) return false;
+        if (order.createdAt && new Date(order.createdAt).getTime() < cutoffTs) return false;
+        return true;
     });
 });
 
@@ -148,12 +158,13 @@ function onImgError(e) {
 }
 
 // 7. ตั้งค่ากราฟ bar chart พร้อมแสดง data labels (จำนวนชิ้น) บนแท่ง
-const chartOptions = computed(() => ({
+const chartOptionsBase = {
     chart: {
         type: 'bar',
         height: 120,
         sparkline: { enabled: true },
-        fontFamily: 'Nunito, sans-serif'
+        fontFamily: 'Nunito, sans-serif',
+        animations: { enabled: false }
     },
     plotOptions: {
         bar: {
@@ -173,19 +184,26 @@ const chartOptions = computed(() => ({
     colors: ['#ff9f40'],
     tooltip: {
         fixed: { enabled: false },
-        x: {
-            formatter: function(val, { dataPointIndex }) {
-                return chartData.value[dataPointIndex]?.name || '';
-            }
-        },
+        x: { show: false },
         marker: { show: false },
         y: { formatter: (val) => `${val} ชิ้น` }
     },
     grid: { padding: { top: 20, bottom: 10, left: 0, right: 0 } }
+};
+
+const chartOptions = computed(() => ({
+    ...chartOptionsBase,
+    xaxis: {
+        categories: chartData.value.map(item => item.name)
+    }
 }));
 </script>
 
 <style scoped>
+.chart-area {
+  min-height: 180px;
+}
+
 .product-images-row {
   display: flex;
   align-items: flex-start;
@@ -227,5 +245,27 @@ const chartOptions = computed(() => ({
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.2;
+}
+
+.btn-period {
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  border: 1.5px solid #ffcc80;
+  background: #fff8ee;
+  color: #e65100;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.btn-period:hover {
+  background: #ffe0b2;
+}
+
+.btn-period.active {
+  background: #ff9f40;
+  color: #fff;
+  border-color: #ff9f40;
 }
 </style>
