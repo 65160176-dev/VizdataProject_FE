@@ -3,7 +3,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
-        <h4 class="fw-bold mb-1 text-dark">Order Status</h4>
+        <h4 class="fw-bold mb-1 text-dark">สถานะออเดอร์</h4>
         <p class="text-secondary small mb-0">ติดตามสถานะการจัดส่งและจัดการคำสั่งซื้อ</p>
       </div>
 
@@ -54,7 +54,7 @@
         <div class="card h-100 order-card border-0 shadow-sm rounded-4 overflow-hidden" @click="openDetail(order)">
           <div
             :class="['card-header border-0 py-3 d-flex justify-content-between align-items-center text-white', getModalHeaderClass(order.status)]">
-            <span class="fw-bold">Order #{{ order.orderId || (order._id ? order._id.substr(-6) : 'N/A') }}</span>
+            <span class="fw-bold">หมายเลขออเดอร์ #{{ order.orderId || (order._id ? order._id.substr(-6) : 'N/A') }}</span>
             <small class="bg-white-glass px-2 py-1 rounded">
               <Icon name="feather:calendar" size="12" /> {{ formatDate(order) }}
             </small>

@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm border-0 h-100 w-100">
     <div class="card-header bg-transparent border-0 pb-0">
-      <h5 class="fw-bold">Top Selling Products 🏆</h5>
+      <h5 class="fw-bold">สินค้าขายดีสุดในร้าน 🏆</h5>
       <small class="text-muted">สินค้าที่มียอดขายสูงสุดของร้านคุณ</small>
     </div>
     <div class="card-body">

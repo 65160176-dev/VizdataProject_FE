@@ -2,8 +2,8 @@
   <div class="container-fluid py-4 bg-light min-vh-100">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
-        <h4 class="fw-bold mb-1 text-dark">My Wallet 💰</h4>
-        <p class="text-secondary small mb-0">จัดการรายได้และถอนเงิน</p>
+        <h4 class="fw-bold mb-1 text-dark">กระเป๋าตัง</h4>
+        
       </div>
     </div>
 

@@ -1,8 +1,8 @@
 <template>
     <div class="container-fluid py-4 bg-light min-vh-100">
         <div class="mb-4">
-            <h4 class="fw-bold mb-1 text-dark">New Orders</h4>
-            <p class="text-secondary small">คำสั่งซื้อใหม่ที่รอการยืนยัน (Pending)</p>
+            <h4 class="fw-bold mb-1 text-dark">สินค้าใหม่</h4>
+            <p class="text-secondary small">คำสั่งซื้อใหม่ที่รอการยืนยัน</p>
         </div>
 
         <div v-if="orderStore.isLoading" class="text-center py-5">

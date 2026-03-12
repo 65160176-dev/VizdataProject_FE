@@ -3,9 +3,9 @@
     <div class="card-body pb-0">
       <div class="d-flex justify-content-between">
         <div>
-          <p class="text-muted mb-1 text-uppercase small fw-bold">My Orders Volume</p>
-          <h4 class="fw-bolder mb-0">{{ totalOrders7Days }} Order(s)</h4>
-          <small class="text-muted" style="font-size: 10px;">(7 วันล่าสุด)</small>
+          <p class="text-muted mb-1 text-uppercase small fw-bold">จำนวนคำสั่งซื้อใน 7 วัน</p>
+          <h4 class="fw-bolder mb-0">{{ totalOrders7Days }} สินค้า</h4>
+          
         </div>
         
       </div>

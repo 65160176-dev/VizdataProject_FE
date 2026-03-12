@@ -310,7 +310,7 @@ let observer = null;
 // อัปเดตข้อมูลแบนเนอร์เพิ่ม Banner 2 และ Banner 3
 const banners = ref([
   {
-    image: new URL("~/assets/images/Banner.png", import.meta.url).href,
+    image: new URL("~/assets/images/Banner.jpg", import.meta.url).href,
     alt: "Banner 1",
   },
   {

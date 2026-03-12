@@ -2,8 +2,8 @@
   <div class="card shadow-sm border-0 h-100 w-100">
     <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
       <div>
-         <h5 class="fw-bold mb-0">Income vs Cancellation 📉</h5>
-         <small class="text-muted">เปรียบเทียบมูลค่าที่ขายได้ (Income) กับ ที่ถูกยกเลิก (Lost) ใน 7 วันล่าสุด</small>
+         <h5 class="fw-bold mb-0">เปรียบเทียบยอดขายกับยกเลิก 📉</h5>
+         
       </div>
     </div>
     <div class="card-body">

@@ -109,7 +109,7 @@
 
             <div v-if="loading" class="text-center py-5">
               <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+                <span class="visually-hidden">กำลังโหลด...</span>
               </div>
               <p class="mt-2">กำลังโหลดสินค้า...</p>
             </div>

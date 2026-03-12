@@ -3,7 +3,7 @@
     <div class="card-body pb-0">
       <div class="d-flex justify-content-between align-items-start">
         <div>
-          <p class="text-muted mb-1 text-uppercase small fw-bold">Affiliate Products</p>
+          <p class="text-muted mb-1 text-uppercase small fw-bold">สินค้าที่แชร์ด้วย Affiliate Link มากที่สุด</p>
           <h4 class="fw-bolder mb-0">{{ totalAffiliateItems }} ชิ้น</h4>
           <small class="text-muted" style="font-size: 10px;">(ยอดขายจากลิงก์ Affiliate ทั้งหมด)</small>
         </div>

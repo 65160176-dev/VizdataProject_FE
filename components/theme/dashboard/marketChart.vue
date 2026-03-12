@@ -2,12 +2,12 @@
   <div class="card shadow-sm border-0 h-100 w-100">
     <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
       <div>
-        <h5 class="fw-bold mb-0">Monthly Revenue 📊</h5>
-        <small class="text-muted">ยอดขายปี {{ selectedYear }} (ร้านคุณ)</small>
+        <h5 class="fw-bold mb-0">กราฟแสดงยอดขายรายเดือน 📊</h5>
+       
       </div>
       <div class="dropdown">
         <button class="btn btn-light btn-sm dropdown-toggle rounded-pill px-3 shadow-sm" type="button" data-bs-toggle="dropdown">
-          Year: {{ selectedYear }}
+          ปี: {{ selectedYear }}
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
           <li v-for="year in availableYears" :key="year">

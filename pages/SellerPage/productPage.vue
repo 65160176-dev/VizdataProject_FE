@@ -8,7 +8,7 @@
           class="fw-bold mb-0 text-white text-nowrap"
           style="text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1)"
         >
-          Products Management
+          จัดการรายการสินค้า
         </h5>
 
         <div
@@ -26,7 +26,7 @@
               class="me-1"
               style="margin-bottom: 2px"
             />
-            Category
+            เพิ่มหมวดหมู่
           </button>
 
           <button
@@ -42,7 +42,7 @@
               class="me-1"
               style="margin-bottom: 2px"
             />
-            Add Stock
+            เพิ่มสต๊อก
           </button>
 
           <button
@@ -57,7 +57,7 @@
               class="me-1"
               style="margin-bottom: 2px"
             />
-            Add Product
+            เพิ่มสินค้า
           </button>
         </div>
       </div>
@@ -70,16 +70,16 @@
           >
             <thead class="bg-light text-secondary">
               <tr>
-                <th class="border-0 py-3 ps-4">Image</th>
-                <th class="border-0 py-3 text-start">Name</th>
-                <th class="border-0 py-3">Stock</th>
-                <th class="border-0 py-3">Price</th>
-                <th class="border-0 py-3">Commission (%)</th>
-                <th class="border-0 py-3">Weight (kg)</th>
-                <th class="border-0 py-3">Shipping Option</th>
-                <th class="border-0 py-3">Status</th>
-                <th class="border-0 py-3">Category</th>
-                <th class="border-0 py-3 pe-4">Actions</th>
+                <th class="border-0 py-3 ps-4">รูป</th>
+                <th class="border-0 py-3 text-start">ชื่อสินค้า</th>
+                <th class="border-0 py-3">สต๊อกสินค้า</th>
+                <th class="border-0 py-3">ราคา</th>
+                <th class="border-0 py-3">ส่วนแบ่ง (%)</th>
+                <th class="border-0 py-3">น้ำหนัก (กก.)</th>
+                <th class="border-0 py-3">ค่าจัดส่ง</th>
+                <th class="border-0 py-3">สถานะ</th>
+                <th class="border-0 py-3">หมวดหมู่</th>
+                <th class="border-0 py-3 pe-4">ปุ่มจัดการ</th>
               </tr>
             </thead>
 
@@ -241,7 +241,7 @@
                 <div
                   class="d-flex justify-content-between align-items-center w-100 mb-3 mb-md-0"
                 >
-                  <h4 class="modal-title fw-bold text-orange mb-0">Category</h4>
+                  <h4 class="modal-title fw-bold text-orange mb-0">หมวดหมู่</h4>
                   <button
                     class="btn-close d-md-none"
                     data-bs-dismiss="modal"
@@ -374,7 +374,7 @@
                       size="16"
                       class="me-1 mb-1"
                     />
-                    Category ที่เพิ่มเข้ามา
+                    หมวดหมู่ที่เพิ่มเข้ามา
                   </h6>
 
                   <div
@@ -519,7 +519,7 @@
                             size="48"
                             class="text-orange-subtle"
                           />
-                          <p class="mb-0 mt-2 small">Click to Upload</p>
+                          <p class="mb-0 mt-2 small">คลิกเพื่ออัปโหลด</p>
                         </div>
                         <input
                           type="file"
@@ -532,7 +532,7 @@
                     </div>
                     <div class="col-md-7">
                       <div class="form-group mb-3">
-                        <label class="small fw-bold">Product Name :</label>
+                        <label class="small fw-bold">ชื่อสินค้า :</label>
                         <input
                           class="form-control"
                           v-model="newItem.name"
@@ -543,7 +543,7 @@
 
                       <div class="row">
                         <div class="col-12 col-sm-6 form-group mb-3">
-                          <label class="small fw-bold">Stock :</label>
+                          <label class="small fw-bold">สต๊อก :</label>
                           <input
                             class="form-control"
                             v-model="newItem.stock"
@@ -556,7 +556,7 @@
                           />
                         </div>
                         <div class="col-12 col-sm-6 form-group mb-3">
-                          <label class="small fw-bold">Price :</label>
+                          <label class="small fw-bold">ราคา :</label>
                           <input
                             class="form-control"
                             v-model="newItem.price"
@@ -569,7 +569,7 @@
 
                       <div class="row">
                         <div class="col-12 col-sm-6 form-group mb-3">
-                          <label class="small fw-bold">Commission (%) :</label>
+                          <label class="small fw-bold">ส่วนแบ่ง (%) :</label>
                           <input
                             class="form-control"
                             v-model="newItem.commission"
@@ -581,7 +581,7 @@
                         </div>
                         <div class="col-12 col-sm-6 form-group mb-3">
                           <label class="text-orange fw-bold small"
-                            >Weight (kg) :</label
+                            >น้ำหนัก (กก.) :</label
                           >
                           <input
                             class="form-control border-orange"
@@ -596,7 +596,7 @@
                             <small
                               class="text-muted w-100 mb-1 d-block"
                               style="font-size: 11px"
-                              >Select Shipping Cost:</small
+                              >เลือกราคาค่าส่ง:</small
                             >
                             <div class="d-flex flex-wrap gap-2">
                               <button
@@ -626,9 +626,9 @@
                       </div>
 
                       <div class="form-group mb-3">
-                        <label class="small fw-bold">Category :</label>
+                        <label class="small fw-bold">หมวดหมู่ :</label>
                         <select class="form-select" v-model="newItem.category">
-                          <option disabled value="">Select Category</option>
+                          <option disabled value="">เลือกหมวดหมู่</option>
                           <option
                             v-for="cat in activeCategories"
                             :key="cat.id"
@@ -641,12 +641,12 @@
                           v-if="activeCategories.length === 0"
                           class="text-danger small mt-1"
                         >
-                          * กรุณาไปเลือกหมวดหมู่ที่ปุ่ม Category ก่อน
+                          * กรุณาไปเลือกหมวดหมู่ที่ปุ่ม เพิ่มหมวดหมู่ ก่อน
                         </div>
                       </div>
 
                       <div class="form-group mb-0">
-                        <label class="small fw-bold">Description :</label>
+                        <label class="small fw-bold">รายละเอียดสินค้า :</label>
                         <textarea
                           class="form-control"
                           rows="3"
@@ -663,14 +663,14 @@
                   class="btn btn-primary px-4 shadow-sm"
                   @click="saveNewItem"
                 >
-                  Save
+                  บันทึก
                 </button>
                 <button
                   class="btn btn-light px-4 shadow-sm text-secondary"
                   data-bs-dismiss="modal"
                   @click="resetNewItemForm"
                 >
-                  Close
+                  ปิด
                 </button>
               </div>
             </div>
@@ -866,7 +866,7 @@
           <div class="modal-dialog border-0">
             <div class="modal-content border-0 shadow">
               <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold text-info">Add Stock</h5>
+                <h5 class="modal-title fw-bold text-info">เพิ่มสต๊อก</h5>
                 <button
                   class="btn-close"
                   type="button"
@@ -878,13 +878,13 @@
                 <form>
                   <div class="form-group mb-3">
                     <label class="small fw-bold text-muted"
-                      >Filter by Category :</label
+                      >กรองโดยหมวดหมู่ :</label
                     >
                     <select
                       class="form-select shadow-none border-secondary-subtle"
                       v-model="stockCategoryFilter"
                     >
-                      <option value="">All Categories</option>
+                      <option value="">หมวดหมู่ทั้งหมด</option>
                       <option
                         v-for="catName in activeProductCategories"
                         :key="catName"
@@ -896,7 +896,7 @@
                   </div>
 
                   <div class="form-group mb-3">
-                    <label class="small fw-bold">Select Product :</label>
+                    <label class="small fw-bold">เลือกสินค้า :</label>
                     <select
                       class="form-select shadow-none mb-2"
                       v-model="stockForm.id"
@@ -905,8 +905,8 @@
                       <option disabled value="">
                         {{
                           filteredStockProducts.length === 0
-                            ? "No products in this category"
-                            : "Select Product..."
+                            ? "ไม่มีสินค้าในหมวดหมู่"
+                            : "กรุณาเลือกสินค้า"
                         }}
                       </option>
                       <option
@@ -948,13 +948,13 @@
                   </div>
 
                   <div class="form-group mb-3 mt-4">
-                    <label class="small fw-bold">Quantity to Add :</label>
+                    <label class="small fw-bold">จำนวนที่ต้องการเพิ่ม :</label>
                     <input
                       class="form-control shadow-none"
                       type="number"
                       v-model="stockForm.quantity"
                       min="1"
-                      placeholder="Enter quantity..."
+                      placeholder="กรุณาระบุจำนวน"
                       @keydown="preventNegativeInput"
                       @input="
                         stockForm.quantity < 1 ? (stockForm.quantity = 1) : null

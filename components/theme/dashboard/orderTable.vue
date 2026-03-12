@@ -3,7 +3,7 @@
     <div class="card-header border-0 pb-3 pt-3" 
          style="background: linear-gradient(135deg, #ff6b35 0%, #ff9f43 100%); border-radius: 10px 10px 0 0;">
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5 class="fw-bold mb-0 text-white text-shadow">Latest Orders 📦</h5>
+        <h5 class="fw-bold mb-0 text-white text-shadow">ออเดอร์ล่าสุด 📦</h5>
       </div>
       <div class="d-flex gap-2 pb-1 align-items-center">
         <select v-model="timeFilter" class="form-select form-select-sm border-0 bg-white fw-bold rounded-pill text-secondary ps-3 shadow-sm" style="cursor: pointer; flex: 1;">
@@ -28,10 +28,10 @@
         <table class="table table-hover align-middle mb-0">
           <thead class="bg-light">
             <tr>
-              <th class="ps-4">ID</th>
-              <th>Customer</th>
-              <th>Status</th>
-              <th class="text-end pe-4">Total</th>
+              <th class="ps-4">ไอดี</th>
+              <th>ลูกค้า</th>
+              <th>สถานะ</th>
+              <th class="text-end pe-4">ราคา</th>
             </tr>
           </thead>
           <tbody>

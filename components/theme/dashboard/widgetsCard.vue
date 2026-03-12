@@ -12,16 +12,14 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h6 class="mb-2 opacity-90">My Earnings</h6>
+              <h6 class="mb-2 opacity-90">รายได้ทั้งหมด</h6>
               <h3 class="fw-bold mb-0">{{ formatCurrency(totalEarnings) }}</h3>
             </div>
             <div class="bg-white-glass p-3 rounded-circle">
               <Icon name="feather:dollar-sign" size="24" />
             </div>
           </div>
-          <small class="mt-3 d-block opacity-90">
-            รายได้ทั้งหมด (เฉพาะสำเร็จ)
-          </small>
+          
         </div>
       </div>
     </div>
@@ -36,7 +34,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h6 class="mb-2 opacity-90">My Products</h6>
+              <h6 class="mb-2 opacity-90">รายการสินค้า</h6>
               <h3 class="fw-bold mb-0">{{ totalProducts }}</h3>
             </div>
             <div class="bg-white-glass p-3 rounded-circle">
@@ -60,7 +58,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h6 class="mb-2 opacity-90 fw-bold">Preparing Orders</h6>
+              <h6 class="mb-2 opacity-90 fw-bold">รายการเตรียมออเดอร์</h6>
               <h3 class="fw-bold mb-0">{{ pendingCount }}</h3>
             </div>
             <div class="bg-white-glass p-3 rounded-circle shadow-sm">
@@ -79,16 +77,14 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h6 class="mb-2 opacity-90 fw-bold">Total Orders</h6>
+              <h6 class="mb-2 opacity-90 fw-bold">คำสั่งซื้อทั้งหมดในร้าน</h6>
               <h3 class="fw-bold mb-0">{{ allOrdersCount }}</h3>
             </div>
             <div class="bg-white-glass p-3 rounded-circle shadow-sm">
               <Icon name="feather:shopping-bag" size="24" />
             </div>
           </div>
-          <small class="mt-3 d-block opacity-90"
-            >คำสั่งซื้อทั้งหมดของร้าน</small
-          >
+         
         </div>
       </div>
     </div>
