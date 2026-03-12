@@ -208,11 +208,10 @@
                 class="img-fluid"
                 alt="empty cart"
               />
-              <h3 class="mt-3"><strong>Your Cart is Empty</strong></h3>
-              <h4 class="mb-3">Add something to make me happy :)</h4>
+              <h3 class="mt-3"><strong>ไม่มีสินค้าในตะกร้าในขณะนี้</strong></h3>
               <div class="col-12">
                 <nuxt-link :to="{ path: '/' }" class="btn btn-solid"
-                  >continue shopping</nuxt-link
+                  >ไปเลือกสินค้าเลย</nuxt-link
                 >
               </div>
             </div>

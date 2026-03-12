@@ -134,6 +134,14 @@ const totalAddressPages = computed(() => {
     if (!addressList.value) return 0
     return Math.ceil(addressList.value.length / itemsPerAddressPage)
 })
+watch(totalAddressPages, (newTotalPages) => {
+    // ถ้าหน้าปัจจุบัน (currentAddressPage) มีค่ามากกว่า จำนวนหน้าทั้งหมด (newTotalPages)
+    // เช่น อยู่หน้า 2 แต่ข้อมูลเหลือแค่พอแสดงหน้า 1
+    if (currentAddressPage.value > newTotalPages) {
+        // ให้เด้งกลับมาหน้าที่มากที่สุดที่มีอยู่ ณ ตอนนั้น (แต่ไม่ให้ต่ำกว่าหน้า 1)
+        currentAddressPage.value = Math.max(1, newTotalPages)
+    }
+})
 
 const changeAddressPage = (page) => {
     if (page >= 1 && page <= totalAddressPages.value) {
@@ -181,11 +189,15 @@ const confirmDeleteAddress = async () => {
     if (addressToDelete.value) {
         try {
             const id = addressToDelete.value._id || addressToDelete.value.id;
-            await addressStore.deleteAddress(id);
+            
+            // ✅ เปลี่ยนจาก deleteAddress เป็น removeAddress
+            await addressStore.removeAddress(id);
+            
             useNuxtApp().$showToast({ msg: "ลบที่อยู่สำเร็จ", type: "success" });
             addressToDelete.value = null;
             showDeleteModal.value = false;
         } catch (err) {
+            console.error("Delete Error:", err);
             useNuxtApp().$showToast({ msg: "ลบไม่สำเร็จ", type: "error" });
         }
     }

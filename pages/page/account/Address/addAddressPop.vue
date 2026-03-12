@@ -13,7 +13,7 @@
                         <form @submit.prevent="submitForm" class="theme-form">
                             <div class="row g-3">
                                 <div class="col-md-12">
-                                    <label class="form-label text-muted mb-1">ชื่อ-นามสกุล (Name) <span
+                                    <label class="form-label text-muted mb-1">ชื่อ-นามสกุล<span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control" v-model="form.name"
                                         :class="{ 'is-invalid': errors.name }">
@@ -21,7 +21,7 @@
                                 </div>
 
                                 <div class="col-md-12">
-                                    <label class="form-label text-muted mb-1">เบอร์โทรศัพท์ (Phone) <span
+                                    <label class="form-label text-muted mb-1">เบอร์โทรศัพท์<span
                                             class="text-danger">*</span></label>
                                     <input type="tel" class="form-control" v-model="form.phone"
                                         :class="{ 'is-invalid': errors.phone }" placeholder="08xxxxxxxx">
@@ -29,7 +29,7 @@
                                 </div>
 
                                 <div class="col-12">
-                                    <label class="form-label text-muted mb-1">ที่อยู่ (Address) <span
+                                    <label class="form-label text-muted mb-1">ที่อยู่<span
                                             class="text-danger">*</span></label>
                                     <input type="text" class="form-control" v-model="form.address"
                                         :class="{ 'is-invalid': errors.address }" placeholder="บ้านเลขที่ หมู่ ซอย ถนน">
@@ -37,7 +37,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted mb-1">จังหวัด (Province) <span
+                                    <label class="form-label text-muted mb-1">จังหวัด<span
                                             class="text-danger">*</span></label>
                                     <SearchSelect v-model="form.province" :options="provinceList"
                                         placeholder="เลือกจังหวัด" :error="!!errors.province"
@@ -47,7 +47,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted mb-1">อำเภอ/เขต (District) <span
+                                    <label class="form-label text-muted mb-1">อำเภอ/เขต<span
                                             class="text-danger">*</span></label>
                                     <SearchSelect v-model="form.district" :options="districtList"
                                         placeholder="เลือกอำเภอ/เขต" :disabled="!form.province"
@@ -57,7 +57,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted mb-1">ตำบล/แขวง (Sub-district) <span
+                                    <label class="form-label text-muted mb-1">ตำบล/แขวง<span
                                             class="text-danger">*</span></label>
                                     <SearchSelect v-model="form.subDistrict" :options="subDistrictList"
                                         placeholder="เลือกตำบล/แขวง" :disabled="!form.district"
@@ -68,7 +68,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted mb-1">รหัสไปรษณีย์ (Zip Code) <span
+                                    <label class="form-label text-muted mb-1">รหัสไปรษณีย์<span
                                             class="text-danger">*</span></label>
                                     <select class="form-select" v-model="form.zipCode"
                                         :class="{ 'is-invalid': errors.zipCode }" :disabled="!form.subDistrict">
