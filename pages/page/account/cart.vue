@@ -25,13 +25,13 @@
                     <th scope="col" class="col-center">
                       <input type="checkbox" v-model="isAllSelected" />
                     </th>
-                    <th scope="col" class="col-center">Image</th>
-                    <th scope="col" class="col-center">Shop</th>
-                    <th scope="col" class="col-left">Product</th>
-                    <th scope="col" class="col-center">Price</th>
-                    <th scope="col" class="col-center">Quantity</th>
-                    <th scope="col" class="col-center">Action</th>
-                    <th scope="col" class="col-right">Total</th>
+                    <th scope="col" class="col-center">รูปภาพสินค้า</th>
+                    <th scope="col" class="col-center">ร้านค้า</th>
+                    <th scope="col" class="col-left">สินค้า</th>
+                    <th scope="col" class="col-center">ราคา</th>
+                    <th scope="col" class="col-center">จำนวน</th>
+                    <th scope="col" class="col-center">นำสินค้าออก</th>
+                    <th scope="col" class="col-right">รวม</th>
                   </tr>
                 </thead>
 
@@ -187,7 +187,7 @@
                 <tfoot>
                   <tr>
                     <td colspan="7" class="text-end total-label">
-                      Total Price (Selected):
+                      ราคารวม (สินค้าที่เลือก):
                     </td>
                     <td class="col-right">
                       <h2 class="td-color">
@@ -222,7 +222,7 @@
         <div class="row cart-buttons" v-if="cart.length">
           <div class="col-6">
             <nuxt-link :to="{ path: '/' }" :class="'btn btn-solid'"
-              >continue shopping</nuxt-link
+              >เลือกซื้อสินค้าต่อ</nuxt-link
             >
           </div>
           <div class="col-6">
@@ -232,18 +232,18 @@
               :class="{ disabled: selectedItems.length === 0 }"
               @click="goToCheckout"
             >
-              check out ({{ selectedItems.length }})
+              ชำระเงิน ({{ selectedItems.length }})
             </a>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="ratio_asos section-b-space bg-light" v-if="randomProducts.length > 0">
+    <section class="ratio_asos bg-light pt-3 pb-4" v-if="randomProducts.length > 0">
       <div class="container-fluid" style="padding-left: 3rem; padding-right: 3rem;">
         <div class="row">
           <div class="col-12 product-related">
-            <h2 class="mb-4 text-center">สินค้าที่คุณอาจสนใจ</h2>
+            <h2 class="mb-3 text-center">สินค้าที่คุณอาจสนใจ</h2>
           </div>
         </div>
         <div class="product-grid">

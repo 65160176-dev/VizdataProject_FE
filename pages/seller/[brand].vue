@@ -443,7 +443,7 @@ function addToCart(product) {
   box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important; 
 }
 
-.card-img-top { height: 200px; object-fit: cover; background: #fdfdfd; }
+.card-img-top { height: 220px; object-fit: contain; background: #fff; padding: 10px; }
 .price-text { color: #ff4c3b; font-size: 17px; font-weight: 700; }
 
 .text-truncate-2 {

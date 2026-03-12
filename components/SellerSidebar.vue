@@ -28,7 +28,7 @@
 
         <div class="profile-info" v-show="!isCollapsed">
           <div class="name text-truncate">{{ displayName }}</div>
-          <div class="role">Seller</div>
+          <div class="role">ผู้ขาย</div>
         </div>
 
         <div class="noti-wrapper" v-show="!isCollapsed">
@@ -103,29 +103,29 @@
         <li>
           <NuxtLink to="/SellerPage/dashboard"
             :class="['menu-item', { 'is-active': isActive('/SellerPage/dashboard') }]">
-            <span class="icon-slot">📊</span><span class="menu-label" v-show="!isCollapsed">Dashboard</span>
+            <span class="icon-slot">📊</span><span class="menu-label" v-show="!isCollapsed">หน้าสรุปผล</span>
           </NuxtLink>
         </li>
         <li>
           <NuxtLink to="/SellerPage/productPage"
             :class="['menu-item', { 'is-active': isActive('/SellerPage/productPage') }]">
-            <span class="icon-slot">📦</span><span class="menu-label" v-show="!isCollapsed">Product</span>
+            <span class="icon-slot">📦</span><span class="menu-label" v-show="!isCollapsed">สินค้า</span>
           </NuxtLink>
         </li>
         <li>
           <NuxtLink to="/SellerPage/order" :class="['menu-item', { 'is-active': isActive('/SellerPage/order') }]">
-            <span class="icon-slot">📋</span><span class="menu-label" v-show="!isCollapsed">Order</span>
+            <span class="icon-slot">📋</span><span class="menu-label" v-show="!isCollapsed">คำสั่งซื้อ</span>
           </NuxtLink>
         </li>
         <li>
           <NuxtLink to="/SellerPage/orderStatus"
             :class="['menu-item', { 'is-active': isActive('/SellerPage/orderStatus') }]">
-            <span class="icon-slot">🚚</span><span class="menu-label" v-show="!isCollapsed">Order Status</span>
+            <span class="icon-slot">🚚</span><span class="menu-label" v-show="!isCollapsed">สถานะคำสั่งซื้อ</span>
           </NuxtLink>
         </li>
         <li>
           <NuxtLink to="/SellerPage/wallet" :class="['menu-item', { 'is-active': isActive('/SellerPage/wallet') }]">
-            <span class="icon-slot">💳</span><span class="menu-label" v-show="!isCollapsed">Wallet</span>
+            <span class="icon-slot">💳</span><span class="menu-label" v-show="!isCollapsed">กระเป๋าเงิน</span>
           </NuxtLink>
         </li>
       </ul>
@@ -133,7 +133,7 @@
 
     <div class="sidebar-bottom">
       <button class="logout-btn" @click="logout" :title="isCollapsed ? 'Logout' : ''">
-        <span v-if="isCollapsed">⎋</span><span v-else>⎋ Logout</span>
+        <span v-if="isCollapsed">⎋</span><span v-else>⎋ ออกจากระบบ</span>
       </button>
     </div>
   </aside>

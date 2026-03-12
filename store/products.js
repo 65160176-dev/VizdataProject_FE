@@ -9,9 +9,9 @@ export const useProductStore = defineStore({
         wishlist: [],
         compare: [],
         currency: {
-          value:'usd',
+          value:'thb',
           curr: 1,
-          symbol: '$'
+          symbol: '฿'
         },
         order: [],
         locale: 'en',

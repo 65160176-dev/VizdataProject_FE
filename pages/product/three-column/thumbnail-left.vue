@@ -620,15 +620,19 @@ export default {
   box-shadow: 0 12px 30px rgba(17, 24, 39, 0.08);
 }
 .card-img-wrap {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #fff;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .card .card-img-top {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 10px;
   display: block;
 }
 .card .card-body {
