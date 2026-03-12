@@ -145,7 +145,7 @@ export default {
         // 🚨 นำ Logic จาก getItemImage มาใส่แทนของเดิม
         resolvedImage(url) {
             const BACKEND = 'https://vizdataprojectbe-production.up.railway.app'
-            const LOCAL_FALLBACKS = ['/images/dashboard/default.png', '/images/icon/logo.png', '/images/placeholder.png']
+            const LOCAL_FALLBACKS = ['/images/dashboard/default.png', '/images/icon/logo.jpg', '/images/placeholder.png']
 
             // กรอง path ที่เป็น local fallback หรือว่าง ออกไปเลย → แสดง default icon แทน
             if (!url || url.trim() === '' || LOCAL_FALLBACKS.includes(url)) return null

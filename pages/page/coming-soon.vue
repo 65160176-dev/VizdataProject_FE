@@ -55,7 +55,7 @@ export default {
   
   data() {
     return {
-      logoimage: '/images/icon/logo.png',
+      logoimage: '/images/icon/logo.jpg',
       title: 'Will be Opening Soon!',
       copyright: '© 2025, Powered by Multikart.'
     }

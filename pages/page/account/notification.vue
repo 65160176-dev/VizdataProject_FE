@@ -40,10 +40,10 @@
 
                                                 <div class="me-3" style="min-width: 50px;">
                                                     <img v-if="item.image" :src="getImgUrl(item.image)"
-                                                        @error="$event.target.src = '/images/icon/logo.png'" alt="icon"
+                                                        @error="$event.target.src = '/images/icon/logo.jpg'" alt="icon"
                                                         style="width: 50px; height: 50px; object-fit: contain;">
 
-                                                    <img v-else src="/images/icon/logo.png" alt="app logo"
+                                                    <img v-else src="/images/icon/logo.jpg" alt="app logo"
                                                         style="width: 50px; height: 50px; object-fit: contain;">
                                                 </div>
 

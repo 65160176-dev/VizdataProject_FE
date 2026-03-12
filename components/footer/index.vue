@@ -11,7 +11,7 @@
               </div>
               <div class="footer-contant">
                 <div class="footer-logo">
-                  <img src='/images/icon/logo.png' alt="logo" style="max-width: 150px;" />
+                  <img src='/images/icon/logo.jpg' alt="logo" style="max-width: 150px;" />
                 </div>
                 <p>เปลี่ยนทุกการช้อปให้เป็นโอกาส และเปลี่ยนคุณให้เป็นเจ้าของธุรกิจเพียงปลายนิ้ว เพราะที่นี่เราเชื่อว่า
                   'ผู้ซื้อที่ดี คือผู้ขายที่จริงใจ' ร่วมส่งต่อสินค้าที่คุณรัก ป้ายยาความคุ้มค่าที่คุณหลงใหล

@@ -18,7 +18,7 @@
                   </div>
                   <div class="brand-logo">
                     <nuxt-link :to="{ path: '/' }">
-                      <img src="/images/icon/logo.png" class="img-fluid" alt="logo" />
+                      <img src="/images/icon/logo.jpg" class="img-fluid" alt="logo" />
                     </nuxt-link>
                   </div>
                 </div>
