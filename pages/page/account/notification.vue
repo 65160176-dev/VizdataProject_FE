@@ -102,7 +102,7 @@ export default {
             // ถ้า path เป็น URL เต็มๆ (เช่น https://...) ให้ใช้เลย
             if (path && path.startsWith('http')) return path;
             // ถ้าไม่มี path ใช้รูป default
-            if (!path) return '/images/icon/logo.png';
+            if (!path) return '/images/icon/logo.jpg';
             // ถ้าเป็น path รูปในโปรเจกต์
             return ('/images/' + path)
         },
