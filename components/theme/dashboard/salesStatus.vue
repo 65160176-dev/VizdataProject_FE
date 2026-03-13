@@ -16,11 +16,20 @@
         <div class="col-xl-6 col-lg-6">
           <div class="sales-legend mt-4 mt-lg-0" style="max-height: 300px; overflow-y: auto;">
              <div v-for="(count, idx) in series" :key="idx" class="d-flex align-items-center justify-content-between mb-3 p-3 rounded-3 bg-light">
-                <div class="d-flex align-items-center" style="max-width: 70%;">
-                   <span class="dot me-3 flex-shrink-0" :style="{ backgroundColor: getChartColor(idx) }"></span>
+                <div class="d-flex align-items-center gap-2" style="max-width: 75%;">
+                   <span class="dot flex-shrink-0" :style="{ backgroundColor: getChartColor(idx) }"></span>
+                   <img
+                     v-if="resolveImage(productImages[idx])"
+                     :src="resolveImage(productImages[idx])"
+                     alt="product"
+                     class="product-thumb flex-shrink-0"
+                   />
+                   <div v-else class="product-thumb-placeholder flex-shrink-0">
+                     <Icon name="feather:image" size="16" class="text-muted" />
+                   </div>
                    <h6 class="mb-0 fw-bold text-truncate">{{ chartOptions.labels[idx] }}</h6>
                 </div>
-                <div class="text-end">
+                <div class="text-end flex-shrink-0">
                    <span class="badge bg-white text-dark shadow-sm">{{ count }} ชิ้น</span>
                 </div>
              </div>
@@ -70,23 +79,34 @@ const productData = computed(() => {
             const name = item.name || 'Unknown Product';
             const qty = Number(item.qty || item.quantity || 1); // ถ้าไม่มี qty ให้นับเป็น 1
             
-            if (!stats[name]) stats[name] = 0;
-            stats[name] += qty;
+            if (!stats[name]) stats[name] = { qty: 0, image: item.image || null };
+            stats[name].qty += qty;
+            if (!stats[name].image && item.image) stats[name].image = item.image;
         });
     });
 
     // แปลง Object เป็น Array แล้วเรียงลำดับจาก มาก -> น้อย
     const sorted = Object.entries(stats)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 5); // เอาแค่ Top 5 (ถ้าอยากได้หมดให้ลบ .slice ออก)
+        .sort(([, a], [, b]) => b.qty - a.qty)
+        .slice(0, 5); // เอาแค่ Top 5
 
     return {
         labels: sorted.map(([name]) => name),
-        series: sorted.map(([, qty]) => qty)
+        series: sorted.map(([, data]) => data.qty),
+        images: sorted.map(([, data]) => data.image)
     };
 });
 
 const series = computed(() => productData.value.series);
+const productImages = computed(() => productData.value.images || []);
+
+const resolveImage = (url) => {
+  if (!url) return null;
+  if (url.startsWith('data:')) return null;
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/')) return `https://vizdataprojectbe-production.up.railway.app${url}`;
+  return `https://vizdataprojectbe-production.up.railway.app/${url}`;
+};
 
 const chartOptions = computed(() => ({
   chart: { type: "donut", fontFamily: 'Nunito, sans-serif' },
@@ -122,6 +142,23 @@ const chartOptions = computed(() => ({
 </script>
 
 <style scoped>
-.dot { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+.product-thumb-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+}
 </style>
