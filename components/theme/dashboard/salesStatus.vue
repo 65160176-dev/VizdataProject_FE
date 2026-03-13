@@ -3,6 +3,16 @@
     <div class="card-header bg-transparent border-0 pb-0">
       <h5 class="fw-bold">สินค้าขายดีสุดในร้าน 🏆</h5>
       <small class="text-muted">สินค้าที่มียอดขายสูงสุดของร้านคุณ</small>
+      <!-- ช่วงเวลา -->
+      <div class="d-flex flex-wrap gap-1 mt-2">
+        <button
+          v-for="d in dayOptions"
+          :key="d"
+          class="btn btn-period"
+          :class="{ active: selectedDays === d }"
+          @click="selectedDays = d"
+        >{{ d }} วัน</button>
+      </div>
     </div>
     <div class="card-body">
       <div class="row align-items-center h-100">
@@ -41,12 +51,15 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useOrderStore } from '~/store/orders';
 import { useAuthStore } from '~/store/auth'; // ✅ 1. เรียก Auth เพื่อแยกร้าน
 
 const orderStore = useOrderStore();
 const authStore = useAuthStore();
+
+const dayOptions = [7, 14, 30, 45, 60, 90];
+const selectedDays = ref(30);
 
 // สีของกราฟ (เตรียมไว้หลายๆ สี)
 const colors = ["#7366ff", "#f73164", "#51bb25", "#ff9f40", "#544fff", "#6362e7", "#ffc107", "#e91e63"];
@@ -65,13 +78,16 @@ const myOrders = computed(() => {
     })
 })
 
-// 3. Logic นับยอดขายสินค้าแต่ละตัว
+// 3. Logic นับยอดขายสินค้าแต่ละตัว (กรองตามช่วงเวลา)
 const productData = computed(() => {
     const stats = {};
+    const cutoffTs = Date.now() - selectedDays.value * 86400000;
     
     myOrders.value.forEach(order => {
         // นับเฉพาะออเดอร์ที่เสร็จสิ้น (ลูกค้ากดรับสินค้าแล้ว)
         if ((order.status || '').toLowerCase() !== 'completed') return;
+        // กรองตามช่วงเวลา
+        if (order.createdAt && new Date(order.createdAt).getTime() < cutoffTs) return;
 
         // วนลูปสินค้าในแต่ละออเดอร์
         const items = order.item || order.items || [];
@@ -142,6 +158,28 @@ const chartOptions = computed(() => ({
 </script>
 
 <style scoped>
+.btn-period {
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  border: 1.5px solid #ffcc80;
+  background: #fff8ee;
+  color: #e65100;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.btn-period:hover {
+  background: #ffe0b2;
+}
+
+.btn-period.active {
+  background: #ff9f40;
+  color: #fff;
+  border-color: #ff9f40;
+}
+
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .product-thumb {

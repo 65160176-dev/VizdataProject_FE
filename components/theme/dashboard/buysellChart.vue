@@ -3,10 +3,19 @@
     <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
       <div>
          <h5 class="fw-bold mb-0">เปรียบเทียบยอดขายกับยกเลิก 📉</h5>
-         
       </div>
     </div>
     <div class="card-body">
+      <!-- ช่วงเวลา -->
+      <div class="d-flex flex-wrap gap-1 mb-3">
+        <button
+          v-for="d in dayOptions"
+          :key="d"
+          class="btn btn-period"
+          :class="{ active: selectedDays === d }"
+          @click="selectedDays = d"
+        >{{ d }} วัน</button>
+      </div>
       <div class="chart-container">
           <apexchart type="bar" height="350" :options="chartOptions" :series="series"></apexchart>
       </div>
@@ -22,6 +31,9 @@ import { useAuthStore } from '~/store/auth';
 const orderStore = useOrderStore();
 const authStore = useAuthStore();
 
+const dayOptions = [7, 14, 30, 45, 60];
+const selectedDays = ref(7);
+
 // --- 2. กรองเฉพาะออเดอร์ของร้านเรา (My Orders) ---
 const myOrders = computed(() => {
     const all = orderStore.allOrders || []
@@ -35,15 +47,17 @@ const myOrders = computed(() => {
     })
 })
 
-// --- 3. คำนวณยอดเงิน 7 วันย้อนหลัง ---
+// --- 3. คำนวณยอดเงินตามช่วงเวลาที่เลือก ---
 const chartData = computed(() => {
-  const successData = Array(7).fill(0);
-  const cancelData = Array(7).fill(0);
+  const days = selectedDays.value;
+  const successData = Array(days).fill(0);
+  const cancelData = Array(days).fill(0);
   const categories = []; 
   
   const orders = myOrders.value;
 
-  if (orders.length === 0) return { successData, cancelData, categories: ['D1','D2','D3','D4','D5','D6','D7'] };
+  const defaultCats = Array.from({ length: days }, (_, i) => `D${i + 1}`);
+  if (orders.length === 0) return { successData, cancelData, categories: defaultCats };
 
   const dates = orders.map(o => new Date(o.createdAt || o.date).getTime()).filter(d => !isNaN(d));
   if (dates.length === 0) return { successData, cancelData, categories };
@@ -52,7 +66,7 @@ const chartData = computed(() => {
   maxDate.setHours(23, 59, 59, 999); 
 
   const tempDate = new Date(maxDate);
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < days; i++) {
       categories.unshift(tempDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })); 
       tempDate.setDate(tempDate.getDate() - 1);
   }
@@ -64,8 +78,8 @@ const chartData = computed(() => {
     const diffTime = maxDate - d;
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays >= 0 && diffDays < 7) {
-       const index = 6 - diffDays; 
+    if (diffDays >= 0 && diffDays < days) {
+       const index = (days - 1) - diffDays; 
        const amount = Number(order.total || 0);
        const status = (order.status || '').toLowerCase();
 
@@ -131,4 +145,26 @@ const chartOptions = computed(() => ({
 
 <style scoped>
 .chart-container { min-height: 350px; }
+
+.btn-period {
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  border: 1.5px solid #ffcc80;
+  background: #fff8ee;
+  color: #e65100;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.btn-period:hover {
+  background: #ffe0b2;
+}
+
+.btn-period.active {
+  background: #ff9f40;
+  color: #fff;
+  border-color: #ff9f40;
+}
 </style>
