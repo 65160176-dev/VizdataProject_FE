@@ -97,7 +97,7 @@
                               </tr>
                               <tr>
                                 <td>ค่าจัดส่ง: (ต่อชิ้น)</td>
-                                <td>฿{{ product.shippingCost || 0 }}</td>
+                                <td>฿{{ (product.shippingCost || 0).toLocaleString() }}</td>
                               </tr>
                             </tbody>
                           </table>
@@ -128,7 +128,7 @@
                     <!-- กล่องซื้อสินค้า -->
                     <div class="col-lg-5">
                       <div class="product-right product-form-box" style="position: sticky; top: 20px; padding: 15px;">
-                        <h3 class="mb-2" style="text-align: center;">฿{{ product.price?.toFixed(2) }}</h3>
+                        <h3 class="mb-2" style="text-align: center;">฿{{ (product.price || 0).toLocaleString() }}</h3>
                         <div class="border-product" style="padding: 8px 0;">
                           <h5
                             class="avalibility"

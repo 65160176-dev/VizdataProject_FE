@@ -150,7 +150,7 @@
                           {{ item.product?.name || "สินค้า" }}
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1">
-                          <span class="price-text" style="font-size: 14px">฿{{ item.product?.price || 0 }}</span>
+                          <span class="price-text" style="font-size: 14px">฿{{ (item.product?.price || 0).toLocaleString() }}</span>
                           <span class="text-muted" style="font-size: 10px">ขายแล้ว {{ item.totalSold || 0 }}</span>
                         </div>
                       </div>
@@ -260,14 +260,14 @@
                             <div
                               class="text-muted small text-decoration-line-through"
                             >
-                              ฿{{ product.price }}
+                              ฿{{ product.price.toLocaleString() }}
                             </div>
                             <div class="fw-bold price-text">
-                              ฿{{ discountedPrice(product) }}
+                              ฿{{ discountedPrice(product).toLocaleString() }}
                             </div>
                           </div>
                           <div v-else class="fw-bold price-text">
-                            ฿{{ product?.price || 0 }}
+                            ฿{{ (product?.price || 0).toLocaleString() }}
                           </div>
                         </div>
                         <button class="btn-cart" @click="addToCart(product)">

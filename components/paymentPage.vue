@@ -314,11 +314,11 @@
 
                           <span class="text-end" style="width: 100px">
                             ฿{{
-                              (
+                              Number((
                                 calcPrice(item) *
                                 item.quantity *
                                 curr.curr
-                              ).toFixed(2)
+                              ).toFixed(2)).toLocaleString()
                             }}
                           </span>
 
@@ -331,11 +331,11 @@
                               "
                             >
                               ฿{{
-                                (
+                                Number((
                                   Number(item.shippingCost) *
                                   item.quantity *
                                   curr.curr
-                                ).toFixed(2)
+                                ).toFixed(2)).toLocaleString()
                               }}
                             </template>
                             <template v-else> Free </template>
@@ -346,21 +346,21 @@
                     <ul class="sub-total">
                       <li>
                         ราคารวมสินค้า
-                        <span class="count">{{
-                          (cartTotal * curr.curr).toFixed(2)
+                        <span class="count">฿{{
+                          Number((cartTotal * curr.curr).toFixed(2)).toLocaleString()
                         }}</span>
                       </li>
                       <li v-if="shippingBeforeDiscount > 0">
                         ค่าจัดส่ง
-                        <span class="count">{{
-                          (shippingBeforeDiscount * curr.curr).toFixed(2)
+                        <span class="count">฿{{
+                          Number((shippingBeforeDiscount * curr.curr).toFixed(2)).toLocaleString()
                         }}</span>
                       </li>
                       <li v-if="shippingDiscount > 0" class="text-success">
                         ส่วนลดค่าจัดส่ง 
                         <span class="count"
-                          >-{{
-                            (shippingDiscount * curr.curr).toFixed(2)
+                          >฿-{{
+                            Number((shippingDiscount * curr.curr).toFixed(2)).toLocaleString()
                           }}</span
                         >
                       </li>
@@ -373,8 +373,8 @@
                       </li>
                       <li class="fw-bold">
                         ราคารวมสุทธิ
-                        <span class="count">{{
-                          (grandTotal * curr.curr).toFixed(2)
+                        <span class="count">฿{{
+                          Number((grandTotal * curr.curr).toFixed(2)).toLocaleString()
                         }}</span>
                       </li>
                     </ul>
@@ -439,8 +439,9 @@
                           style="max-width: 200px"
                         />
                         <p class="text-muted small">
-                          ยอดชำระ: {{ curr.symbol
-                          }}{{ (grandTotal * curr.curr).toFixed(2) }}
+                          ยอดชำระ: ฿{{
+                            Number((grandTotal * curr.curr).toFixed(2)).toLocaleString()
+                          }}
                         </p>
                       </div>
 

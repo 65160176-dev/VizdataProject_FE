@@ -31,7 +31,7 @@
                             <nuxt-link :to="{ path: '/product/sidebar/' + (product._id || product.id) }">
                               <h6>{{ product.name || product.title }}</h6>
                             </nuxt-link>
-                            <h4>{{ curr.symbol }}{{ (product.price * curr.curr).toFixed(2) }}</h4>
+                            <h4>{{ curr.symbol }}{{ Number((product.price * curr.curr).toFixed(2)).toLocaleString() }}</h4>
                           </div>
                         </li>
                       </ul>
@@ -95,7 +95,7 @@
                     <h4>{{ item.name || item.title }}</h4>
                   </nuxt-link>
                   <h4>
-                    <span>{{ item.quantity }} x ฿{{ (item.price * curr.curr).toFixed(2) }}</span>
+                    <span>{{ item.quantity }} x ฿{{ Number((item.price * curr.curr).toFixed(2)).toLocaleString() }}</span>
                   </h4>
 
                   <div v-if="item.quantity > item.stock" class="text-danger mt-1"

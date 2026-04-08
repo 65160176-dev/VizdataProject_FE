@@ -113,7 +113,7 @@
 
                     <td class="col-center">
                       <h2 class="td-color price-text">
-                        ฿ {{ (calcPrice(item) * curr.curr).toFixed(2) }}
+                        ฿ {{ Number((calcPrice(item) * curr.curr).toFixed(2)).toLocaleString() }}
                       </h2>
                     </td>
 
@@ -175,9 +175,7 @@
                       <h2 class="td-color total-text">
                         ฿
                         {{
-                          (calcPrice(item) * curr.curr * item.quantity).toFixed(
-                            2,
-                          )
+                          Number((calcPrice(item) * curr.curr * item.quantity).toFixed(2)).toLocaleString()
                         }}
                       </h2>
                     </td>
@@ -191,7 +189,7 @@
                     </td>
                     <td class="col-right">
                       <h2 class="td-color">
-                        ฿ {{ (selectedTotal * curr.curr).toFixed(2) }}
+                        ฿ {{ Number((selectedTotal * curr.curr).toFixed(2)).toLocaleString() }}
                       </h2>
                     </td>
                   </tr>
